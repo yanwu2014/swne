@@ -1,0 +1,28 @@
+Package: swne
+Type: Package
+Title: Similarity Weighted Nonnegative Embedding: A nonlinear method for visualizing high dimensional datasets
+Version: 0.1.0
+Author: Yan Wu
+Maintainer: Yan Wu <yauwning@gmail.com>
+Description: Uses NMF to reduce high dimenensional dataset into NMF components, then embeds NMF components
+  in a 2D space for visualization, using a similarity matrix to ensure that data points close in the high 
+  dimensional space are also close in the 2D visualization. The NMF components are also embedded onto the 
+  visualization, and can be interpreted via correlation with the features in the dataset. The NMF component 
+  embedding preserves global relationships between data points, while the similarity matrix preserves local 
+  relationships.
+Authors@R: person("Yan", "Wu", email = "yauwning@gmail.com", role = c("aut", "cre"))
+License: GPL-2
+Encoding: UTF-8
+LazyData: true
+LinkingTo: 
+  Rcpp,
+  RcppArmadillo
+Imports: 
+  Rcpp (>= 0.12.14),
+  RcppArmadillo (>= 0.8.300.1.0),
+  NNLM (>= 0.4.1),
+  ggplot2 (>= 2.2.1),
+  RColorBrewer (>= 1.1.2),
+  Matrix (>= 1.2.11),
+  ggrepel (>= 0.7.0),
+  ggConvexHull (>= 0.1.0)
