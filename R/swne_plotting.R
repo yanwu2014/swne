@@ -218,8 +218,7 @@ PlotSWNE <- function(swne.embedding, alpha.plot = 0.25, sample.groups = NULL, do
 
 #' Plots swne embedding with feature overlayed
 #'
-#' @param H.coords NMF coordinates
-#' @param sample.coords Sample coordinates
+#' @param swne.embedding SWNE embedding (list of NMF and sample coordinates) from EmbedSWNE
 #' @param feature.score Feature vector to overlay
 #' @param n.colors Number of colors to bin feature vector into
 #' @param alpha.plot Data point transparency
@@ -232,8 +231,11 @@ PlotSWNE <- function(swne.embedding, alpha.plot = 0.25, sample.groups = NULL, do
 #'
 #' @export
 #'
-FeaturePlotSWNE <- function(H.coords, sample.coords, feature.scores, n.colors = 5, alpha.plot = 0.5,
+FeaturePlotSWNE <- function(swne.embedding, feature.scores, n.colors = 5, alpha.plot = 0.5,
                             quantiles = c(0.05, 0.95), samples.plot = NULL, label.size = 4.5, pt.size = 1) {
+  H.coords <- swne.embedding$H.coords
+  sample.coords <- swne.embedding$sample.coords
+
   feature.scores <- as.numeric(feature.scores[rownames(sample.coords)])
   feature.quantiles <- quantile(feature.scores, probs = quantiles)
 

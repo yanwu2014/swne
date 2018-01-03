@@ -4,14 +4,12 @@
 \alias{FeaturePlotSWNE}
 \title{Plots swne embedding with feature overlayed}
 \usage{
-FeaturePlotSWNE(H.coords, sample.coords, feature.scores, n.colors = 5,
+FeaturePlotSWNE(swne.embedding, feature.scores, n.colors = 5,
   alpha.plot = 0.5, quantiles = c(0.05, 0.95), samples.plot = NULL,
   label.size = 4.5, pt.size = 1)
 }
 \arguments{
-\item{H.coords}{NMF coordinates}
-
-\item{sample.coords}{Sample coordinates}
+\item{swne.embedding}{SWNE embedding (list of NMF and sample coordinates) from EmbedSWNE}
 
 \item{n.colors}{Number of colors to bin feature vector into}
 
