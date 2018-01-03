@@ -5,13 +5,12 @@
 \title{Find the top gene or geneset markers for each NMF component using pearson/spearman correlation,
 or mutual information}
 \usage{
-ComponentAssociation(component.scores, feature.mat, n.cores = 8,
-  metric = "IC")
+ComponentAssociation(feature.mat, nmf.scores, n.cores = 8, metric = "IC")
 }
 \arguments{
-\item{component.scores}{NMF component scores (nmf components x samples)}
-
 \item{feature.mat}{Feature matrix (features x samples)}
+
+\item{nmf.scores}{NMF component scores (nmf components x samples)}
 
 \item{n.cores}{Number of cores to use}
 

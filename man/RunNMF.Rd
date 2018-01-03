@@ -5,7 +5,7 @@
 \title{Runs NMF decomposition on a data matrix}
 \usage{
 RunNMF(A, k, alpha = 0, init = "random", n.cores = 1, loss = "mse",
-  n.rand.init = 5)
+  n.rand.init = 5, init.zeros = "uniform")
 }
 \arguments{
 \item{A}{Input data matrix}
@@ -21,6 +21,8 @@ RunNMF(A, k, alpha = 0, init = "random", n.cores = 1, loss = "mse",
 \item{loss}{Type of loss function to use}
 
 \item{n.rand.init}{If random initialization is used, number of random restarts}
+
+\item{init.zeros}{What to do with zeros in the initialization}
 }
 \value{
 List of NMF loadings (features x nmf components) and NMF scores (nmf components x samples)

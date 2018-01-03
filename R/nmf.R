@@ -65,9 +65,7 @@ FindComponents <- function(A, k.range = seq(1,10,1), alpha = 0, n.cores = 1, do.
 
 .norm <- function(x) { sqrt(drop(crossprod(x))) }
 
-.nnsvd_init <- function(A, k, LINPACK = F) {
-  if( any(A < 0) ) stop('The input matrix contains negative elements !')
-
+.nnsvd_init <- function(A, k, LINPACK = F, eps, init.zeros) {
   size <- dim(A);
   m <- size[1]; n <- size[2];
 
@@ -102,30 +100,42 @@ FindComponents <- function(A, k.range = seq(1,10,1), alpha = 0, n.cores = 1, do.
   }
 
   #actually these numbers are zeros
-  W[W < 0.0000000001] <- 0;
-  H[H < 0.0000000001] <- 0;
+  W[W < eps] <- 0;
+  H[H < eps] <- 0;
 
   ind1 <- W == 0; ind2 <- H == 0;
-  n1 <- sum(ind1); n2 <- sum(ind2);
   A.mean <- mean(A);
-  W[ind1] <-  runif(n1, min = 0, max = A.mean) / 100
-  H[ind2] <-  runif(n2, min = 0, max = A.mean) / 100
+
+  if (init.zeros == "random") {
+    n1 <- sum(ind1); n2 <- sum(ind2);
+    A.mean <- mean(A);
+    W[ind1] <-  runif(n1, min = 0, max = A.mean) / 100
+    H[ind2] <-  runif(n2, min = 0, max = A.mean) / 100
+  } else if (init.zeros == "uniform") {
+    W[ind1] <-  A.mean / 100
+    H[ind2] <-  A.mean / 100
+  }
 
   return(list(W = W, H = H))
 }
 
 
 
-.ica_init <- function(A, k) {
+.ica_init <- function(A, k, eps, init.zeros) {
   ica.res <- ica::icafast(t(A), nc = k)
   nmf.init <- list(W = ica.res$M, H = t(ica.res$S))
 
   A.mean <- mean(A)
-  nmf.init$W[nmf.init$W < 0.0000000001] <- 0; nmf.init$H[nmf.init$H < 0.0000000001] <- 0;
+  nmf.init$W[nmf.init$W < eps] <- 0; nmf.init$H[nmf.init$H < eps] <- 0;
   zero.idx.w <- which(nmf.init$W == 0); zero.idx.h <- which(nmf.init$H == 0);
 
-  nmf.init$W[zero.idx.w] <- runif(length(zero.idx.w), 0, A.mean/100)
-  nmf.init$H[zero.idx.h] <- runif(length(zero.idx.h), 0, A.mean/100)
+  if (init.zeros == "random") {
+    nmf.init$W[zero.idx.w] <- runif(length(zero.idx.w), 0, A.mean/100)
+    nmf.init$H[zero.idx.h] <- runif(length(zero.idx.h), 0, A.mean/100)
+  } else if (init.zeros == "uniform") {
+    nmf.init$W[zero.idx.w] <- A.mean / 100
+    nmf.init$H[zero.idx.h] <- A.mean / 100
+  }
 
   return(nmf.init)
 }
@@ -140,14 +150,22 @@ FindComponents <- function(A, k.range = seq(1,10,1), alpha = 0, n.cores = 1, do.
 #' @param n.cores Number of cores
 #' @param loss Type of loss function to use
 #' @param n.rand.init If random initialization is used, number of random restarts
+#' @param init.zeros What to do with zeros in the initialization
 #'
 #' @return List of NMF loadings (features x nmf components) and NMF scores (nmf components x samples)
 #'
 #' @export
 #'
-RunNMF <- function(A, k, alpha = 0, init = "random", n.cores = 1, loss = "mse", n.rand.init = 5) {
+RunNMF <- function(A, k, alpha = 0, init = "random", n.cores = 1, loss = "mse", n.rand.init = 5,
+                   init.zeros = "uniform") {
+  if (any(A < 0)) stop('The input matrix contains negative elements !')
+
   if (!init %in% c("ica", "nnsvd", "random")) {
     stop("Invalid initialization method")
+  }
+
+  if (!init.zeros %in% c("random", "uniform")) {
+    stop("init.zeros should be either 'random', or 'uniform'")
   }
 
   A <- as.matrix(A)
@@ -155,9 +173,9 @@ RunNMF <- function(A, k, alpha = 0, init = "random", n.cores = 1, loss = "mse", 
   A.mean <- mean(A)
 
   if (init == "ica") {
-    nmf.init <- .ica_init(A, k)
+    nmf.init <- .ica_init(A, k, eps = 1e-8, init.zeros = init.zeros)
   } else if (init == "nnsvd") {
-    nmf.init <- .nnsvd_init(A, k, LINPACK = T)
+    nmf.init <- .nnsvd_init(A, k, LINPACK = T, eps = 1e-8, init.zeros = init.zeros)
   } else {
     nmf.init <- NULL
   }

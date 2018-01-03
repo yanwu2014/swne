@@ -142,8 +142,7 @@ ProjectSWNE <- function(swne.embedding, H.test, SNN.test = NULL, alpha.exp = 1, 
 
 #' Plots swne embedding
 #'
-#' @param H.coords NMF coordinates
-#' @param sample.coords Sample coordinates
+#' @param swne.embedding SWNE embedding (list of NMF and sample coordinates) from EmbedSWNE
 #' @param alpha.plot Data point transparency
 #' @param sample.groups Factor defining sample groups
 #' @param do.label Label the sample groups
@@ -157,9 +156,12 @@ ProjectSWNE <- function(swne.embedding, H.test, SNN.test = NULL, alpha.exp = 1, 
 #'
 #' @export
 #'
-PlotSWNE <- function(H.coords, sample.coords, alpha.plot = 0.25, sample.groups = NULL, do.label = F,
+PlotSWNE <- function(swne.embedding, alpha.plot = 0.25, sample.groups = NULL, do.label = F,
                      label.size = 4.5, pt.size = 1, samples.plot = NULL, show.legend = T,
                      seed = NULL) {
+  H.coords <- swne.embedding$H.coords
+  sample.coords <- swne.embedding$sample.coords
+
   sample.groups <- factor(sample.groups[rownames(sample.coords)])
   sample.coords$pt.size <- pt.size
 
@@ -292,9 +294,9 @@ FeaturePlotSWNE <- function(H.coords, sample.coords, feature.scores, n.colors = 
 #'
 #' @export
 #'
-DimPlot <- function(dim.scores, sample.groups = NULL, x.lab = "tsne1", y.lab = "tsne2",
-                    main.title = NULL, pt.size = 1.0, font.size = 12, alpha.plot = 1.0, do.label = T,
-                    label.size = 4, show.legend = T, show.axes = T, seed = NULL) {
+PlotDims <- function(dim.scores, sample.groups = NULL, x.lab = "tsne1", y.lab = "tsne2",
+                     main.title = NULL, pt.size = 1.0, font.size = 12, alpha.plot = 1.0, do.label = T,
+                     label.size = 4, show.legend = T, show.axes = T, seed = NULL) {
   if (!is.null(sample.groups)) {
     set.seed(seed)
     sample.groups <- factor(sample.groups, levels = sample(levels(sample.groups)))

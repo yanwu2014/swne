@@ -8,6 +8,7 @@
   return(paste(strsplit(string, split = delim)[[1]][fields], collapse = delim))
 }
 
+
 #' Reads data from a sparse or dense matrix
 #'
 #' @param matrix.dir The input matrix or sparse matrix directory

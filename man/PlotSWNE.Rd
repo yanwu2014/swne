@@ -4,14 +4,12 @@
 \alias{PlotSWNE}
 \title{Plots swne embedding}
 \usage{
-PlotSWNE(H.coords, sample.coords, alpha.plot = 0.25, sample.groups = NULL,
+PlotSWNE(swne.embedding, alpha.plot = 0.25, sample.groups = NULL,
   do.label = F, label.size = 4.5, pt.size = 1, samples.plot = NULL,
   show.legend = T, seed = NULL)
 }
 \arguments{
-\item{H.coords}{NMF coordinates}
-
-\item{sample.coords}{Sample coordinates}
+\item{swne.embedding}{SWNE embedding (list of NMF and sample coordinates) from EmbedSWNE}
 
 \item{alpha.plot}{Data point transparency}
 
