@@ -6,6 +6,7 @@
 #' @import ggrepel
 #' @import ggConvexHull
 #' @import snow
+#' @import usedist
 #' @useDynLib swne
 #' @importFrom Rcpp evalCpp
 NULL
