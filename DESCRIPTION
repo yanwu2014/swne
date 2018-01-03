@@ -25,4 +25,6 @@ Imports:
   RColorBrewer (>= 1.1.2),
   Matrix (>= 1.2.11),
   ggrepel (>= 0.7.0),
-  ggConvexHull (>= 0.1.0)
+  ggConvexHull (>= 0.1.0),
+  reshape
+RoxygenNote: 6.0.1

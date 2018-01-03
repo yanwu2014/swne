@@ -8,7 +8,15 @@
   return(paste(strsplit(string, split = delim)[[1]][fields], collapse = delim))
 }
 
-
+#' Reads data from a sparse or dense matrix
+#'
+#' @param matrix.dir The input matrix or sparse matrix directory
+#' @param make.sparse Force output to be a sparse dgCMatrix
+#'
+#' @return Returns either a dense or sparse matrix
+#'
+#' @export
+#'
 ReadData <- function(matrix.dir, make.sparse = T) {
   if (dir.exists(matrix.dir)) {
     if (!grepl("\\/$", matrix.dir)) { matrix.dir <- paste(matrix.dir, "/", sep = "") }
@@ -53,12 +61,23 @@ ReadData <- function(matrix.dir, make.sparse = T) {
 }
 
 
-# Filter data by minimum cells, minimum genes
-FilterData <- function(x, min.cells.frac, trim, min.genes = 500, min.expr = 0, max.transcripts = 70000) {
-  min.cells <- round(ncol(x)*min.cells.frac)
-  x <- x[ , Matrix::colSums(x) < max.transcripts]
-  x <- x[ , Matrix::colSums(x > min.expr) > min.genes]
-  x <- x[Matrix::rowSums(x > min.expr) > min.cells, ]
+#' Filter data by minimum cells, minimum genes, and winsorizes data
+#'
+#' @param x Input matrix
+#' @param min.samples.frac Minimum number of samples for a feature to be included
+#' @param trim Fraction of samples to winsorize if trim < 1. If trim > 1, absolute number of samples to winsorize
+#' @param min.nonzero.features Minimum number of nonzero features for a sample to be included
+#' @param max.sample.sum Samples with greater than this sum of features will be excluded
+#'
+#' @return Filtered and winsorized data matrix
+#'
+#' @export
+#'
+FilterData <- function(x, min.samples.frac, trim, min.nonzero.features = 500, max.sample.sum = 50000) {
+  min.cells <- round(ncol(x)*min.samples.frac)
+  x <- x[ , Matrix::colSums(x) < max.sample.sum]
+  x <- x[ , Matrix::colSums(x > 0) > min.nonzero.features]
+  x <- x[Matrix::rowSums(x > 0) > min.cells, ]
   if (trim > 0) {
     x <- t(.winsorize_matrix(t(x), trim = trim))
   }
@@ -67,7 +86,16 @@ FilterData <- function(x, min.cells.frac, trim, min.genes = 500, min.expr = 0, m
 
 
 
-# Normalization and batch effect removal
+#' Normalization and batch effect removal adapted from pagoda2 [insert citation here]
+#'
+#' @param counts Input data matrix
+#' @param depthScale Rescale all columns to this value
+#' @param batch Factor the same length as ncol(counts) which contains batch effects to remove
+#'
+#' @return Normalized data matrix with batch effects removed
+#'
+#' @export
+#'
 NormalizeCounts <- function(counts, depthScale = 1e3, batch = NULL) {
   if(!is.null(batch)) {
     if(!all(colnames(counts) %in% names(batch))) {
@@ -77,7 +105,7 @@ NormalizeCounts <- function(counts, depthScale = 1e3, batch = NULL) {
   }
 
   depth <- Matrix::colSums(counts)
-  counts <- t(counts)
+  counts <- Matrix::t(counts)
 
   if(!is.null(batch)) {
     # dataset-wide gene average
@@ -94,14 +122,27 @@ NormalizeCounts <- function(counts, depthScale = 1e3, batch = NULL) {
   }
 
   counts <- counts/(depth/depthScale)
-  return(t(counts))
+  return(Matrix::t(counts))
 }
 
 
-
-AdjustVariance <- function(counts, gam.k = 5, alpha = 5e-2, plot = F, use.unadjusted.pvals = F, max.adjusted.variance = 1e3,
-                           min.adjusted.variance = 1e-3, verbose = T) {
-  counts <- t(counts)
+#' Adjust feature variance to remove effect of varying feature means. Adapted from pagoda2 [insert citation here]
+#'
+#' @param counts Input data matrix
+#' @param gam.k Number of additive models to use when fitting mean variance relationship
+#' @param plot Whether or not to plot the mean variance relationship
+#' @param max.adjusted.variance Maximum adjusted feature variance
+#' @param min.adjusted.variance Minimum adjusted feature variance
+#' @param verbose Whether or not to print output
+#' @param q.val Maximum adjusted p-value for a feature to qualify as overdispersed
+#'
+#' @return Dataframe with adjusted feature variances
+#'
+#' @export
+#'
+AdjustVariance <- function(counts, gam.k = 5, plot = F, max.adjusted.variance = 1e3, min.adjusted.variance = 1e-3,
+                           verbose = T, q.val = 0.05) {
+  counts <- Matrix::t(counts)
 
   if(verbose) cat("calculating variance fit ...")
   df <- colMeanVarS(counts, NULL)
@@ -125,11 +166,7 @@ AdjustVariance <- function(counts, gam.k = 5, alpha = 5e-2, plot = F, use.unadju
   n.cells <- nrow(counts)
   df$qv <- as.numeric(qchisq(df$lp, n.cells-1, lower.tail = FALSE,log.p=F)/n.cells)
 
-  if(use.unadjusted.pvals) {
-    ods <- which(df$lp < alpha)
-  } else {
-    ods <- which(df$lpa < alpha)
-  }
+  ods <- which(df$lpa < q.val)
 
   df$gsf <- geneScaleFactors <- sqrt(pmax(min.adjusted.variance,pmin(max.adjusted.variance,df$qv))/exp(df$v));
   df$gsf[!is.finite(df$gsf)] <- 0;
@@ -158,6 +195,18 @@ AdjustVariance <- function(counts, gam.k = 5, alpha = 5e-2, plot = F, use.unadju
 }
 
 
+#' Normalize, adjust feature variance, and scale data matrix
+#'
+#' @param counts Input data matrix
+#' @param batch Factor with batch identity for each sample
+#' @param method Scaling method
+#' @param adj.var Whether or not to apply mean variance adjustment for features
+#' @param plot.var.adj Whether or not to plot the mean variance relationship
+#'
+#' @return Normalized and scaled data matrix
+#'
+#' @export
+#'
 ScaleCounts <- function(counts, batch = NULL, method = "log", adj.var = T, plot.var.adj = F) {
   stopifnot(method %in% c("log", "logrank", "ft", "none"))
 
@@ -177,7 +226,7 @@ ScaleCounts <- function(counts, batch = NULL, method = "log", adj.var = T, plot.
       x/length(x) * rank.scale
     })
   } else if (method == "ft") {
-    norm.counts@x <- ft_transform(norm.counts@x)
+    norm.counts@x <- .ft_transform(norm.counts@x)
   } else if (method == "log") {
     norm.counts@x <- log(norm.counts@x + 1)
   }

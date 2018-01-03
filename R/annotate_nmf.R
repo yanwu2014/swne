@@ -1,32 +1,58 @@
 ## Geneset handling functions
 
-ReadGenesets <- function(geneset.name) {
-  geneset.to.use <- as.list(readLines(geneset.name))
-  geneset.to.use <- lapply(geneset.to.use, function (v) strsplit(v, '\t')[[1]])
-  geneset.names <- unlist(lapply(geneset.to.use, function(x) x[[1]]))
-  geneset.to.use <- lapply(geneset.to.use, function(v) v[3:length(v)])
-  names(geneset.to.use) <- geneset.names
-  names(geneset.to.use) <- sapply(names(geneset.to.use), function(x) gsub(" ", "_", x))
-  return(geneset.to.use)
+#' Load genesets from gmt file. For more info on the .gmt file format, see [link]
+#'
+#' @param geneset.file Geneset filename
+#'
+#' @return List of genesets (character vectors)
+#'
+#' @export
+#'
+ReadGenesets <- function(genesets.file) {
+  genesets <- as.list(readLines(genesets.file))
+  genesets <- lapply(genesets, function (v) strsplit(v, '\t')[[1]])
+  geneset.names <- unlist(lapply(genesets, function(x) x[[1]]))
+  genesets <- lapply(genesets, function(v) v[3:length(v)])
+  names(genesets) <- sapply(geneset.names, function(x) gsub(" ", "_", x))
+  return(genesets)
 }
 
 
 ## Helper function for filtering genesets
-.clean_genesets <- function(go.env, min.size = 5, max.size = 500, annot = FALSE) {
-  go.env <- as.list(go.env)
-  size <- unlist(lapply(go.env, length))
-  go.env <- go.env[size > min.size & size < max.size]
-  return(go.env)
+.clean_genesets <- function(genesets, min.size = 5, max.size = 500, annot = FALSE) {
+  genesets <- as.list(genesets)
+  size <- unlist(lapply(genesets, length))
+  genesets <- genesets[size > min.size & size < max.size]
+  return(genesets)
 }
 
 
-FilterGenesets <- function(geneset.to.use, gene.names, min.size = 5, max.size = 500) {
-  geneset.to.use <- lapply(geneset.to.use, function (x) return(x[x %in% gene.names]))
-  geneset.to.use <- .clean_genesets(geneset.to.use, min.size = min.size, max.size = max.size)
-  return(geneset.to.use)
+#' Filters genesets according to minimum and maximum set size
+#'
+#' @param gene.names Name of all genes to use
+#' @param min.size Minimum geneset size
+#' @param max.size Maximum geneset size
+#'
+#' @return Filtered list of genesets
+#'
+#' @export
+#'
+FilterGenesets <- function(genesets, gene.names, min.size = 5, max.size = 500) {
+  genesets <- lapply(genesets, function (x) return(x[x %in% gene.names]))
+  genesets <- .clean_genesets(genesets, min.size = min.size, max.size = max.size)
+  return(genesets)
 }
 
 
+#' Writes genesets to gmt file
+#'
+#' @param genesets List of genesets
+#' @param file.name Name of output file
+#'
+#' @return Writes to file
+#'
+#' @export
+#'
 WriteGenesets <- function(genesets, file.name) {
   genesets <- lapply(names(genesets), function(name) {x <- genesets[[name]]; x <- c(name,name,x); return(x);})
   n.cols <- 1.5*max(unlist(lapply(genesets, length)))
@@ -36,6 +62,7 @@ WriteGenesets <- function(genesets, file.name) {
 
 ## Functions for annotating NMF components
 
+## Creates a genes x genesets indicator matrix
 .genesets_indicator <- function(genesets, inv = F, return.numeric = F) {
   genes <- unique(unlist(genesets, F, F))
 
@@ -61,65 +88,94 @@ WriteGenesets <- function(genesets, file.name) {
 }
 
 
+#' Projects dataset onto genesets using a nonnegative linear model
+#'
+#' @param norm.counts Normalized input data
+#' @param genesets List of genesets to use
+#' @param loss Loss function for the nonnegative linear model
+#'
+#' @return A genesets x samples matrix
+#'
+#' @export
+#'
 ProjectGenesets <- function(norm.counts, genesets, loss = "mse") {
   full.genesets.matrix <- .genesets_indicator(genesets, inv = F, return.numeric = T)
-  project_nmf(norm.counts[rownames(full.genesets.matrix),], full.genesets.matrix, loss = loss)
+  ProjectNMF(norm.counts[rownames(full.genesets.matrix),], full.genesets.matrix, loss = loss)
 }
 
 
-ComponentAssociation <- function(X, Y, n.cores = 8, metric = "IC") {
+#' Find the top gene or geneset markers for each NMF component using pearson/spearman correlation,
+#' or mutual information
+#'
+#' @param feature.mat Feature matrix (features x samples)
+#' @param nmf.scores NMF component scores (nmf components x samples)
+#' @param n.cores Number of cores to use
+#' @param metric Association metric. Options are pearson, spearman, or IC
+#'
+#' @return Components x features matrix of associations
+#'
+#' @export
+#'
+ComponentAssociation <- function(feature.mat, nmf.scores, n.cores = 8, metric = "IC") {
   cl <- snow::makeCluster(n.cores, type = "SOCK")
-  snow::clusterExport(cl, c("Y", "MutualInf"), envir = environment())
+  snow::clusterExport(cl, c("nmf.scores", "MutualInf"), envir = environment())
   if (metric == "IC") {
     source.log <- snow::parLapply(cl, 1:length(cl), function(i) library(MASS))
-    assoc <- t(snow::parApply(cl, X, 1, function(v) apply(Y, 1, function(u) MutualInf(u, v))))
+    assoc <- t(snow::parApply(cl, feature.mat, 1, function(v) apply(nmf.scores, 1, function(u) MutualInf(u, v))))
   } else if (metric == "pearson") {
-    assoc <- t(snow::parApply(cl, X, 1, function(v) apply(Y, 1, function(u) cor(u, v))))
+    assoc <- t(snow::parApply(cl, feature.mat, 1, function(v) apply(nmf.scores, 1, function(u) cor(u, v))))
   } else if (metric == "spearman") {
-    assoc <- t(snow::parApply(cl, X, 1, function(v) apply(Y, 1, function(u) cor(u, v, method = "spearman"))))
+    assoc <- t(snow::parApply(cl, feature.mat, 1, function(v) apply(nmf.scores, 1, function(u) cor(u, v, method = "spearman"))))
   } else {
     stop("Invalid correlation metric")
   }
   stopCluster(cl)
 
-  rownames(assoc) <- rownames(X)
-  colnames(assoc) <- rownames(Y)
+  rownames(assoc) <- rownames(feature.mat)
+  colnames(assoc) <- rownames(nmf.scores)
   return(assoc)
 }
 
 
-
-SummarizeAssocGenes <- function(gene.nmf.assoc, genes.return = 10, genes.use = NULL) {
-  if (!is.null(genes.use)) {
-    gene.nmf.assoc <- gene.nmf.assoc[genes.use,]
+#' Summarize the components x features association matrix into a readable dataframe
+#'
+#' @param component.feature.assoc NMF components x features association matrix from ComponentAssociation
+#' @param features.return Number of top features to return for each NMF component
+#' @param features.use Only consider a subset of features. Default is NULL, which will use all features
+#'
+#' @return Dataframe summarizing top features for each NMF component
+#'
+#' @export
+#'
+SummarizeAssocFeatures <- function(component.feature.assoc, features.return = 10, features.use = NULL) {
+  if (!is.null(features.use)) {
+    component.feature.assoc <- component.feature.assoc[features.use,]
   }
 
-  nmf.genes.df <- do.call("rbind", lapply(1:ncol(gene.nmf.assoc), function(i) {
-    genes.df <- data.frame(Cor = gene.nmf.assoc[,i])
-    genes.df$gene <- rownames(gene.nmf.assoc)
-    genes.df$Metagene <- colnames(gene.nmf.assoc)[[i]]
-    genes.df <- genes.df[order(genes.df$Cor, decreasing = T),]
-    head(genes.df, n = genes.return)
+  nmf.features.df <- do.call("rbind", lapply(1:ncol(component.feature.assoc), function(i) {
+    features.df <- data.frame(assoc_score = component.feature.assoc[,i])
+    features.df$feature <- rownames(component.feature.assoc)
+    features.df$nmf <- colnames(component.feature.assoc)[[i]]
+    features.df <- features.df[order(features.df$assoc_score, decreasing = T),]
+    head(features.df, n = features.return)
   }))
 
-  rownames(nmf.genes.df) <- NULL
-  return(nmf.genes.df)
+  rownames(nmf.features.df) <- NULL
+  return(nmf.features.df)
 }
 
 
-SummarizeAssocGenesets <- function(genesets.nmf.assoc, n.return = 5) {
-  assoc.genesets.df <- do.call("rbind", lapply(colnames(genesets.nmf.assoc), function(nf) {
-    df <- data.frame(Cor = genesets.nmf.assoc[ ,nf])
-    df$Genesets <- rownames(df)
-    df$NMF <- nf
-    head(df[order(df$Cor, decreasing = T), ], n = n.return)
-  })); rownames(assoc.genesets.df) <- NULL;
-  assoc.genesets.df
-}
-
-
-# Compute Information Coefficient [IC]
-# Pablo Tamayo Dec 30, 2015
+#' Compute Information Coefficient [IC]
+#' Pablo Tamayo Dec 30, 2015
+#'
+#' @param x Input vector x
+#' @param y Input vector y
+#' @param n.grid Gridsize for calculating IC
+#'
+#' @return Mutual information between x and y
+#'
+#' @export
+#'
 MutualInf <-  function(x, y, n.grid = 25) {
   x.set <- !is.na(x)
   y.set <- !is.na(y)
@@ -133,7 +189,7 @@ MutualInf <-  function(x, y, n.grid = 25) {
     rho <- cor(x, y)
     rho2 <- abs(rho)
     delta <- delta*(1 + (-0.75)*rho2)
-    kde2d.xy <- kde2d(x, y, n = n.grid, h = delta)
+    kde2d.xy <- MASS::kde2d(x, y, n = n.grid, h = delta)
     FXY <- kde2d.xy$z + .Machine$double.eps
     dx <- kde2d.xy$x[2] - kde2d.xy$x[1]
     dy <- kde2d.xy$y[2] - kde2d.xy$y[1]
@@ -157,10 +213,19 @@ MutualInf <-  function(x, y, n.grid = 25) {
 
 ## Genotype/group handling functions
 
+#' Convert list of sample groups into a flat vector.
+#' Removes all samples belonging to multiple groups
+#'
+#' @param groups.list List of sample groups
+#'
+#' @return A character vector of the group each sample belongs to. The vector names are the sample names.
+#'
+#' @export
+#'
 FlattenGroups <- function(groups.list) {
   cell.names <- unlist(groups.list, F, F)
   if (length(cell.names) > length(unique(cell.names))) {
-    print("Warning: removing all cells with duals")
+    print("Warning: removing all samples belonging to multiple groups")
     groups.list <- single.groups(groups.list)
     cell.names <- unlist(groups.list, F, F)
   }
@@ -176,19 +241,34 @@ FlattenGroups <- function(groups.list) {
 }
 
 
-UnflattenGroups <- function(groups, min.cells = 1) {
+#' Converts a flat sample groups character vector into a list format
+#'
+#' @param groups Character vector of sample groups
+#'
+#' @return List of groups: each list element contains the samples for that group
+#'
+#' @export
+#'
+UnflattenGroups <- function(groups) {
   groups.list <- c()
   unique.groups <- unique(groups)
   for (g in unique.groups) {
     g.cells <- names(groups[groups == g])
-    if (length(g.cells) > min.cells) {
-      groups.list[[g]] <- g.cells
-    }
+    groups.list[[g]] <- g.cells
   }
   return(groups.list)
 }
 
 
+#' Read in sample groups from a csv file format
+#'
+#' @param groups.file Name of groups file
+#' @param sep.char Delimiter
+#'
+#' @return List of groups
+#'
+#' @export
+#'
 ReadGroups <- function(groups.file, sep.char = ",") {
   group.data <- read.table(groups.file, sep = sep.char, header = F, stringsAsFactors = F)
   groups <- group.data[[1]]
@@ -199,6 +279,13 @@ ReadGroups <- function(groups.file, sep.char = ",") {
 }
 
 
+#' Write sample groups from list to csv format
+#'
+#' @param groups.list List of groups
+#' @param out.file Name of output file
+#'
+#' @export
+#'
 WriteGroups <- function(groups.list, out.file) {
   group.data <- sapply(groups.list, function(x) paste('\"', paste(x, collapse = ", "), '\"', sep = ""))
   group.data <- sapply(names(group.data), function(x) paste(x, group.data[[x]], sep = ","))

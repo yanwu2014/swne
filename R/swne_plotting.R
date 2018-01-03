@@ -1,5 +1,14 @@
-library(ggplot2)
-library(RColorBrewer)
+#' @import methods
+#' @import ggplot2
+#' @import RColorBrewer
+#' @import Matrix
+#' @import NNLM
+#' @import ggrepel
+#' @import ggConvexHull
+#' @import snow
+#' @useDynLib swne
+#' @importFrom Rcpp evalCpp
+NULL
 
 #### SWNE functions ####
 
@@ -27,7 +36,7 @@ library(RColorBrewer)
     H.dist <- sqrt(2*(1 - cor(H)))
   } else if (distance == "IC") {
     require(usedist)
-    H.dist <- sqrt(2*(1 - as.matrix(dist_make(t(H), distance_fcn = CCBA_IC.v1, method = "IC"))))
+    H.dist <- sqrt(2*(1 - as.matrix(dist_make(t(H), distance_fcn = MutualInf, method = "IC"))))
   }
 
   H.coords <- MASS::sammon(H.dist, k = 2, niter = 250)$points
@@ -60,9 +69,22 @@ library(RColorBrewer)
 }
 
 
-
+#' Embeds NMF components and samples in a 2D space
+#'
+#' @param H NMF scores (NMF components x samples)
+#' @param SNN Shared nearest neighbors matrix (or other similarity matrix)
+#' @param alpha.exp Increasing alpha.exp increases how much the NMF components "pull" the samples
+#' @param snn.exp Decreasing snn.exp increases the effect of the similarity matrix on the embedding
+#' @param n_pull Number of NMF components pulling on each sample. n_pull >= 3
+#' @param dist.use Similarity function to use for calculating NMF component positions. Options include pearson and IC.
+#' @param min.snn Minimum SNN value
+#'
+#' @return A list of nmf component coordinates in 2D space (H.coords) and sample coordinates (sample.coords)
+#'
+#' @export
+#'
 EmbedSWNE <- function(H, SNN = NULL, alpha.exp = 1, snn.exp = 1.0, n_pull = NULL, dist.use = "pearson",
-                      min.snn = 0.05, n.snn.iter = 1) {
+                      min.snn = 0.05) {
   H <- H[ ,colSums(H) > 0]
   H.coords <- .get_component_coords(H, distance = dist.use)
   H.coords <- data.frame(H.coords); H.coords$name <- rownames(H.coords);
@@ -74,21 +96,31 @@ EmbedSWNE <- function(H, SNN = NULL, alpha.exp = 1, snn.exp = 1.0, n_pull = NULL
     SNN@x <- SNN@x^snn.exp
     SNN <- SNN/Matrix::rowSums(SNN)
 
-    for (i in 1:n.snn.iter) {
-      x <- sapply(1:nrow(SNN), function(i) sum(SNN[i,]*sample.coords[,1]))
-      y <- sapply(1:nrow(SNN), function(i) sum(SNN[i,]*sample.coords[,2]))
-      sample.coords <- as.matrix(data.frame(x, y)); rownames(sample.coords) <- colnames(H);
-    }
+    x <- sapply(1:nrow(SNN), function(i) sum(SNN[i,]*sample.coords[,1]))
+    y <- sapply(1:nrow(SNN), function(i) sum(SNN[i,]*sample.coords[,2]))
+    sample.coords <- as.matrix(data.frame(x, y)); rownames(sample.coords) <- colnames(H);
   }
 
   return(list(H.coords = H.coords, sample.coords = data.frame(sample.coords)))
 }
 
 
-
-ProjectSWNE <- function(embedding.train, H.test, SNN.test = NULL, alpha.exp = 1, snn.exp = 1, n_pull = NULL) {
-  sample.coords.test <- .get_sample_coords(H.test, embedding.train$H.coords, alpha = alpha.exp, n_pull = n_pull)
-  sample.coords.train <- as.matrix(embedding.train$sample.coords)
+#' Projects new data onto an existing swne embedding
+#'
+#' @param swne.embedding Existing swne embedding from EmbedSWNE
+#' @param H.test Projected test data NMF scores
+#' @param SNN.test Projected test data shared nearest neighbors matrix
+#' @param alpha.exp Increasing alpha.exp increases how much the NMF components "pull" the samples
+#' @param snn.exp Decreasing snn.exp increases the effect of the similarity matrix on the embedding
+#' @param n_pull Number of NMF components pulling on each sample. n_pull >= 3
+#'
+#' @return Matrix of sample embeddings
+#'
+#' @export
+#'
+ProjectSWNE <- function(swne.embedding, H.test, SNN.test = NULL, alpha.exp = 1, snn.exp = 1, n_pull = NULL) {
+  sample.coords.test <- .get_sample_coords(H.test, swne.embedding$H.coords, alpha = alpha.exp, n_pull = n_pull)
+  sample.coords.train <- as.matrix(swne.embedding$sample.coords)
   sample.coords.all <- rbind(sample.coords.test, sample.coords.train)
 
   if (!is.null(SNN.test)) {
@@ -108,19 +140,35 @@ ProjectSWNE <- function(embedding.train, H.test, SNN.test = NULL, alpha.exp = 1,
 }
 
 
-
-PlotSWNE <- function(H.coords, sample.coords, alpha.plot = 0.25, color.plot = NULL, do.label = F,
+#' Plots swne embedding
+#'
+#' @param H.coords NMF coordinates
+#' @param sample.coords Sample coordinates
+#' @param alpha.plot Data point transparency
+#' @param sample.groups Factor defining sample groups
+#' @param do.label Label the sample groups
+#' @param label.size Label font size
+#' @param pt.size Sample point size
+#' @param samples.plot Vector of samples to plot. Default is NULL, which plots all samples.
+#' @param show.legend If sample groups defined, show legend
+#' @param seed Seed for sample group color reproducibility
+#'
+#' @return ggplot2 object with swne plot
+#'
+#' @export
+#'
+PlotSWNE <- function(H.coords, sample.coords, alpha.plot = 0.25, sample.groups = NULL, do.label = F,
                      label.size = 4.5, pt.size = 1, samples.plot = NULL, show.legend = T,
                      seed = NULL) {
-  color.plot <- factor(color.plot[rownames(sample.coords)])
+  sample.groups <- factor(sample.groups[rownames(sample.coords)])
   sample.coords$pt.size <- pt.size
 
-  if (!is.null(color.plot)) {
+  if (!is.null(sample.groups)) {
     set.seed(seed)
-    color.plot <- factor(color.plot, levels = sample(levels(color.plot)))
-    sample.coords$color.plot <- color.plot[rownames(sample.coords)]
+    sample.groups <- factor(sample.groups, levels = sample(levels(sample.groups)))
+    sample.coords$sample.groups <- sample.groups[rownames(sample.coords)]
   } else {
-    sample.coords$color.plot <- factor(rep(1, nrow(sample.coords)))
+    sample.coords$sample.groups <- factor(rep(1, nrow(sample.coords)))
   }
 
   if (!is.null(samples.plot)) {
@@ -130,7 +178,7 @@ PlotSWNE <- function(H.coords, sample.coords, alpha.plot = 0.25, color.plot = NU
 
   ## Plot sample coordinates
   ggobj <- ggplot() +
-    geom_point(data = sample.coords, aes(x, y, colour = color.plot, fill = color.plot),
+    geom_point(data = sample.coords, aes(x, y, colour = sample.groups, fill = sample.groups),
                alpha = alpha.plot, size = pt.size) +
     theme_classic() + theme(axis.title.x = element_blank(), axis.title.y = element_blank(),
                             axis.ticks = element_blank(), axis.line = element_blank(),
@@ -144,11 +192,11 @@ PlotSWNE <- function(H.coords, sample.coords, alpha.plot = 0.25, color.plot = NU
     geom_point(data = H.coords, aes(x, y), size = 3, color = "blue")
 
   ## Plot text labels
-  if (do.label && is.factor(color.plot)) {
-    group.pts.x <- tapply(sample.coords$x, sample.coords$color.plot, median)
-    group.pts.y <- tapply(sample.coords$y, sample.coords$color.plot, median)
+  if (do.label && is.factor(sample.groups)) {
+    group.pts.x <- tapply(sample.coords$x, sample.coords$sample.groups, median)
+    group.pts.y <- tapply(sample.coords$y, sample.coords$sample.groups, median)
 
-    group.pts <- data.frame(x = group.pts.x, y = group.pts.y, name = levels(sample.coords$color.plot))
+    group.pts <- data.frame(x = group.pts.x, y = group.pts.y, name = levels(sample.coords$sample.groups))
     label.pts <- rbind(H.coords, group.pts)
 
     ggobj <- ggobj + ggrepel::geom_text_repel(data = label.pts, mapping = aes(x, y, label = name),
@@ -166,7 +214,22 @@ PlotSWNE <- function(H.coords, sample.coords, alpha.plot = 0.25, color.plot = NU
 }
 
 
-
+#' Plots swne embedding with feature overlayed
+#'
+#' @param H.coords NMF coordinates
+#' @param sample.coords Sample coordinates
+#' @param feature.score Feature vector to overlay
+#' @param n.colors Number of colors to bin feature vector into
+#' @param alpha.plot Data point transparency
+#' @param quantiles Quantiles to trim outliers from
+#' @param samples.plot Samples to actually plot. Default is NULL, which plots all samples
+#' @param label.size Label font size
+#' @param pt.size Sample point size
+#'
+#' @return ggplot2 object with swne plot with feature overlayed
+#'
+#' @export
+#'
 FeaturePlotSWNE <- function(H.coords, sample.coords, feature.scores, n.colors = 5, alpha.plot = 0.5,
                             quantiles = c(0.05, 0.95), samples.plot = NULL, label.size = 4.5, pt.size = 1) {
   feature.scores <- as.numeric(feature.scores[rownames(sample.coords)])
@@ -179,7 +242,7 @@ FeaturePlotSWNE <- function(H.coords, sample.coords, feature.scores, n.colors = 
 
   sample.coords$pt.size <- pt.size
   sample.coords$feature <- feature.scores
-  sample.coords$color.plot <- as.factor(feature.cut)
+  sample.coords$sample.groups <- as.factor(feature.cut)
 
   if (!is.null(samples.plot)) {
     sample.coords <- sample.coords[samples.plot,]
@@ -188,7 +251,7 @@ FeaturePlotSWNE <- function(H.coords, sample.coords, feature.scores, n.colors = 
 
   ## Plot sample coordinates
   ggobj <- ggplot() +
-    geom_point(data = sample.coords, aes(x, y, colour = color.plot, fill = color.plot), alpha = alpha.plot, size = pt.size) +
+    geom_point(data = sample.coords, aes(x, y, colour = sample.groups, fill = sample.groups), alpha = alpha.plot, size = pt.size) +
     theme_classic() + theme(axis.title.x = element_blank(), axis.title.y = element_blank(),
                             axis.ticks = element_blank(), axis.line = element_blank(), axis.text = element_blank()) +
     guides(colour = guide_legend(override.aes = list(alpha = 1, size = label.size))) +
@@ -209,40 +272,50 @@ FeaturePlotSWNE <- function(H.coords, sample.coords, feature.scores, n.colors = 
 }
 
 
-
-DimPlot <- function(dim.scores, landmark.scores = NULL, color.plot = NULL, x.lab = "tsne1", y.lab = "tsne2",
-                    main.title = NULL, pt.size = 1.0, font.size = 12, alpha = 1.0, group.label = T,
+#' Plots 2D embedding
+#'
+#' @param dim.scores 2D embedding coordinates. Must be 2 x n.samples
+#' @param sample.groups Factor defining sample groups
+#' @param x.lab X axis label
+#' @param y.lab Y axis label
+#' @param main.title Main plot title
+#' @param pt.size Sample point size
+#' @param font.size Font size for axis labels
+#' @param alpha.plot Data point transparency
+#' @param do.label Label the sample groups
+#' @param label.size Label font size
+#' @param show.legend If sample groups defined, show legend
+#' @param show.axes Plot x and y axes
+#' @param seed Seed for sample group color reproducibility
+#'
+#' @return ggplot2 object with 2d plot
+#'
+#' @export
+#'
+DimPlot <- function(dim.scores, sample.groups = NULL, x.lab = "tsne1", y.lab = "tsne2",
+                    main.title = NULL, pt.size = 1.0, font.size = 12, alpha.plot = 1.0, do.label = T,
                     label.size = 4, show.legend = T, show.axes = T, seed = NULL) {
-  if (!is.null(color.plot)) {
+  if (!is.null(sample.groups)) {
     set.seed(seed)
-    color.plot <- factor(color.plot, levels = sample(levels(color.plot)))
+    sample.groups <- factor(sample.groups, levels = sample(levels(sample.groups)))
   }
 
-  gg.df <- data.frame(x = dim.scores[,1], y = dim.scores[,2], color.plot = color.plot)
-  ggobj <- ggplot(gg.df, aes(x, y)) + geom_point(size = pt.size, alpha = alpha, aes(colour = color.plot)) +
+  gg.df <- data.frame(x = dim.scores[,1], y = dim.scores[,2], sample.groups = sample.groups)
+  ggobj <- ggplot(gg.df, aes(x, y)) + geom_point(size = pt.size, alpha = alpha.plot, aes(colour = sample.groups)) +
     theme(text = element_text(size = font.size)) +
     xlab(x.lab) + ylab(y.lab) + ggtitle(main.title) +
     guides(colour = guide_legend(override.aes = list(alpha = 1, size = label.size)))
 
   if (!show.axes) { ggobj <- ggobj + theme_void() }
 
-  if (!is.null(landmark.scores)) {
-    label.pts <- data.frame(landmark.scores); label.pts$ident <- rownames(label.pts);
-    colnames(label.pts) <- c("x", "y", "ident")
-    ggobj <- ggobj + geom_point(data = label.pts, mapping = aes(x = x, y = y), size = 3, alpha = 1,
-                                color = "blue")
-  } else {
-    label.pts <- NULL
+  if (do.label && is.factor(sample.groups)) {
+    group.pts.x <- tapply(gg.df$x, gg.df$sample.groups, function(v) median(v))
+    group.pts.y <- tapply(gg.df$y, gg.df$sample.groups, function(v) median(v))
+    group.pts <- data.frame(x = group.pts.x, y = group.pts.y)
+    group.pts$ident <- levels(gg.df$sample.groups)
   }
 
-  if (group.label && is.factor(color.plot)) {
-    group.pts.x <- tapply(gg.df$x, gg.df$color.plot, function(v) median(v))
-    group.pts.y <- tapply(gg.df$y, gg.df$color.plot, function(v) median(v))
-    group.pts <- data.frame(x = group.pts.x, y = group.pts.y)
-    group.pts$ident <- levels(gg.df$color.plot)
-    label.pts <- rbind(label.pts, group.pts)
-  }
-  ggobj <- ggobj + ggrepel::geom_text_repel(data = label.pts, mapping = aes(label = ident), size = label.size,
+  ggobj <- ggobj + ggrepel::geom_text_repel(data = group.pts, mapping = aes(label = ident), size = label.size,
                                             box.padding = 0.15)
 
   if (!show.legend) { ggobj <- ggobj + theme(legend.position = "none") }
@@ -251,12 +324,28 @@ DimPlot <- function(dim.scores, landmark.scores = NULL, color.plot = NULL, x.lab
 }
 
 
+#' Plots a heatmap using ggplot2. Adapted from [site]
+#'
+#' @param m Matrix to plot heatmap for
+#' @param rescaling Scale by row or columns
+#' @param clustering Cluster by row or columns
+#' @param labCol Label columns
+#' @param labRow Label rows
+#' @param border Plot heatmap border
+#' @param heatscale Color map
+#' @param legend.title Title of heatmap legend
+#' @param x.lab.size x label size
+#' @param y.lab.size y label size
+#'
+#' @return ggplot2 heatmap
+#'
+#' @import reshape
+#'
+#' @export
+#'
 ggHeat <- function(m, rescaling = 'none', clustering = 'none', labCol = T, labRow = T, border = F,
                    heatscale = c(low = 'skyblue', mid = 'white', high = 'tomato'), legend.title = NULL, x.lab.size = 10,
                    y.lab.size = 10) {
-  require(reshape)
-  require(ggplot2)
-
   ## you can either scale by row or column not both!
   ## if you wish to scale by both or use a differen scale method then simply supply a scale
   ## function instead NB scale is a base funct
@@ -266,9 +355,9 @@ ggHeat <- function(m, rescaling = 'none', clustering = 'none', labCol = T, labRo
   } else
   {
     if(rescaling == 'column')
-      m = scale(m, center=T)
+      m = scale(m, center = T)
     if(rescaling == 'row')
-      m = t(scale(t(m),center=T))
+      m = t(scale(t(m), center = T))
   }
 
   ## I have supplied the default cluster and euclidean distance- and chose to cluster after scaling
@@ -278,9 +367,9 @@ ggHeat <- function(m, rescaling = 'none', clustering = 'none', labCol = T, labRo
   if(is.function(clustering)) {
     m = clustering(m)
   } else {
-    if(clustering=='row')
+    if(clustering == 'row')
       m = m[hclust(dist(m))$order, ]
-    if(clustering=='column')
+    if(clustering == 'column')
       m = m[ ,hclust(dist(t(m)))$order]
     if(clustering=='both')
       m = m[hclust(dist(m))$order, hclust(dist(t(m)))$order]
@@ -289,7 +378,7 @@ ggHeat <- function(m, rescaling = 'none', clustering = 'none', labCol = T, labRo
 
   rows = dim(m)[1]
   cols = dim(m)[2]
-  melt.m = cbind(rowInd=rep(1:rows, times = cols), colInd = rep(1:cols, each = rows), melt(m))
+  melt.m = cbind(rowInd = rep(1:rows, times = cols), colInd = rep(1:cols, each = rows), reshape::melt(m))
   g = ggplot(data = melt.m)
 
   ## add the heat tiles with or without a white border for clarity

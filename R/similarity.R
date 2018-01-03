@@ -52,7 +52,20 @@
 }
 
 
-
+#' Calculates shared nearest neighbors between samples (columns) in a test matrix and samples in a training matrix
+#' Adapted from Seurat
+#'
+#' @param test.matrix Test data
+#' @param train.matrix Training data
+#' @param k Number of nearest neighbors
+#' @param k.scale k*k.scale is the number of nearest neighbors to calculate shared nearest neighbors for
+#' @param prune.SNN Minimum fraction of shared nearest neighbors
+#' @param print.output Prints progress bar if true
+#'
+#' @return A n.test x n.train matrix with the shared nearest neighbors between test and training data
+#'
+#' @export
+#'
 ProjectSNN <- function(test.matrix, train.matrix, k = 20, k.scale = 10, prune.SNN = 1/15, print.output = T) {
   n.train.cells <- ncol(train.matrix)
   n.test.cells <- ncol(test.matrix)
