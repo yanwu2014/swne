@@ -26,6 +26,6 @@ Imports:
   Matrix (>= 1.2.11),
   ggrepel (>= 0.7.0),
   ggConvexHull (>= 0.1.0),
-  reshape
+  reshape,
   usedist
 RoxygenNote: 6.0.1
