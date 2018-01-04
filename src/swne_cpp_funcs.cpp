@@ -8,7 +8,7 @@
 #include <queue>
 using namespace Rcpp;
 
-
+// Adapted from pagoda2: https://github.com/hms-dbmi/pagoda2
 // calculates factor-stratified sums for each column
 // rowSel is an integer factor;
 // note that the 0-th column will return sums for any NA values; 0 or negative values will be omitted
@@ -51,7 +51,7 @@ arma::mat colSumByFac(SEXP sY,  SEXP rowSel) {
   return sumM;
 }
 
-
+// Adapted from pagoda2: https://github.com/hms-dbmi/pagoda2
 // calculate column mean and variance, optionally taking a subset of rows to operate on
 // [[Rcpp::export]]
 Rcpp::DataFrame colMeanVarS(SEXP sY,  SEXP rowSel) {
@@ -102,7 +102,7 @@ Rcpp::DataFrame colMeanVarS(SEXP sY,  SEXP rowSel) {
   return Rcpp::DataFrame::create(Named("m")=meanV,Named("v")=varV,Named("nobs",nobsV));
 }
 
-
+// Adapted from pagoda2: https://github.com/hms-dbmi/pagoda2
 // Winsorize top N values in each column of a sparse matrix
 // [[Rcpp::export]]
 int inplaceWinsorizeSparseCols(SEXP sY, const int n) {

@@ -141,6 +141,25 @@ ProjectSWNE <- function(swne.embedding, H.test, SNN.test = NULL, alpha.exp = 1, 
 }
 
 
+#' Function for renaming NMF components to something more interpretable.
+#' If the NMF component name is the empty string, "", then the NMF component will not be plotted
+#'
+#' @param swne.embedding List of NMF and sample coordinates from EmbedSWNE
+#' @param new.names Character vector of new NMF names. Must be of length equal to the number of NMF components
+#'
+#' @return SWNE embedding with NMFs renamed
+#'
+#' @export
+#'
+RenameNMFs <- function(swne.embedding, new.names) {
+  if (length(new.names) != nrow(swne.embedding$H.coords)) {
+    stop("new.names vector must be same length as number of NMF components (k)")
+  }
+  swne.embedding$H.coords$name <- new.names
+  return(swne.embedding)
+}
+
+
 #' Plots swne embedding
 #'
 #' @param swne.embedding SWNE embedding (list of NMF and sample coordinates) from EmbedSWNE
@@ -161,6 +180,7 @@ PlotSWNE <- function(swne.embedding, alpha.plot = 0.25, sample.groups = NULL, do
                      label.size = 4.5, pt.size = 1, samples.plot = NULL, show.legend = T,
                      seed = NULL) {
   H.coords <- swne.embedding$H.coords
+  H.coords.plot <- subset(H.coords, name != "")
   sample.coords <- swne.embedding$sample.coords
 
   sample.groups <- factor(sample.groups[rownames(sample.coords)])
@@ -189,10 +209,12 @@ PlotSWNE <- function(swne.embedding, alpha.plot = 0.25, sample.groups = NULL, do
     guides(colour = guide_legend(override.aes = list(alpha = 1, size = label.size)))
 
   ## Plot NMF points and draw convex hull
-  ggobj <- ggobj +
-    ggConvexHull::geom_convexhull(data = H.coords, aes(x, y), alpha = 0.1, fill = NA, size = 0.75,
-                                  colour = "grey", linetype = "dotdash") +
-    geom_point(data = H.coords, aes(x, y), size = 3, color = "blue")
+  if (nrow(H.coords.plot) > 0) {
+    ggobj <- ggobj +
+      ggConvexHull::geom_convexhull(data = H.coords, aes(x, y), alpha = 0.1, fill = NA, size = 0.75,
+                                    colour = "grey", linetype = "dotdash") +
+      geom_point(data = H.coords.plot, aes(x, y), size = 3, color = "blue")
+  }
 
   ## Plot text labels
   if (do.label && is.factor(sample.groups)) {
@@ -200,13 +222,15 @@ PlotSWNE <- function(swne.embedding, alpha.plot = 0.25, sample.groups = NULL, do
     group.pts.y <- tapply(sample.coords$y, sample.coords$sample.groups, median)
 
     group.pts <- data.frame(x = group.pts.x, y = group.pts.y, name = levels(sample.coords$sample.groups))
-    label.pts <- rbind(H.coords, group.pts)
+    label.pts <- rbind(H.coords.plot, group.pts)
 
     ggobj <- ggobj + ggrepel::geom_text_repel(data = label.pts, mapping = aes(x, y, label = name),
                                               size = label.size, box.padding = 0.15)
   } else {
-    ggobj <- ggobj + ggrepel::geom_text_repel(data = H.coords, mapping = aes(x, y, label = name),
-                                              size = label.size, box.padding = 0.15)
+    if (nrow(H.coords.plot) > 0) {
+      ggobj <- ggobj + ggrepel::geom_text_repel(data = H.coords.plot, mapping = aes(x, y, label = name),
+                                                size = label.size, box.padding = 0.15)
+    }
   }
 
   if (!show.legend) {
@@ -235,6 +259,7 @@ PlotSWNE <- function(swne.embedding, alpha.plot = 0.25, sample.groups = NULL, do
 FeaturePlotSWNE <- function(swne.embedding, feature.scores, n.colors = 5, alpha.plot = 0.5,
                             quantiles = c(0.05, 0.95), samples.plot = NULL, label.size = 4.5, pt.size = 1) {
   H.coords <- swne.embedding$H.coords
+  H.coords.plot <- subset(H.coords, name != "")
   sample.coords <- swne.embedding$sample.coords
 
   feature.scores <- as.numeric(feature.scores[rownames(sample.coords)])
@@ -262,17 +287,17 @@ FeaturePlotSWNE <- function(swne.embedding, feature.scores, n.colors = 5, alpha.
     guides(colour = guide_legend(override.aes = list(alpha = 1, size = label.size))) +
     scale_colour_brewer(palette = "Blues")
 
-  ## Plot NMF points and draw convex hull
-  ggobj <- ggobj +
-    ggConvexHull::geom_convexhull(data = H.coords, aes(x, y), alpha = 0.1, fill = NA, size = 0.75,
-                                  colour = "grey", linetype = "dotdash") +
-    geom_point(data = H.coords, aes(x, y), size = 3, color = "blue")
+  ## Plot NMF points and text labels and draw convex hull
+  if (nrow(H.coords.plot) > 0) {
+    ggobj <- ggobj +
+      ggConvexHull::geom_convexhull(data = H.coords.plot, aes(x, y), alpha = 0.1, fill = NA, size = 0.75,
+                                    colour = "grey", linetype = "dotdash") +
+      geom_point(data = H.coords, aes(x, y), size = 3, color = "blue") +
+      ggrepel::geom_text_repel(data = H.coords.plot, mapping = aes(x, y, label = name),
+                               size = label.size, box.padding = 0.15)
+  }
 
-  ## Plot text labels
-  ggobj <- ggobj + ggrepel::geom_text_repel(data = H.coords, mapping = aes(x, y, label = name),
-                                            size = label.size, box.padding = 0.15)
   ggobj <- ggobj + theme(legend.position = "none")
-
   return(ggobj)
 }
 

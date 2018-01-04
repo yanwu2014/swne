@@ -50,7 +50,8 @@ ReadData <- function(matrix.dir, make.sparse = T) {
   return(counts)
 }
 
-
+## Internal function for winsorizing a matrix
+## Adapted from pagoda2: https://github.com/hms-dbmi/pagoda2
 .winsorize_matrix <- function(mat, trim) {
   if(trim < 1) {
     trim <- trim*ncol(mat)
@@ -127,7 +128,8 @@ NormalizeCounts <- function(counts, depthScale = 1e3, batch = NULL) {
 }
 
 
-#' Adjust feature variance to remove effect of varying feature means. Adapted from pagoda2 [insert citation here]
+#' Adjust feature variance to remove effect of varying feature means.
+#' Adapted from pagoda2: https://github.com/hms-dbmi/pagoda2
 #'
 #' @param counts Input data matrix
 #' @param gam.k Number of additive models to use when fitting mean variance relationship

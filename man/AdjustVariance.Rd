@@ -2,7 +2,8 @@
 % Please edit documentation in R/data_processing.R
 \name{AdjustVariance}
 \alias{AdjustVariance}
-\title{Adjust feature variance to remove effect of varying feature means. Adapted from pagoda2 [insert citation here]}
+\title{Adjust feature variance to remove effect of varying feature means.
+Adapted from pagoda2: https://github.com/hms-dbmi/pagoda2}
 \usage{
 AdjustVariance(counts, gam.k = 5, plot = F, max.adjusted.variance = 1000,
   min.adjusted.variance = 0.001, verbose = T, q.val = 0.05)
@@ -26,5 +27,6 @@ AdjustVariance(counts, gam.k = 5, plot = F, max.adjusted.variance = 1000,
 Dataframe with adjusted feature variances
 }
 \description{
-Adjust feature variance to remove effect of varying feature means. Adapted from pagoda2 [insert citation here]
+Adjust feature variance to remove effect of varying feature means.
+Adapted from pagoda2: https://github.com/hms-dbmi/pagoda2
 }
