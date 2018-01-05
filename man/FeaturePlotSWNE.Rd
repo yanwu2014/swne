@@ -6,7 +6,7 @@
 \usage{
 FeaturePlotSWNE(swne.embedding, feature.scores, n.colors = 5,
   alpha.plot = 0.5, quantiles = c(0.05, 0.95), samples.plot = NULL,
-  label.size = 4.5, pt.size = 1)
+  label.size = 4.5, pt.size = 1, draw.border = F)
 }
 \arguments{
 \item{swne.embedding}{SWNE embedding (list of NMF and sample coordinates) from EmbedSWNE}
@@ -22,6 +22,8 @@ FeaturePlotSWNE(swne.embedding, feature.scores, n.colors = 5,
 \item{label.size}{Label font size}
 
 \item{pt.size}{Sample point size}
+
+\item{draw.border}{Draws a border around the outer NMF components}
 
 \item{feature.score}{Feature vector to overlay}
 }

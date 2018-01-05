@@ -1,6 +1,6 @@
 ## NMF functions
 
-# x and y can be vectors or doubles
+## KL divergence. Pseudocounts added to avoid NAs
 .kl_div <- function(x, y, pseudocount = 1e-12) {
   x <- x + pseudocount; y <- y + pseudocount;
   stopifnot(length(x) == length(y))
@@ -65,7 +65,8 @@ FindComponents <- function(A, k.range = seq(1,10,1), alpha = 0, n.cores = 1, do.
 
 .norm <- function(x) { sqrt(drop(crossprod(x))) }
 
-.nnsvd_init <- function(A, k, LINPACK = F, eps, init.zeros) {
+## Nonnegative SVD initialization
+.nnsvd_init <- function(A, k, LINPACK, eps, init.zeros) {
   size <- dim(A);
   m <- size[1]; n <- size[2];
 
@@ -120,7 +121,7 @@ FindComponents <- function(A, k.range = seq(1,10,1), alpha = 0, n.cores = 1, do.
 }
 
 
-
+## Independent component analysis initialization. Negative values are set to a small, random number.
 .ica_init <- function(A, k, eps, init.zeros) {
   ica.res <- ica::icafast(t(A), nc = k)
   nmf.init <- list(W = ica.res$M, H = t(ica.res$S))

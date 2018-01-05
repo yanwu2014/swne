@@ -13,6 +13,7 @@ NULL
 
 #### SWNE functions ####
 
+## Normalize vector with different methods.
 .normalize_vector <- function(x, method = "scale", n_ranks = 10000) {
   stopifnot(method %in% c("rank", "scale", "bounded"))
   if (method == "scale") {
@@ -29,7 +30,7 @@ NULL
 }
 
 
-
+## Calculate the coordinates of the NMF components via Sammon mapping
 .get_component_coords <- function(H, distance = "pearson") {
   H <- t(H)
   stopifnot(distance %in% c("pearson", "IC"))
@@ -48,7 +49,7 @@ NULL
 }
 
 
-
+## Calculate sample coordinates using the NMF scores and NMF component coordinates
 .get_sample_coords <- function(H, H.coords, alpha = 1, n_pull = NULL) {
   if (n_pull < 3) { n_pull <- 3 }
   if (is.null(n_pull) || n_pull > nrow(H.coords)) { n_pull <- nrow(H.coords) }
@@ -170,6 +171,7 @@ RenameNMFs <- function(swne.embedding, new.names) {
 #' @param pt.size Sample point size
 #' @param samples.plot Vector of samples to plot. Default is NULL, which plots all samples.
 #' @param show.legend If sample groups defined, show legend
+#' @param draw.border Draws a border around the outer NMF components
 #' @param seed Seed for sample group color reproducibility
 #'
 #' @return ggplot2 object with swne plot
@@ -178,7 +180,7 @@ RenameNMFs <- function(swne.embedding, new.names) {
 #'
 PlotSWNE <- function(swne.embedding, alpha.plot = 0.25, sample.groups = NULL, do.label = F,
                      label.size = 4.5, pt.size = 1, samples.plot = NULL, show.legend = T,
-                     seed = NULL) {
+                     draw.border = F, seed = NULL) {
   H.coords <- swne.embedding$H.coords
   H.coords.plot <- subset(H.coords, name != "")
   sample.coords <- swne.embedding$sample.coords
@@ -210,10 +212,11 @@ PlotSWNE <- function(swne.embedding, alpha.plot = 0.25, sample.groups = NULL, do
 
   ## Plot NMF points and draw convex hull
   if (nrow(H.coords.plot) > 0) {
-    ggobj <- ggobj +
-      ggConvexHull::geom_convexhull(data = H.coords, aes(x, y), alpha = 0.1, fill = NA, size = 0.75,
-                                    colour = "grey", linetype = "dotdash") +
-      geom_point(data = H.coords.plot, aes(x, y), size = 3, color = "blue")
+    if (draw.border) {
+      ggobj <- ggobj + ggConvexHull::geom_convexhull(data = H.coords, aes(x, y), alpha = 0.1, fill = NA,
+                                                     size = 0.75, colour = "grey", linetype = "dotdash")
+    }
+    ggobj <- ggobj + geom_point(data = H.coords.plot, aes(x, y), size = 3, color = "blue")
   }
 
   ## Plot text labels
@@ -251,13 +254,15 @@ PlotSWNE <- function(swne.embedding, alpha.plot = 0.25, sample.groups = NULL, do
 #' @param samples.plot Samples to actually plot. Default is NULL, which plots all samples
 #' @param label.size Label font size
 #' @param pt.size Sample point size
+#' @param draw.border Draws a border around the outer NMF components
 #'
 #' @return ggplot2 object with swne plot with feature overlayed
 #'
 #' @export
 #'
 FeaturePlotSWNE <- function(swne.embedding, feature.scores, n.colors = 5, alpha.plot = 0.5,
-                            quantiles = c(0.05, 0.95), samples.plot = NULL, label.size = 4.5, pt.size = 1) {
+                            quantiles = c(0.05, 0.95), samples.plot = NULL, label.size = 4.5,
+                            pt.size = 1, draw.border = F) {
   H.coords <- swne.embedding$H.coords
   H.coords.plot <- subset(H.coords, name != "")
   sample.coords <- swne.embedding$sample.coords
@@ -289,10 +294,11 @@ FeaturePlotSWNE <- function(swne.embedding, feature.scores, n.colors = 5, alpha.
 
   ## Plot NMF points and text labels and draw convex hull
   if (nrow(H.coords.plot) > 0) {
-    ggobj <- ggobj +
-      ggConvexHull::geom_convexhull(data = H.coords.plot, aes(x, y), alpha = 0.1, fill = NA, size = 0.75,
-                                    colour = "grey", linetype = "dotdash") +
-      geom_point(data = H.coords, aes(x, y), size = 3, color = "blue") +
+    if (draw.border) {
+      ggobj <- ggobj + ggConvexHull::geom_convexhull(data = H.coords.plot, aes(x, y), alpha = 0.1, fill = NA,
+                                                     size = 0.75, colour = "grey", linetype = "dotdash")
+    }
+    ggobj <- ggobj + geom_point(data = H.coords, aes(x, y), size = 3, color = "blue") +
       ggrepel::geom_text_repel(data = H.coords.plot, mapping = aes(x, y, label = name),
                                size = label.size, box.padding = 0.15)
   }

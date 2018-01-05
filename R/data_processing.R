@@ -1,5 +1,6 @@
 ## Matrix processing functions
 
+## Extract a field from a delimited string
 .extract_field <- function (string, field = 1, delim = "_") {
   fields <- as.numeric(unlist(strsplit(x = as.character(x = field), split = ",")))
   if (length(fields) == 1) {
@@ -193,6 +194,7 @@ AdjustVariance <- function(counts, gam.k = 5, plot = F, max.adjusted.variance = 
 }
 
 
+## Freeman-Tukey transform for variance stabilization
 .ft_transform <- function(A) {
   return(sqrt(A) + sqrt(A + 1))
 }

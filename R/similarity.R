@@ -1,5 +1,6 @@
 ## SNN functions
 
+## Helper function for calculating a shared nearest neighbors graph between a test and training dataset
 .calc_snn_project <- function(train.cell.names, test.cell.names, k, test.nn.large, test.nn.ranked, train.nn.ranked,
                               prune.SNN, print.output = T) {
   n.train.cells <- length(train.cell.names)
