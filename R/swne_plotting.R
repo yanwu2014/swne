@@ -402,7 +402,7 @@ FeaturePlotDims <- function(dim.scores, feature.scores, x.lab = "tsne1", y.lab =
     xlab(x.lab) + ylab(y.lab) + scale_colour_brewer(palette = "Blues")
 
   if (!show.axes) { ggobj <- ggobj + theme_void() }
-  ggobj <- ggobj + theme(text = element_text(size = font.size), legend.position = "none") +
+  ggobj <- ggobj + theme(text = element_text(size = font.size), legend.position = "none")
 
   ggobj
 }
