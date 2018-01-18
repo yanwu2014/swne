@@ -298,7 +298,7 @@ FeaturePlotSWNE <- function(swne.embedding, feature.scores, n.colors = 5, alpha.
       ggobj <- ggobj + ggConvexHull::geom_convexhull(data = H.coords.plot, aes(x, y), alpha = 0.1, fill = NA,
                                                      size = 0.75, colour = "grey", linetype = "dotdash")
     }
-    ggobj <- ggobj + geom_point(data = H.coords, aes(x, y), size = 3, color = "blue") +
+    ggobj <- ggobj + geom_point(data = H.coords.plot, aes(x, y), size = 3, color = "blue") +
       ggrepel::geom_text_repel(data = H.coords.plot, mapping = aes(x, y, label = name),
                                size = label.size, box.padding = 0.15)
   }
@@ -355,6 +355,54 @@ PlotDims <- function(dim.scores, sample.groups = NULL, x.lab = "tsne1", y.lab = 
                                             box.padding = 0.15)
 
   if (!show.legend) { ggobj <- ggobj + theme(legend.position = "none") }
+
+  ggobj
+}
+
+
+#' Plots 2d embedding with feature overlayed
+#'
+#' @param dim.scores SWNE embedding (list of NMF and sample coordinates) from EmbedSWNE
+#' @param feature.score Feature vector to overlay
+#' @param x.lab X axis label
+#' @param y.lab Y axis label
+#' @param n.colors Number of colors to bin feature vector into
+#' @param alpha.plot Data point transparency
+#' @param quantiles Quantiles to trim outliers from
+#' @param show.axes Plot x and y axes
+#' @param pt.size Sample point size
+#' @param font.size Font size for axis labels
+#'
+#' @return ggplot2 object with dim plot with feature overlayed
+#'
+#' @export
+#'
+FeaturePlotDims <- function(dim.scores, feature.scores, x.lab = "tsne1", y.lab = "tsne2", n.colors = 5,
+                            alpha.plot = 0.5, quantiles = c(0.05, 0.95), show.axes = T, pt.size = 1,
+                            font.size = 12) {
+
+  sample.coords <- data.frame(x = dim.scores[,1], y = dim.scores[,2])
+
+  feature.scores <- as.numeric(feature.scores[rownames(dim.scores)])
+  feature.quantiles <- quantile(feature.scores, probs = quantiles)
+
+  min.quantile <- feature.quantiles[[1]]; max.quantile <- feature.quantiles[[2]];
+  feature.scores[feature.scores < min.quantile] <- min.quantile
+  feature.scores[feature.scores > max.quantile] <- max.quantile
+  feature.cut <- as.numeric(as.factor(cut(feature.scores, breaks = n.colors)))
+
+  sample.coords$pt.size <- pt.size
+  sample.coords$feature <- feature.scores
+  sample.coords$sample.groups <- as.factor(feature.cut)
+
+  ## Plot sample coordinates
+  ggobj <- ggplot() +
+    geom_point(data = sample.coords, aes(x, y, colour = sample.groups, fill = sample.groups),
+               alpha = alpha.plot, size = pt.size) +
+    xlab(x.lab) + ylab(y.lab) + scale_colour_brewer(palette = "Blues")
+
+  if (!show.axes) { ggobj <- ggobj + theme_void() }
+  ggobj <- ggobj + theme(text = element_text(size = font.size), legend.position = "none") +
 
   ggobj
 }

@@ -3,6 +3,7 @@
 export(AdjustVariance)
 export(ComponentAssociation)
 export(EmbedSWNE)
+export(FeaturePlotDims)
 export(FeaturePlotSWNE)
 export(FilterData)
 export(FilterGenesets)
