@@ -11,6 +11,7 @@
 
 
 #' Reads data from a sparse or dense matrix
+#' Adapted from Seurat
 #'
 #' @param matrix.dir The input matrix or sparse matrix directory
 #' @param make.sparse Force output to be a sparse dgCMatrix

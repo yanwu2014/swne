@@ -24,8 +24,8 @@
 #'
 #' @export
 #'
-FindComponents <- function(A, k.range = seq(1,10,1), alpha = 0, n.cores = 1, do.plot = T, seed = NULL,
-                           na.frac = 0.3, loss = "mse", max.iter = 1000) {
+FindNumComponents <- function(A, k.range = seq(1,10,1), alpha = 0, n.cores = 1, do.plot = T, seed = NULL,
+                              na.frac = 0.3, loss = "mse", max.iter = 1000) {
   if (!is.null(seed)) { set.seed(seed) }
   A <- as.matrix(A)
 

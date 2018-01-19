@@ -7,6 +7,7 @@
 #' @import ggConvexHull
 #' @import snow
 #' @import usedist
+#' @import plyr
 #' @useDynLib swne
 #' @importFrom Rcpp evalCpp
 NULL
@@ -146,17 +147,21 @@ ProjectSWNE <- function(swne.embedding, H.test, SNN.test = NULL, alpha.exp = 1, 
 #' If the NMF component name is the empty string, "", then the NMF component will not be plotted
 #'
 #' @param swne.embedding List of NMF and sample coordinates from EmbedSWNE
-#' @param new.names Character vector of new NMF names. Must be of length equal to the number of NMF components
+#' @param new.names Named character vector with the old values as names and the new values as values
+#' @param set.empty If true, any old NMF names that weren't renamed are set to the empty string
 #'
-#' @return SWNE embedding with NMFs renamed
+#' @return SWNE embedding with NMFs renamed.
 #'
 #' @export
 #'
-RenameNMFs <- function(swne.embedding, new.names) {
-  if (length(new.names) != nrow(swne.embedding$H.coords)) {
-    stop("new.names vector must be same length as number of NMF components (k)")
-  }
+RenameNMFs <- function(swne.embedding, name.mapping, set.empty = T) {
+  old.names <- swne.embedding$H.coords$name
+  new.names <- plyr::revalue(old.names, name.mapping)
+  if (set.empty) { new.names[new.names == old.names] <- "" }
+
   swne.embedding$H.coords$name <- new.names
+  rownames(swne.embedding$H.coords) <- new.names
+
   return(swne.embedding)
 }
 

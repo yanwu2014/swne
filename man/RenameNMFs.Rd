@@ -5,15 +5,17 @@
 \title{Function for renaming NMF components to something more interpretable.
 If the NMF component name is the empty string, "", then the NMF component will not be plotted}
 \usage{
-RenameNMFs(swne.embedding, new.names)
+RenameNMFs(swne.embedding, name.mapping, set.empty = T)
 }
 \arguments{
 \item{swne.embedding}{List of NMF and sample coordinates from EmbedSWNE}
 
-\item{new.names}{Character vector of new NMF names. Must be of length equal to the number of NMF components}
+\item{set.empty}{If true, any old NMF names that weren't renamed are set to the empty string}
+
+\item{new.names}{Named character vector with the old values as names and the new values as values}
 }
 \value{
-SWNE embedding with NMFs renamed
+SWNE embedding with NMFs renamed.
 }
 \description{
 Function for renaming NMF components to something more interpretable.

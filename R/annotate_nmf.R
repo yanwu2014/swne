@@ -88,19 +88,33 @@ WriteGenesets <- function(genesets, file.name) {
 }
 
 
-#' Projects dataset onto genesets using a nonnegative linear model
+#' Projects dataset onto genesets using either NMF or a nonnegative linear model
 #'
 #' @param norm.counts Normalized input data
 #' @param genesets List of genesets to use
+#' @param method Method used to project data onto genesets. nnlm uses a simple linear model while nmf will use a masked version of nmf.
 #' @param loss Loss function for the nonnegative linear model
 #'
 #' @return A genesets x samples matrix
 #'
 #' @export
 #'
-ProjectGenesets <- function(norm.counts, genesets, loss = "mse") {
-  full.genesets.matrix <- .genesets_indicator(genesets, inv = F, return.numeric = T)
-  ProjectNMF(norm.counts[rownames(full.genesets.matrix),], full.genesets.matrix, loss = loss)
+ProjectGenesets <- function(norm.counts, genesets, method = "nnlm", loss = "mse") {
+  if (!method %in% c("nnlm", "nmf")) { stop("Invalid method") }
+
+  if (method == "nnlm") {
+    full.genesets.matrix <- .genesets_indicator(genesets, inv = F, return.numeric = T)
+    genesets.scores <- ProjectNMF(norm.counts[rownames(full.genesets.matrix),], full.genesets.matrix,
+                                  loss = loss)
+  } else if (method == "nmf") {
+    genesets.mask <- .genesets_indicator(genesets, inv = T, return.numeric = F)
+    nmf.res <- nnmf(norm.counts[rownames(genesets.mask),], k = ncol(genesets.mask), loss = loss,
+                    mask = list(W = genesets.mask))
+    colnames(nmf.res$W) <- rownames(nmf.res$H) <- rownames(genesets.mask)
+    genesets.scores <- nmf.res$H
+  }
+
+  genesets.scores
 }
 
 

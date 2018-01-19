@@ -2,14 +2,16 @@
 % Please edit documentation in R/annotate_nmf.R
 \name{ProjectGenesets}
 \alias{ProjectGenesets}
-\title{Projects dataset onto genesets using a nonnegative linear model}
+\title{Projects dataset onto genesets using either NMF or a nonnegative linear model}
 \usage{
-ProjectGenesets(norm.counts, genesets, loss = "mse")
+ProjectGenesets(norm.counts, genesets, method = "nnlm", loss = "mse")
 }
 \arguments{
 \item{norm.counts}{Normalized input data}
 
 \item{genesets}{List of genesets to use}
+
+\item{method}{Method used to project data onto genesets. nnlm uses a simple linear model while nmf will use a masked version of nmf.}
 
 \item{loss}{Loss function for the nonnegative linear model}
 }
@@ -17,5 +19,5 @@ ProjectGenesets(norm.counts, genesets, loss = "mse")
 A genesets x samples matrix
 }
 \description{
-Projects dataset onto genesets using a nonnegative linear model
+Projects dataset onto genesets using either NMF or a nonnegative linear model
 }

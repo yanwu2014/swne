@@ -2,7 +2,8 @@
 % Please edit documentation in R/data_processing.R
 \name{ReadData}
 \alias{ReadData}
-\title{Reads data from a sparse or dense matrix}
+\title{Reads data from a sparse or dense matrix
+Adapted from Seurat}
 \usage{
 ReadData(matrix.dir, make.sparse = T)
 }
@@ -16,4 +17,5 @@ Returns either a dense or sparse matrix
 }
 \description{
 Reads data from a sparse or dense matrix
+Adapted from Seurat
 }
