@@ -90,7 +90,9 @@ EmbedSWNE <- function(H, SNN = NULL, alpha.exp = 1, snn.exp = 1.0, n_pull = NULL
                       min.snn = 0.05) {
   H <- H[ ,colSums(H) > 0]
   H.coords <- .get_component_coords(H, distance = dist.use)
-  H.coords <- data.frame(H.coords); H.coords$name <- rownames(H.coords);
+  H.coords <- data.frame(H.coords)
+  H.coords$name <- rownames(H.coords)
+  rownames(H.coords) <- NULL
 
   sample.coords <- .get_sample_coords(H, H.coords, alpha = alpha.exp, n_pull = n_pull)
 
@@ -160,8 +162,6 @@ RenameNMFs <- function(swne.embedding, name.mapping, set.empty = T) {
   if (set.empty) { new.names[new.names == old.names] <- "" }
 
   swne.embedding$H.coords$name <- new.names
-  rownames(swne.embedding$H.coords) <- new.names
-
   return(swne.embedding)
 }
 
@@ -494,4 +494,3 @@ ggHeat <- function(m, rescaling = 'none', clustering = 'none', labCol = T, labRo
   ## finally add the fill colour ramp of your choice (default is blue to red)-- and return
   return(g2 + scale_fill_gradient2(low = heatscale[1], mid = heatscale[2], high = heatscale[3], guide = guide_colorbar(title = legend.title)))
 }
-

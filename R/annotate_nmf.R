@@ -92,25 +92,26 @@ WriteGenesets <- function(genesets, file.name) {
 #'
 #' @param norm.counts Normalized input data
 #' @param genesets List of genesets to use
-#' @param method Method used to project data onto genesets. nnlm uses a simple linear model while nmf will use a masked version of nmf.
+#' @param method Method used to project data onto genesets. lm uses a simple linear model while mf
+#'               will use a masked version of nmf.
 #' @param loss Loss function for the nonnegative linear model
 #'
 #' @return A genesets x samples matrix
 #'
 #' @export
 #'
-ProjectGenesets <- function(norm.counts, genesets, method = "nnlm", loss = "mse") {
-  if (!method %in% c("nnlm", "nmf")) { stop("Invalid method") }
+ProjectGenesets <- function(norm.counts, genesets, method = "lm", loss = "mse") {
+  if (!method %in% c("lm", "mf")) { stop("Invalid method") }
 
-  if (method == "nnlm") {
+  if (method == "lm") {
     full.genesets.matrix <- .genesets_indicator(genesets, inv = F, return.numeric = T)
     genesets.scores <- ProjectNMF(norm.counts[rownames(full.genesets.matrix),], full.genesets.matrix,
                                   loss = loss)
-  } else if (method == "nmf") {
-    genesets.mask <- .genesets_indicator(genesets, inv = T, return.numeric = F)
-    nmf.res <- nnmf(norm.counts[rownames(genesets.mask),], k = ncol(genesets.mask), loss = loss,
+  } else if (method == "mf") {
+    genesets.mask <- .genesets_indicator(genesets, inv = T)
+    nmf.res <- nnmf(as.matrix(norm.counts[rownames(genesets.mask),]), k = ncol(genesets.mask), loss = loss,
                     mask = list(W = genesets.mask))
-    colnames(nmf.res$W) <- rownames(nmf.res$H) <- rownames(genesets.mask)
+    colnames(nmf.res$W) <- rownames(nmf.res$H) <- colnames(genesets.mask)
     genesets.scores <- nmf.res$H
   }
 
@@ -176,6 +177,35 @@ SummarizeAssocFeatures <- function(component.feature.assoc, features.return = 10
 
   rownames(nmf.features.df) <- NULL
   return(nmf.features.df)
+}
+
+
+#' Runs GSEA on the gene association coefficients for each NMF
+#'
+#' @param gene.nmf.assoc Matrix with the gene associations for each nmf
+#' @param genesets Genesets to use (as a named list)
+#' @param power GSEA coefficient power
+#' @param n.rand Number of permutations to use when calculating significance
+#' @param n.cores Number of threads to use
+#'
+#' @return Dataframe summarizing the gsea results
+#'
+#' @import liger
+#'
+#' @export
+#'
+RunGSEA <- function(gene.nmf.assoc, genesets, power = 1, n.rand = 1000, n.cores = 1) {
+  nmfs <- colnames(gene.nmf.assoc)
+  gsea.list <- lapply(nmfs, function(nf) {
+    gene.assocs <- gene.nmf.assoc[,nf]
+    gene.assocs <- sort(gene.assocs, decreasing = T)
+    df <- liger::bulk.gsea(gene.assocs, genesets, power = power, n.rand = n.rand, mc.cores = n.cores)
+    df$geneset <- rownames(df); df$nmf <- nf;
+    df
+  })
+
+  gsea.df <- do.call("rbind", gsea.list); rownames(gsea.df) <- NULL;
+  gsea.df
 }
 
 
