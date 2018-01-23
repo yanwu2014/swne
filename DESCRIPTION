@@ -1,7 +1,7 @@
 Package: swne
 Type: Package
-Title: Similarity Weighted Nonnegative Embedding: A nonlinear method for visualizing high dimensional datasets
-Version: 0.1.4
+Title: Similarity Weighted Nonnegative Embedding: A method for visualizing high dimensional datasets
+Version: 0.1.5
 Author: Yan Wu
 Maintainer: Yan Wu <yauwning@gmail.com>
 Description: Uses NMF to reduce high dimenensional dataset into NMF components, embeds NMF components
@@ -24,7 +24,6 @@ Imports:
   RColorBrewer (>= 1.1.2),
   Matrix (>= 1.2.11),
   ggrepel (>= 0.7.0),
-  ggConvexHull (>= 0.1.0),
   reshape,
   usedist,
   plyr,

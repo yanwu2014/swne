@@ -4,7 +4,6 @@
 #' @import Matrix
 #' @import NNLM
 #' @import ggrepel
-#' @import ggConvexHull
 #' @import snow
 #' @import usedist
 #' @import plyr
@@ -176,7 +175,6 @@ RenameNMFs <- function(swne.embedding, name.mapping, set.empty = T) {
 #' @param pt.size Sample point size
 #' @param samples.plot Vector of samples to plot. Default is NULL, which plots all samples.
 #' @param show.legend If sample groups defined, show legend
-#' @param draw.border Draws a border around the outer NMF components
 #' @param seed Seed for sample group color reproducibility
 #'
 #' @return ggplot2 object with swne plot
@@ -185,7 +183,7 @@ RenameNMFs <- function(swne.embedding, name.mapping, set.empty = T) {
 #'
 PlotSWNE <- function(swne.embedding, alpha.plot = 0.25, sample.groups = NULL, do.label = F,
                      label.size = 4.5, pt.size = 1, samples.plot = NULL, show.legend = T,
-                     draw.border = F, seed = NULL) {
+                     seed = NULL) {
   H.coords <- swne.embedding$H.coords
   H.coords.plot <- subset(H.coords, name != "")
   sample.coords <- swne.embedding$sample.coords
@@ -217,11 +215,7 @@ PlotSWNE <- function(swne.embedding, alpha.plot = 0.25, sample.groups = NULL, do
 
   ## Plot NMF points and draw convex hull
   if (nrow(H.coords.plot) > 0) {
-    if (draw.border) {
-      ggobj <- ggobj + ggConvexHull::geom_convexhull(data = H.coords, aes(x, y), alpha = 0.1, fill = NA,
-                                                     size = 0.75, colour = "grey", linetype = "dotdash")
-    }
-    ggobj <- ggobj + geom_point(data = H.coords.plot, aes(x, y), size = 3, color = "blue")
+    ggobj <- ggobj + geom_point(data = H.coords.plot, aes(x, y), size = 2.5, color = "blue")
   }
 
   ## Plot text labels
@@ -259,7 +253,6 @@ PlotSWNE <- function(swne.embedding, alpha.plot = 0.25, sample.groups = NULL, do
 #' @param samples.plot Samples to actually plot. Default is NULL, which plots all samples
 #' @param label.size Label font size
 #' @param pt.size Sample point size
-#' @param draw.border Draws a border around the outer NMF components
 #'
 #' @return ggplot2 object with swne plot with feature overlayed
 #'
@@ -267,7 +260,7 @@ PlotSWNE <- function(swne.embedding, alpha.plot = 0.25, sample.groups = NULL, do
 #'
 FeaturePlotSWNE <- function(swne.embedding, feature.scores, n.colors = 5, alpha.plot = 0.5,
                             quantiles = c(0.05, 0.95), samples.plot = NULL, label.size = 4.5,
-                            pt.size = 1, draw.border = F) {
+                            pt.size = 1) {
   H.coords <- swne.embedding$H.coords
   H.coords.plot <- subset(H.coords, name != "")
   sample.coords <- swne.embedding$sample.coords
@@ -297,13 +290,9 @@ FeaturePlotSWNE <- function(swne.embedding, feature.scores, n.colors = 5, alpha.
     guides(colour = guide_legend(override.aes = list(alpha = 1, size = label.size))) +
     scale_colour_brewer(palette = "Blues")
 
-  ## Plot NMF points and text labels and draw convex hull
+  ## Plot NMF points and text labels
   if (nrow(H.coords.plot) > 0) {
-    if (draw.border) {
-      ggobj <- ggobj + ggConvexHull::geom_convexhull(data = H.coords.plot, aes(x, y), alpha = 0.1, fill = NA,
-                                                     size = 0.75, colour = "grey", linetype = "dotdash")
-    }
-    ggobj <- ggobj + geom_point(data = H.coords.plot, aes(x, y), size = 3, color = "blue") +
+    ggobj <- ggobj + geom_point(data = H.coords.plot, aes(x, y), size = 2.5, color = "blue") +
       ggrepel::geom_text_repel(data = H.coords.plot, mapping = aes(x, y, label = name),
                                size = label.size, box.padding = 0.15)
   }

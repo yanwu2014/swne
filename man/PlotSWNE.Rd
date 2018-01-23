@@ -6,7 +6,7 @@
 \usage{
 PlotSWNE(swne.embedding, alpha.plot = 0.25, sample.groups = NULL,
   do.label = F, label.size = 4.5, pt.size = 1, samples.plot = NULL,
-  show.legend = T, draw.border = F, seed = NULL)
+  show.legend = T, seed = NULL)
 }
 \arguments{
 \item{swne.embedding}{SWNE embedding (list of NMF and sample coordinates) from EmbedSWNE}
@@ -24,8 +24,6 @@ PlotSWNE(swne.embedding, alpha.plot = 0.25, sample.groups = NULL,
 \item{samples.plot}{Vector of samples to plot. Default is NULL, which plots all samples.}
 
 \item{show.legend}{If sample groups defined, show legend}
-
-\item{draw.border}{Draws a border around the outer NMF components}
 
 \item{seed}{Seed for sample group color reproducibility}
 }
