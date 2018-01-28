@@ -4,18 +4,18 @@
 \alias{FeaturePlotDims}
 \title{Plots 2d embedding with feature overlayed}
 \usage{
-FeaturePlotDims(dim.scores, feature.scores, x.lab = "tsne1",
-  y.lab = "tsne2", n.colors = 5, alpha.plot = 0.5, quantiles = c(0.05,
-  0.95), show.axes = T, pt.size = 1, font.size = 12)
+FeaturePlotDims(dim.scores, feature.scores, feature.name = NULL,
+  x.lab = "tsne1", y.lab = "tsne2", alpha.plot = 0.5,
+  quantiles = c(0.01, 0.99), show.axes = T, pt.size = 1, font.size = 12)
 }
 \arguments{
 \item{dim.scores}{SWNE embedding (list of NMF and sample coordinates) from EmbedSWNE}
 
+\item{feature.name}{Name of feature}
+
 \item{x.lab}{X axis label}
 
 \item{y.lab}{Y axis label}
-
-\item{n.colors}{Number of colors to bin feature vector into}
 
 \item{alpha.plot}{Data point transparency}
 

@@ -2,7 +2,7 @@
 % Please edit documentation in R/nmf.R
 \name{RunNMF}
 \alias{RunNMF}
-\title{Runs NMF decomposition on a data matrix}
+\title{Runs NMF decomposition on a data matrix: A = WH.}
 \usage{
 RunNMF(A, k, alpha = 0, init = "random", n.cores = 1, loss = "mse",
   n.rand.init = 5, init.zeros = "uniform")
@@ -10,11 +10,11 @@ RunNMF(A, k, alpha = 0, init = "random", n.cores = 1, loss = "mse",
 \arguments{
 \item{A}{Input data matrix}
 
-\item{k}{Number of NMF components}
+\item{k}{Number of NMF factors}
 
 \item{alpha}{Regularization parameter}
 
-\item{init}{NMF initialization method}
+\item{init}{Initialization method: ica, nnsvd, or random.}
 
 \item{n.cores}{Number of cores}
 
@@ -25,8 +25,8 @@ RunNMF(A, k, alpha = 0, init = "random", n.cores = 1, loss = "mse",
 \item{init.zeros}{What to do with zeros in the initialization}
 }
 \value{
-List of NMF loadings (features x nmf components) and NMF scores (nmf components x samples)
+List of W (features x factors) and H (factors x samples)
 }
 \description{
-Runs NMF decomposition on a data matrix
+Runs NMF decomposition on a data matrix: A = WH.
 }

@@ -10,15 +10,15 @@ ProjectSWNE(swne.embedding, H.test, SNN.test = NULL, alpha.exp = 1,
 \arguments{
 \item{swne.embedding}{Existing swne embedding from EmbedSWNE}
 
-\item{H.test}{Projected test data NMF scores}
+\item{H.test}{Test factor scores}
 
-\item{SNN.test}{Projected test data shared nearest neighbors matrix}
+\item{SNN.test}{Test SNN matrix}
 
-\item{alpha.exp}{Increasing alpha.exp increases how much the NMF components "pull" the samples}
+\item{alpha.exp}{Increasing alpha.exp increases how much the factors "pull" the samples}
 
 \item{snn.exp}{Decreasing snn.exp increases the effect of the similarity matrix on the embedding}
 
-\item{n_pull}{Number of NMF components pulling on each sample. n_pull >= 3}
+\item{n_pull}{Number of factors pulling on each sample. Must be >= 3}
 }
 \value{
 Matrix of sample embeddings

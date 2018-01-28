@@ -17,7 +17,7 @@ will use a masked version of nmf.}
 \item{loss}{Loss function for the nonnegative linear model}
 }
 \value{
-A genesets x samples matrix
+Genesets x samples matrix
 }
 \description{
 Projects dataset onto genesets using either NMF or a nonnegative linear model

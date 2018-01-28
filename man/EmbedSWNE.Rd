@@ -2,29 +2,29 @@
 % Please edit documentation in R/swne_plotting.R
 \name{EmbedSWNE}
 \alias{EmbedSWNE}
-\title{Embeds NMF components and samples in a 2D space}
+\title{Projects NMF factors and samples in a 2D}
 \usage{
 EmbedSWNE(H, SNN = NULL, alpha.exp = 1, snn.exp = 1, n_pull = NULL,
-  dist.use = "pearson", min.snn = 0.05)
+  dist.use = "pearson", min.snn = 0)
 }
 \arguments{
-\item{H}{NMF scores (NMF components x samples)}
+\item{H}{NMF factors (factors x samples)}
 
 \item{SNN}{Shared nearest neighbors matrix (or other similarity matrix)}
 
-\item{alpha.exp}{Increasing alpha.exp increases how much the NMF components "pull" the samples}
+\item{alpha.exp}{Increasing alpha.exp increases how much the NMF factors "pull" the samples}
 
 \item{snn.exp}{Decreasing snn.exp increases the effect of the similarity matrix on the embedding}
 
-\item{n_pull}{Number of NMF components pulling on each sample. n_pull >= 3}
+\item{n_pull}{Number of factors pulling on each sample. Must be >= 3}
 
-\item{dist.use}{Similarity function to use for calculating NMF component positions. Options include pearson and IC.}
+\item{dist.use}{Similarity function to use for calculating factor positions. Options include pearson and IC.}
 
 \item{min.snn}{Minimum SNN value}
 }
 \value{
-A list of nmf component coordinates in 2D space (H.coords) and sample coordinates (sample.coords)
+A list of factor (H.coords) and sample coordinates (sample.coords) in 2D
 }
 \description{
-Embeds NMF components and samples in a 2D space
+Projects NMF factors and samples in a 2D
 }

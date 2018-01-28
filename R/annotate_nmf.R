@@ -60,7 +60,7 @@ WriteGenesets <- function(genesets, file.name) {
 }
 
 
-## Functions for annotating NMF components
+## Functions for annotating NMF factors
 
 ## Creates a genes x genesets indicator matrix
 .genesets_indicator <- function(genesets, inv = F, return.numeric = F) {
@@ -96,7 +96,7 @@ WriteGenesets <- function(genesets, file.name) {
 #'               will use a masked version of nmf.
 #' @param loss Loss function for the nonnegative linear model
 #'
-#' @return A genesets x samples matrix
+#' @return Genesets x samples matrix
 #'
 #' @export
 #'
@@ -105,33 +105,33 @@ ProjectGenesets <- function(norm.counts, genesets, method = "lm", loss = "mse") 
 
   if (method == "lm") {
     full.genesets.matrix <- .genesets_indicator(genesets, inv = F, return.numeric = T)
-    genesets.scores <- ProjectNMF(norm.counts[rownames(full.genesets.matrix),], full.genesets.matrix,
+    genesets.H <- ProjectNMF(norm.counts[rownames(full.genesets.matrix),], full.genesets.matrix,
                                   loss = loss)
   } else if (method == "mf") {
     genesets.mask <- .genesets_indicator(genesets, inv = T)
     nmf.res <- nnmf(as.matrix(norm.counts[rownames(genesets.mask),]), k = ncol(genesets.mask), loss = loss,
                     mask = list(W = genesets.mask))
     colnames(nmf.res$W) <- rownames(nmf.res$H) <- colnames(genesets.mask)
-    genesets.scores <- nmf.res$H
+    genesets.H <- nmf.res$H
   }
 
-  genesets.scores
+  genesets.H
 }
 
 
-#' Find the top gene or geneset markers for each NMF component using pearson/spearman correlation,
+#' Find the top gene or geneset markers for each NMF factor using pearson/spearman correlation,
 #' or mutual information
 #'
 #' @param feature.mat Feature matrix (features x samples)
-#' @param nmf.scores NMF component scores (nmf components x samples)
+#' @param H Factor scores (factors x samples)
 #' @param n.cores Number of cores to use
-#' @param metric Association metric. Options are pearson, spearman, or IC
+#' @param metric Association metric: pearson, spearman, or IC (information coefficient)
 #'
-#' @return Components x features matrix of associations
+#' @return Features x factors matrix of associations or correlations
 #'
 #' @export
 #'
-ComponentAssociation <- function(feature.mat, nmf.scores, n.cores = 8, metric = "IC") {
+FactorAssociation <- function(feature.mat, nmf.scores, n.cores = 8, metric = "IC") {
   cl <- snow::makeCluster(n.cores, type = "SOCK")
   snow::clusterExport(cl, c("nmf.scores", "MutualInf"), envir = environment())
   if (metric == "IC") {
@@ -152,37 +152,37 @@ ComponentAssociation <- function(feature.mat, nmf.scores, n.cores = 8, metric = 
 }
 
 
-#' Summarize the components x features association matrix into a readable dataframe
+#' Summarize the factors x features association matrix into a readable dataframe
 #'
-#' @param component.feature.assoc NMF components x features association matrix from ComponentAssociation
-#' @param features.return Number of top features to return for each NMF component
+#' @param feature.factor.assoc (features x factors) association matrix from FactorAssociation
+#' @param features.return Number of top features to return for each factor
 #' @param features.use Only consider a subset of features. Default is NULL, which will use all features
 #'
-#' @return Dataframe summarizing top features for each NMF component
+#' @return Dataframe summarizing top features for each factor
 #'
 #' @export
 #'
-SummarizeAssocFeatures <- function(component.feature.assoc, features.return = 10, features.use = NULL) {
+SummarizeAssocFeatures <- function(feature.factor.assoc, features.return = 10, features.use = NULL) {
   if (!is.null(features.use)) {
-    component.feature.assoc <- component.feature.assoc[features.use,]
+    feature.factor.assoc <- feature.factor.assoc[features.use,]
   }
 
-  nmf.features.df <- do.call("rbind", lapply(1:ncol(component.feature.assoc), function(i) {
-    features.df <- data.frame(assoc_score = component.feature.assoc[,i])
-    features.df$feature <- rownames(component.feature.assoc)
-    features.df$nmf <- colnames(component.feature.assoc)[[i]]
+  factor.features.df <- do.call("rbind", lapply(1:ncol(feature.factor.assoc), function(i) {
+    features.df <- data.frame(assoc_score = feature.factor.assoc[,i])
+    features.df$feature <- rownames(feature.factor.assoc)
+    features.df$factor <- colnames(feature.factor.assoc)[[i]]
     features.df <- features.df[order(features.df$assoc_score, decreasing = T),]
     head(features.df, n = features.return)
   }))
 
-  rownames(nmf.features.df) <- NULL
-  return(nmf.features.df)
+  rownames(factor.features.df) <- NULL
+  return(factor.features.df)
 }
 
 
 #' Runs GSEA on the gene association coefficients for each NMF
 #'
-#' @param gene.nmf.assoc Matrix with the gene associations for each nmf
+#' @param gene.factor.assoc Matrix with the gene associations for each nmf
 #' @param genesets Genesets to use (as a named list)
 #' @param power GSEA coefficient power
 #' @param n.rand Number of permutations to use when calculating significance
@@ -194,10 +194,10 @@ SummarizeAssocFeatures <- function(component.feature.assoc, features.return = 10
 #'
 #' @export
 #'
-RunGSEA <- function(gene.nmf.assoc, genesets, power = 1, n.rand = 1000, n.cores = 1) {
-  nmfs <- colnames(gene.nmf.assoc)
+RunGSEA <- function(gene.factor.assoc, genesets, power = 1, n.rand = 1000, n.cores = 1) {
+  nmfs <- colnames(gene.factor.assoc)
   gsea.list <- lapply(nmfs, function(nf) {
-    gene.assocs <- gene.nmf.assoc[,nf]
+    gene.assocs <- gene.factor.assoc[,nf]
     gene.assocs <- sort(gene.assocs, decreasing = T)
     df <- liger::bulk.gsea(gene.assocs, genesets, power = power, n.rand = n.rand, mc.cores = n.cores)
     df$geneset <- rownames(df); df$nmf <- nf;

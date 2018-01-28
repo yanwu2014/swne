@@ -2,21 +2,21 @@
 % Please edit documentation in R/annotate_nmf.R
 \name{SummarizeAssocFeatures}
 \alias{SummarizeAssocFeatures}
-\title{Summarize the components x features association matrix into a readable dataframe}
+\title{Summarize the factors x features association matrix into a readable dataframe}
 \usage{
-SummarizeAssocFeatures(component.feature.assoc, features.return = 10,
+SummarizeAssocFeatures(feature.factor.assoc, features.return = 10,
   features.use = NULL)
 }
 \arguments{
-\item{component.feature.assoc}{NMF components x features association matrix from ComponentAssociation}
+\item{feature.factor.assoc}{(features x factors) association matrix from FactorAssociation}
 
-\item{features.return}{Number of top features to return for each NMF component}
+\item{features.return}{Number of top features to return for each factor}
 
 \item{features.use}{Only consider a subset of features. Default is NULL, which will use all features}
 }
 \value{
-Dataframe summarizing top features for each NMF component
+Dataframe summarizing top features for each factor
 }
 \description{
-Summarize the components x features association matrix into a readable dataframe
+Summarize the factors x features association matrix into a readable dataframe
 }

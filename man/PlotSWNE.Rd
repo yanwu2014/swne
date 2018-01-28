@@ -9,7 +9,7 @@ PlotSWNE(swne.embedding, alpha.plot = 0.25, sample.groups = NULL,
   show.legend = T, seed = NULL)
 }
 \arguments{
-\item{swne.embedding}{SWNE embedding (list of NMF and sample coordinates) from EmbedSWNE}
+\item{swne.embedding}{SWNE embedding (list of factor and sample coordinates) from EmbedSWNE}
 
 \item{alpha.plot}{Data point transparency}
 
@@ -25,7 +25,7 @@ PlotSWNE(swne.embedding, alpha.plot = 0.25, sample.groups = NULL,
 
 \item{show.legend}{If sample groups defined, show legend}
 
-\item{seed}{Seed for sample group color reproducibility}
+\item{seed}{Seed for sample groups color reproducibility}
 }
 \value{
 ggplot2 object with swne plot

@@ -8,56 +8,6 @@
 }
 
 
-#' Determines the optimal number of NMF components to use via reconstruction error
-#'
-#' @param A Input data matrix
-#' @param k.range Range of NMF components to fit over
-#' @param alpha Regularization parameter
-#' @param n.cores Number of threads
-#' @param do.plot Whether to plot the reconstruction error
-#' @param seed Random seed for selecting missing data
-#' @param na.frac Fraction of data to set as missing
-#' @param loss Loss function to use
-#' @param max.iter Maximum iterations for NMF run
-#'
-#' @return Reconstruction error at each number of NMF components specified in k.range
-#'
-#' @export
-#'
-FindNumComponents <- function(A, k.range = seq(1,10,1), alpha = 0, n.cores = 1, do.plot = T, seed = NULL,
-                              na.frac = 0.3, loss = "mse", max.iter = 1000) {
-  if (!is.null(seed)) { set.seed(seed) }
-  A <- as.matrix(A)
-
-  ind <- sample(length(A), na.frac*length(A));
-  A2 <- A;
-  A2[ind] <- NA;
-
-  A.ind <- A[ind]
-  err <- sapply(k.range, function(k) {
-    z <- NNLM::nnmf(A2, k, alpha = c(alpha, alpha, 0), n.threads = n.cores, verbose = 0, loss = loss)
-    A_hat <- with(z, W %*% H)
-    mse  <- mean((A_hat[ind] - A.ind)^2)
-    mkl <- mean(.kl_div(A.ind, A_hat[ind]))
-    return(c(mse, mkl))
-  })
-
-  if (loss == "mse") { j <- 1; } else { j <- 2; }
-  min.idx <- which.min(err[j,]);
-
-  if (do.plot) {
-    plot(k.range, err[1,], col = "blue", type = 'b', main = "MSE");
-    plot(k.range, err[2,], col = "red", type = 'b', main = "MKL");
-  }
-
-  res <- list()
-  res$err <- err
-  res$k <- k.range[[min.idx]]
-
-  return(res)
-}
-
-
 ## NMF initialization
 .pos <- function(x) { as.numeric(x >= 0) * x }
 
@@ -142,18 +92,68 @@ FindNumComponents <- function(A, k.range = seq(1,10,1), alpha = 0, n.cores = 1, 
 }
 
 
-#' Runs NMF decomposition on a data matrix
+#' Determines the optimal number of NMF factors to use via reconstruction error
 #'
 #' @param A Input data matrix
-#' @param k Number of NMF components
+#' @param k.range Range of NMF factors to fit over
 #' @param alpha Regularization parameter
-#' @param init NMF initialization method
+#' @param n.cores Number of threads
+#' @param do.plot Whether to plot the reconstruction error
+#' @param seed Random seed for selecting missing data
+#' @param na.frac Fraction of data to set as missing
+#' @param loss Loss function to use
+#' @param max.iter Maximum iterations for NMF run
+#'
+#' @return Reconstruction error at each number of NMF factors specified in k.range
+#'
+#' @export
+#'
+FindNumFactors <- function(A, k.range = seq(1,10,1), alpha = 0, n.cores = 1, do.plot = T,
+                           seed = NULL, na.frac = 0.3, loss = "mse", max.iter = 1000) {
+  if (!is.null(seed)) { set.seed(seed) }
+  A <- as.matrix(A)
+
+  ind <- sample(length(A), na.frac*length(A));
+  A2 <- A;
+  A2[ind] <- NA;
+
+  A.ind <- A[ind]
+  err <- sapply(k.range, function(k) {
+    z <- NNLM::nnmf(A2, k, alpha = c(alpha, alpha, 0), n.threads = n.cores, verbose = 0, loss = loss)
+    A_hat <- with(z, W %*% H)
+    mse  <- mean((A_hat[ind] - A.ind)^2)
+    mkl <- mean(.kl_div(A.ind, A_hat[ind]))
+    return(c(mse, mkl))
+  })
+
+  if (loss == "mse") { j <- 1; } else { j <- 2; }
+  min.idx <- which.min(err[j,]);
+
+  if (do.plot) {
+    plot(k.range, err[1,], col = "blue", type = 'b', main = "MSE");
+    plot(k.range, err[2,], col = "red", type = 'b', main = "MKL");
+  }
+
+  res <- list()
+  res$err <- err
+  res$k <- k.range[[min.idx]]
+
+  return(res)
+}
+
+
+#' Runs NMF decomposition on a data matrix: A = WH.
+#'
+#' @param A Input data matrix
+#' @param k Number of NMF factors
+#' @param alpha Regularization parameter
+#' @param init Initialization method: ica, nnsvd, or random.
 #' @param n.cores Number of cores
 #' @param loss Type of loss function to use
 #' @param n.rand.init If random initialization is used, number of random restarts
 #' @param init.zeros What to do with zeros in the initialization
 #'
-#' @return List of NMF loadings (features x nmf components) and NMF scores (nmf components x samples)
+#' @return List of W (features x factors) and H (factors x samples)
 #'
 #' @export
 #'
@@ -192,22 +192,22 @@ RunNMF <- function(A, k, alpha = 0, init = "random", n.cores = 1, loss = "mse", 
   }
 
   colnames(nmf.res$W) <- rownames(nmf.res$H) <- sapply(1:ncol(nmf.res$W), function(i) paste("nmf", i, sep = "_"))
-  return(list(nmf.loadings = nmf.res$W, nmf.scores = nmf.res$H))
+  return(nmf.res)
 }
 
 
 #' Projects new data onto existing NMF decomposition
 #'
 #' @param newdata New data matrix
-#' @param loadings Existing NMF feature loadings
+#' @param W Existing feature loadings
 #' @param alpha Regularization parameter
 #' @param loss Loss function to use
 #'
-#' @return NMF scores for new data matrix
+#' @return H matrix (scores) for newdata
 #'
 #' @export
 #'
-ProjectNMF <- function(newdata, loadings, alpha = rep(0,3), loss = "mse") {
-  lm.out <- NNLM::nnlm(loadings, newdata, alpha = alpha, loss = loss)
+ProjectNMF <- function(newdata, W, alpha = rep(0,3), loss = "mse") {
+  lm.out <- NNLM::nnlm(W, newdata, alpha = alpha, loss = loss)
   return(lm.out$coefficients)
 }

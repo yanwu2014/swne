@@ -4,19 +4,19 @@
 \alias{ProjectNMF}
 \title{Projects new data onto existing NMF decomposition}
 \usage{
-ProjectNMF(newdata, loadings, alpha = rep(0, 3), loss = "mse")
+ProjectNMF(newdata, W, alpha = rep(0, 3), loss = "mse")
 }
 \arguments{
 \item{newdata}{New data matrix}
 
-\item{loadings}{Existing NMF feature loadings}
+\item{W}{Existing feature loadings}
 
 \item{alpha}{Regularization parameter}
 
 \item{loss}{Loss function to use}
 }
 \value{
-NMF scores for new data matrix
+H matrix (scores) for newdata
 }
 \description{
 Projects new data onto existing NMF decomposition
