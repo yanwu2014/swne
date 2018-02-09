@@ -6,7 +6,8 @@
 \usage{
 FeaturePlotDims(dim.scores, feature.scores, feature.name = NULL,
   x.lab = "tsne1", y.lab = "tsne2", alpha.plot = 0.5,
-  quantiles = c(0.01, 0.99), show.axes = T, pt.size = 1, font.size = 12)
+  quantiles = c(0.01, 0.99), show.axes = T, pt.size = 1, font.size = 12,
+  color.palette = "YlOrRd")
 }
 \arguments{
 \item{dim.scores}{SWNE embedding (list of NMF and sample coordinates) from EmbedSWNE}
@@ -26,6 +27,8 @@ FeaturePlotDims(dim.scores, feature.scores, feature.name = NULL,
 \item{pt.size}{Sample point size}
 
 \item{font.size}{Font size for axis labels}
+
+\item{color.palette}{RColorbrewer palette to use}
 
 \item{feature.score}{Feature vector to overlay}
 }

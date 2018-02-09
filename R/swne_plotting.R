@@ -4,7 +4,6 @@
 #' @import Matrix
 #' @import NNLM
 #' @import ggrepel
-#' @import snow
 #' @import usedist
 #' @useDynLib swne
 #' @importFrom Rcpp evalCpp
@@ -36,8 +35,7 @@ NULL
   if (distance == "pearson") {
     H.dist <- sqrt(2*(1 - cor(H)))
   } else if (distance == "IC") {
-    require(usedist)
-    H.dist <- sqrt(2*(1 - as.matrix(dist_make(t(H), distance_fcn = MutualInf, method = "IC"))))
+    H.dist <- sqrt(2*(1 - as.matrix(usedist::dist_make(t(H), distance_fcn = MutualInf, method = "IC"))))
   }
 
   H.coords <- MASS::sammon(H.dist, k = 2, niter = 250)$points
@@ -111,17 +109,24 @@ EmbedSWNE <- function(H, SNN = NULL, alpha.exp = 1, snn.exp = 1.0, n_pull = NULL
 #' Embeds features relative to factor coordinates
 #'
 #' @param swne.embedding Existing swne embedding from EmbedSWNE
+#' @param feature.assoc Feature loadings or correlations (features x factors)
 #' @param alpha.exp Increasing alpha.exp increases how much the factors "pull" the features
 #' @param n_pull Number of factors pulling on each feature. Must be >= 3
-#'
+#' @param scale.cols Whether or not to scale the input columns to 0 - 1
 #' @return swne.embedding with feature coordinates (feature.coords)
 #'
 #' @export
 #'
-EmbedFeatures <- function(swne.embedding, feature.nmf.assoc, alpha.exp = 1, n_pull = NULL) {
-  feature.nmf.assoc <- apply(feature.nmf.assoc, 2, .normalize_vector, method = "bounded")
+EmbedFeatures <- function(swne.embedding, feature.assoc, alpha.exp = 1, n_pull = NULL,
+                          scale.cols = T) {
+  feature.assoc <- t(feature.assoc)
+  stopifnot(nrow(swne.embedding$H.coords) == nrow(feature.assoc))
 
-  feature.coords <- .get_sample_coords(feature.nmf.assoc, swne.embedding$H.coords, alpha = alpha.exp, n_pull = n_pull)
+  if (scale.cols) {
+    feature.assoc <- apply(feature.assoc, 2, .normalize_vector, method = "bounded")
+  }
+
+  feature.coords <- .get_sample_coords(feature.assoc, swne.embedding$H.coords, alpha = alpha.exp, n_pull = n_pull)
   feature.coords <- data.frame(feature.coords)
   feature.coords$name <- rownames(feature.coords); rownames(feature.coords) <- NULL;
 
@@ -238,11 +243,11 @@ PlotSWNE <- function(swne.embedding, alpha.plot = 0.25, sample.groups = NULL, do
 
   ## Plot factors
   if (nrow(H.coords.plot) > 0) {
-    ggobj <- ggobj + geom_point(data = H.coords.plot, aes(x, y), size = 2.5, color = "blue")
+    ggobj <- ggobj + geom_point(data = H.coords.plot, aes(x, y), size = 2.5, color = "darkblue")
   }
 
   if (!is.null(feature.coords)) {
-    ggobj <- ggobj + geom_point(data = feature.coords, aes(x, y), size = 2.5, color = "darkred")
+    ggobj <- ggobj + geom_point(data = feature.coords, aes(x, y), size = 2.5, color = "darkblue")
   }
 
   ## Plot text labels
@@ -257,7 +262,7 @@ PlotSWNE <- function(swne.embedding, alpha.plot = 0.25, sample.groups = NULL, do
                                               size = label.size, box.padding = 0.15)
   } else if (nrow(H.coords.plot) > 0) {
     label.pts <- rbind(H.coords.plot, feature.coords)
-    ggobj <- ggobj + ggrepel::geom_text_repel(data = label.coords, mapping = aes(x, y, label = name),
+    ggobj <- ggobj + ggrepel::geom_text_repel(data = label.pts, mapping = aes(x, y, label = name),
                                               size = label.size, box.padding = 0.15)
   } else if (!is.null(feature.coords)) {
     ggobj <- ggobj + ggrepel::geom_text_repel(data = feature.coords, mapping = aes(x, y, label = name),
@@ -282,6 +287,7 @@ PlotSWNE <- function(swne.embedding, alpha.plot = 0.25, sample.groups = NULL, do
 #' @param samples.plot Samples to actually plot. Default is NULL, which plots all samples
 #' @param label.size Label font size
 #' @param pt.size Sample point size
+#' @param color.palette RColorbrewer palette to use
 #'
 #' @return ggplot2 object with swne plot with feature overlayed
 #'
@@ -289,7 +295,7 @@ PlotSWNE <- function(swne.embedding, alpha.plot = 0.25, sample.groups = NULL, do
 #'
 FeaturePlotSWNE <- function(swne.embedding, feature.scores, feature.name = NULL, alpha.plot = 0.5,
                             quantiles = c(0.01, 0.99), samples.plot = NULL, label.size = 4.5,
-                            pt.size = 1) {
+                            pt.size = 1, color.palette = "YlOrRd") {
   H.coords <- swne.embedding$H.coords
   H.coords.plot <- subset(H.coords, name != "")
   sample.coords <- swne.embedding$sample.coords
@@ -315,20 +321,20 @@ FeaturePlotSWNE <- function(swne.embedding, feature.scores, feature.name = NULL,
   ggobj <- ggplot() +
     geom_point(data = sample.coords, aes(x, y, colour = feature),
                alpha = alpha.plot, size = pt.size) +
-    theme_classic() + theme(axis.title.x = element_blank(), axis.title.y = element_blank(),
-                            axis.ticks = element_blank(), axis.line = element_blank(),
-                            axis.text = element_blank()) +
-    scale_colour_gradient2(low = "grey", high = "darkblue", guide = guide_colorbar(title = feature.name))
+    theme_classic() + theme(axis.title = element_blank(), axis.ticks = element_blank(),
+                            axis.line = element_blank(), axis.text = element_blank()) +
+    scale_color_distiller(palette = color.palette, direction = 1, guide =
+                            guide_colorbar(title = feature.name, ticks = F, label = F))
 
   if (!is.null(feature.coords)) {
-    ggobj <- ggobj + geom_point(data = feature.coords, aes(x, y), size = 2.5, color = "darkred")
+    ggobj <- ggobj + geom_point(data = feature.coords, aes(x, y), size = 2.5, color = "darkblue")
   }
 
   ## Plot factors
   if (nrow(H.coords.plot) > 0) {
     label.pts <- rbind(H.coords.plot, feature.coords)
-    ggobj <- ggobj + geom_point(data = H.coords.plot, aes(x, y), size = 2.5, color = "blue")
-    ggobj <- ggobj + ggrepel::geom_text_repel(data = label.coords, mapping = aes(x, y, label = name),
+    ggobj <- ggobj + geom_point(data = H.coords.plot, aes(x, y), size = 2.5, color = "darkblue")
+    ggobj <- ggobj + ggrepel::geom_text_repel(data = label.pts, mapping = aes(x, y, label = name),
                                               size = label.size, box.padding = 0.15)
   } else if (!is.null(feature.coords)) {
     ggobj <- ggobj + ggrepel::geom_text_repel(data = feature.coords, mapping = aes(x, y, label = name),
@@ -403,6 +409,7 @@ PlotDims <- function(dim.scores, sample.groups = NULL, x.lab = "tsne1", y.lab = 
 #' @param show.axes Plot x and y axes
 #' @param pt.size Sample point size
 #' @param font.size Font size for axis labels
+#' @param color.palette RColorbrewer palette to use
 #'
 #' @return ggplot2 object with dim plot with feature overlayed
 #'
@@ -410,7 +417,7 @@ PlotDims <- function(dim.scores, sample.groups = NULL, x.lab = "tsne1", y.lab = 
 #'
 FeaturePlotDims <- function(dim.scores, feature.scores, feature.name = NULL, x.lab = "tsne1", y.lab = "tsne2",
                             alpha.plot = 0.5, quantiles = c(0.01, 0.99), show.axes = T, pt.size = 1,
-                            font.size = 12) {
+                            font.size = 12, color.palette = "YlOrRd") {
 
   sample.coords <- data.frame(x = dim.scores[,1], y = dim.scores[,2])
 
@@ -429,8 +436,9 @@ FeaturePlotDims <- function(dim.scores, feature.scores, feature.name = NULL, x.l
   ggobj <- ggplot() +
     geom_point(data = sample.coords, aes(x, y, colour = feature),
                alpha = alpha.plot, size = pt.size) +
-    xlab(x.lab) + ylab(y.lab) + scale_colour_gradient2(low = "grey", high = "darkblue",
-                                                       guide = guide_colorbar(title = feature.name))
+    xlab(x.lab) + ylab(y.lab) +
+    scale_color_distiller(palette = color.palette, direction = 1, guide =
+                            guide_colorbar(title = feature.name, ticks = F, label = F))
 
   if (!show.axes) { ggobj <- ggobj + theme_void() }
   ggobj <- ggobj + theme(text = element_text(size = font.size))

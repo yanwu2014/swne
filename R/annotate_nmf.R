@@ -95,27 +95,56 @@ WriteGenesets <- function(genesets, file.name) {
 #' @param method Method used to project data onto genesets. lm uses a simple linear model while mf
 #'               will use a masked version of nmf.
 #' @param loss Loss function for the nonnegative linear model
+#' @param n.cores Number of cores to use
 #'
-#' @return Genesets x samples matrix
+#' @return List of gene loadings and factor scores, with each factor corresponding to a geneset
 #'
 #' @export
 #'
-ProjectGenesets <- function(norm.counts, genesets, method = "lm", loss = "mse") {
+ProjectGenesets <- function(norm.counts, genesets, method = "lm", loss = "mse", n.cores = 1) {
   if (!method %in% c("lm", "mf")) { stop("Invalid method") }
 
   if (method == "lm") {
     full.genesets.matrix <- .genesets_indicator(genesets, inv = F, return.numeric = T)
-    genesets.H <- ProjectNMF(norm.counts[rownames(full.genesets.matrix),], full.genesets.matrix,
-                                  loss = loss)
+    genesets.H <- ProjectSamples(norm.counts[rownames(full.genesets.matrix),], full.genesets.matrix,
+                                  loss = loss, n.cores = n.cores)
   } else if (method == "mf") {
     genesets.mask <- .genesets_indicator(genesets, inv = T)
-    nmf.res <- nnmf(as.matrix(norm.counts[rownames(genesets.mask),]), k = ncol(genesets.mask), loss = loss,
-                    mask = list(W = genesets.mask))
+    nmf.res <- NNLM::nnmf(as.matrix(norm.counts[rownames(genesets.mask),]), k = ncol(genesets.mask), loss = loss,
+                          mask = list(W = genesets.mask), n.threads = n.cores)
     colnames(nmf.res$W) <- rownames(nmf.res$H) <- colnames(genesets.mask)
-    genesets.H <- nmf.res$H
   }
 
-  genesets.H
+  return(nmf.res)
+}
+
+
+#' Calculate geneset factor loadings from gene factor loadings
+#'
+#' @param W gene factor loadings from NMF
+#' @param W.genesets.project gene factor loadings from projecting genesets onto data
+#' @param top.genesets List of genesets to calculate loadings for
+#'
+#' @return Matrix of geneset by factor loadings
+#'
+#' @export
+#'
+CalcGenesetLoadings <- function(W, W.genesets.project, top.genesets) {
+  genesets.weights <- lapply(names(top.genesets), function(name) {
+    genes <- genesets[[name]]
+    weights <- W.genesets.project[genes, name]; names(weights) <- genes;
+    weights
+  }); names(genesets.weights) <- names(top.genesets);
+
+  weighted.genesets <- lapply(genesets.weights, function(x) x/sum(x))
+  genesets.loadings <- apply(W, 2, function(x) {
+    sapply(names(top.genesets), function(name) {
+      genes <- genesets[[name]]
+      genes.weights <- genesets.weights[[name]]
+      mean(x[genes] * genes.weights)
+    })
+  })
+  return(genesets.loadings)
 }
 
 
@@ -129,6 +158,7 @@ ProjectGenesets <- function(norm.counts, genesets, method = "lm", loss = "mse") 
 #'
 #' @return Features x factors matrix of associations or correlations
 #'
+#' @import snow
 #' @export
 #'
 FactorAssociation <- function(feature.mat, nmf.scores, n.cores = 8, metric = "IC") {

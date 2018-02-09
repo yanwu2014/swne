@@ -1,61 +1,5 @@
 ## SNN functions
 
-# Function to convert the knn graph into the snn graph. Stored in a sparse
-# representation. Adapted from the Seurat package.
-#
-#' @importFrom utils txtProgressBar setTxtProgressBar
-#
-.calc_snn <- function(cell.names, k, nn.large, nn.ranked, prune.SNN, print.output) {
-  n.cells <- length(cell.names)
-  counter <- 1
-  idx1 <- vector(mode = "integer", length = n.cells ^ 2 / k)
-  idx2 <- vector(mode = "integer", length = n.cells ^ 2 / k)
-  edge.weight <- vector(mode = "double", length = n.cells ^ 2 / k)
-  id <- 1
-
-  # fill out the adjacency matrix w with edge weights only between your target
-  # cell and its k.scale*k-nearest neighbors
-  # speed things up (don't have to calculate all pairwise distances)
-  # define the edge weights with Jaccard distance
-  if (print.output) {
-    print("Constructing SNN")
-    pb <- txtProgressBar(min = 0, max = n.cells, style = 3)
-  }
-  for (i in 1:n.cells) {
-    for (j in 1:ncol(x = nn.large)) {
-      s <- intersect(x = nn.ranked[i, ], y = nn.ranked[nn.large[i, j], ])
-      u <- union(nn.ranked[i, ], nn.ranked[nn.large[i, j], ])
-      e <- length(x = s) / length(x = u)
-      if (e > prune.SNN) {
-        idx1[id] <- i
-        idx2[id] <- nn.large[i, j]
-        edge.weight[id] <- e
-        id <- id + 1
-      }
-    }
-    if (print.output) {
-      setTxtProgressBar(pb = pb, value = i)
-    }
-  }
-  if (print.output) {
-    close(con = pb)
-  }
-  idx1 <- idx1[! is.na(x = idx1) & idx1 != 0]
-  idx2 <- idx2[! is.na(x = idx2) & idx2 != 0]
-  edge.weight <- edge.weight[! is.na(x = edge.weight) & edge.weight != 0]
-  w <- sparseMatrix(
-    i = idx1,
-    j = idx2,
-    x = edge.weight,
-    dims = c(n.cells, n.cells)
-  )
-  diag(x = w) <- 1
-  rownames(x = w) <- cell.names
-  colnames(x = w) <- cell.names
-  return(w)
-}
-
-
 #' SNN Graph Construction. Adapted from Seurat.
 #'
 #' @param data.use Features x samples matrix to use to build the SNN
@@ -68,8 +12,9 @@
 #' @import FNN
 #' @importFrom Matrix sparseMatrix
 #'
-#' @return Returns the object with object@@snn filled
+#' @return Returns similarity matrix in sparse matrix format
 #'
+#' @import Seurat
 #' @export
 #'
 CalcSNN <- function(data.use, k = 10, k.scale = 10, prune.SNN = 1/15, print.output = T) {
@@ -83,8 +28,8 @@ CalcSNN <- function(data.use, k = 10, k.scale = 10, prune.SNN = 1/15, print.outp
   nn.ranked <- cbind(1:n.cells, my.knn$nn.index[, 1:(k - 1)])
   nn.large <- my.knn$nn.index
 
-  w <- .calc_snn(cell.names = colnames(data.use), k = k, nn.large = nn.large,
-                 nn.ranked = nn.ranked, prune.SNN = prune.SNN, print.output = print.output)
+  w <- Seurat:::CalcSNNSparse(cell.names = colnames(data.use), k = k, nn.large = nn.large,
+                              nn.ranked = nn.ranked, prune.SNN = prune.SNN, print.output = print.output)
   return(w)
 }
 

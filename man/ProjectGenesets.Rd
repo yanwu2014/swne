@@ -4,7 +4,8 @@
 \alias{ProjectGenesets}
 \title{Projects dataset onto genesets using either NMF or a nonnegative linear model}
 \usage{
-ProjectGenesets(norm.counts, genesets, method = "lm", loss = "mse")
+ProjectGenesets(norm.counts, genesets, method = "lm", loss = "mse",
+  n.cores = 1)
 }
 \arguments{
 \item{norm.counts}{Normalized input data}
@@ -15,9 +16,11 @@ ProjectGenesets(norm.counts, genesets, method = "lm", loss = "mse")
 will use a masked version of nmf.}
 
 \item{loss}{Loss function for the nonnegative linear model}
+
+\item{n.cores}{Number of cores to use}
 }
 \value{
-Genesets x samples matrix
+List of gene loadings and factor scores, with each factor corresponding to a geneset
 }
 \description{
 Projects dataset onto genesets using either NMF or a nonnegative linear model

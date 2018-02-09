@@ -1,12 +1,3 @@
-## NMF functions
-
-## KL divergence. Pseudocounts added to avoid NAs
-.kl_div <- function(x, y, pseudocount = 1e-12) {
-  x <- x + pseudocount; y <- y + pseudocount;
-  stopifnot(length(x) == length(y))
-  return(x*log(x/y) - x + y)
-}
-
 
 ## NMF initialization
 .pos <- function(x) { as.numeric(x >= 0) * x }
@@ -92,6 +83,14 @@
 }
 
 
+## KL divergence. Pseudocounts added to avoid NAs
+.kl_div <- function(x, y, pseudocount = 1e-12) {
+  x <- x + pseudocount; y <- y + pseudocount;
+  stopifnot(length(x) == length(y))
+  return(x*log(x/y) - x + y)
+}
+
+
 #' Determines the optimal number of NMF factors to use via reconstruction error
 #'
 #' @param A Input data matrix
@@ -101,7 +100,8 @@
 #' @param do.plot Whether to plot the reconstruction error
 #' @param seed Random seed for selecting missing data
 #' @param na.frac Fraction of data to set as missing
-#' @param loss Loss function to use
+#' @param loss Loss function to use for NMF
+#' @param recon.err Error function to minimize
 #' @param max.iter Maximum iterations for NMF run
 #'
 #' @return Reconstruction error at each number of NMF factors specified in k.range
@@ -109,29 +109,42 @@
 #' @export
 #'
 FindNumFactors <- function(A, k.range = seq(1,10,1), alpha = 0, n.cores = 1, do.plot = T,
-                           seed = NULL, na.frac = 0.3, loss = "mse", max.iter = 1000) {
+                           seed = NULL, na.frac = 0.3, loss = "mse", recon.err = "mse", max.iter = 1000) {
   if (!is.null(seed)) { set.seed(seed) }
-  A <- as.matrix(A)
+  if (!loss %in% c("mse", "mkl")) { stop("Invalid loss function") }
+  if (!recon.err %in% c("mse", "mkl", "pearson", "spearman")) { stop("Invalid error function") }
 
-  ind <- sample(length(A), na.frac*length(A));
+  A <- as.matrix(A)
+  nzero <- which(A > 0)
+  # ind <- sample(nzero, na.frac*length(nzero));
+  ind <- sample(length(A), na.frac*length(A))
   A2 <- A;
   A2[ind] <- NA;
 
-  A.ind <- A[ind]
+  A.ind <- as.numeric(A[ind])
   err <- sapply(k.range, function(k) {
     z <- NNLM::nnmf(A2, k, alpha = c(alpha, alpha, 0), n.threads = n.cores, verbose = 0, loss = loss)
-    A_hat <- with(z, W %*% H)
-    mse  <- mean((A_hat[ind] - A.ind)^2)
-    mkl <- mean(.kl_div(A.ind, A_hat[ind]))
-    return(c(mse, mkl))
-  })
+    A.hat <- with(z, W %*% H)
+    A.hat.ind <- as.numeric(A.hat[ind])
 
-  if (loss == "mse") { j <- 1; } else { j <- 2; }
-  min.idx <- which.min(err[j,]);
+    mse  <- mean((A.ind - A.hat.ind)^2)
+    mkl <- mean(.kl_div(A.ind, A.hat.ind))
+    pearson.r <- cor(A.ind, A.hat.ind)
+    spearman.r <- cor(A.ind, A.hat.ind, method = "spearman")
+
+    return(c(mse, mkl, pearson.r, spearman.r))
+  })
+  rownames(err) <- c("mse", "mkl", "pearson", "spearman")
+
+  if (recon.err %in% c("pearson", "spearman")) {
+    min.idx <- which.max(err[recon.err,])
+  } else {
+    min.idx <- which.min(err[recon.err,])
+  }
 
   if (do.plot) {
-    plot(k.range, err[1,], col = "blue", type = 'b', main = "MSE");
-    plot(k.range, err[2,], col = "red", type = 'b', main = "MKL");
+    plot(k.range, err[recon.err,], col = "blue", type = 'b', main = "Model selection",
+         xlab = "Number of factors", ylab = recon.err)
   }
 
   res <- list()
@@ -191,23 +204,43 @@ RunNMF <- function(A, k, alpha = 0, init = "random", n.cores = 1, loss = "mse", 
     nmf.res <- NNLM::nnmf(A, k = k, alpha = alpha, init = nmf.init, n.threads = n.cores, loss = loss)
   }
 
-  colnames(nmf.res$W) <- rownames(nmf.res$H) <- sapply(1:ncol(nmf.res$W), function(i) paste("nmf", i, sep = "_"))
+  colnames(nmf.res$W) <- rownames(nmf.res$H) <- sapply(1:ncol(nmf.res$W), function(i) paste("factor", i, sep = "_"))
   return(nmf.res)
 }
 
 
-#' Projects new data onto existing NMF decomposition
+#' Projects new features onto existing factor decomposition
+#'
+#' @param newdata New data matrix
+#' @param H Existing factor scores
+#' @param alpha Regularization parameter
+#' @param loss Loss function to use
+#' @param n.cores Number of cores to use
+#'
+#' @return W matrix (feature loadings) for newdata
+#'
+#' @export
+#'
+ProjectFeatures <- function(newdata, H, alpha = rep(0,3), loss = "mse", n.cores = 1) {
+  lm.out <- NNLM::nnlm(t(H), t(newdata), alpha = alpha, loss = loss, n.threads = n.cores)
+  return(t(lm.out$coefficients))
+}
+
+
+#' Projects new samples onto existing factor decomposition
 #'
 #' @param newdata New data matrix
 #' @param W Existing feature loadings
 #' @param alpha Regularization parameter
 #' @param loss Loss function to use
+#' @param n.cores Number of cores to use
 #'
 #' @return H matrix (scores) for newdata
 #'
 #' @export
 #'
-ProjectNMF <- function(newdata, W, alpha = rep(0,3), loss = "mse") {
-  lm.out <- NNLM::nnlm(W, newdata, alpha = alpha, loss = loss)
+ProjectSamples <- function(newdata, W, alpha = rep(0,3), loss = "mse", n.cores = 1) {
+  lm.out <- NNLM::nnlm(W, newdata, alpha = alpha, loss = loss, n.threads = n.cores)
   return(lm.out$coefficients)
 }
+

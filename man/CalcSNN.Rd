@@ -20,7 +20,7 @@ computing the neighborhood overlap for the SNN construction.}
 \item{print.output}{Whether or not to print output to the console}
 }
 \value{
-Returns the object with object@snn filled
+Returns similarity matrix in sparse matrix format
 }
 \description{
 SNN Graph Construction. Adapted from Seurat.
