@@ -247,7 +247,7 @@ PlotSWNE <- function(swne.embedding, alpha.plot = 0.25, sample.groups = NULL, do
   }
 
   if (!is.null(feature.coords)) {
-    ggobj <- ggobj + geom_point(data = feature.coords, aes(x, y), size = 2.5, color = "darkblue")
+    ggobj <- ggobj + geom_point(data = feature.coords, aes(x, y), size = 2.5, color = "darkred")
   }
 
   ## Plot text labels
@@ -333,7 +333,7 @@ FeaturePlotSWNE <- function(swne.embedding, feature.scores, feature.name = NULL,
   ## Plot factors
   if (nrow(H.coords.plot) > 0) {
     label.pts <- rbind(H.coords.plot, feature.coords)
-    ggobj <- ggobj + geom_point(data = H.coords.plot, aes(x, y), size = 2.5, color = "darkblue")
+    ggobj <- ggobj + geom_point(data = H.coords.plot, aes(x, y), size = 2.5, color = "darkred")
     ggobj <- ggobj + ggrepel::geom_text_repel(data = label.pts, mapping = aes(x, y, label = name),
                                               size = label.size, box.padding = 0.15)
   } else if (!is.null(feature.coords)) {
