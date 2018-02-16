@@ -88,6 +88,17 @@ WriteGenesets <- function(genesets, file.name) {
 }
 
 
+#' Creates a clusters x cells indicator matrix where a 1 means the cell belongs to that cluster
+#'
+#' @param clusters Cell clusters
+#' @return clusters x cells indicator matrix
+#'
+ClusterIndicatorMatrix <- function(clusters) {
+  clusters.list <- UnflattenGroups(clusters)
+  return(t(.genesets_indicator(clusters.list, return.numeric = T)))
+}
+
+
 #' Projects dataset onto genesets using either NMF or a nonnegative linear model
 #'
 #' @param norm.counts Normalized input data
@@ -366,4 +377,25 @@ WriteGroups <- function(groups.list, out.file) {
   fileConn = file(out.file)
   writeLines(group.data, fileConn)
   close(fileConn)
+}
+
+
+#### Misc utilities ####
+
+#' Convert dataframe to matrix, specifying all column names
+#'
+#' @param df Dataframe
+#' @param output.name Column of df to use as matrix values
+#' @param row.col Column of df to use as matrix rows
+#' @param col.col Column of df to use as matrix columns
+#'
+#' @return Matrix
+#' @importFrom reshape2 acast
+#' @export
+#'
+UnflattenDataframe <- function(df, output.name, row.col = 'Gene', col.col = 'Group') {
+  df <- df[c(row.col, col.col, output.name)]
+  colnames(df) <- c('row', 'column', output.name)
+  mat.out <- reshape2::acast(df, row~column, value.var = output.name)
+  return(mat.out)
 }
