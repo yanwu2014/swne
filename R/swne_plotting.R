@@ -327,13 +327,13 @@ FeaturePlotSWNE <- function(swne.embedding, feature.scores, feature.name = NULL,
                             guide_colorbar(title = feature.name, ticks = F, label = F))
 
   if (!is.null(feature.coords)) {
-    ggobj <- ggobj + geom_point(data = feature.coords, aes(x, y), size = 2.5, color = "darkblue")
+    ggobj <- ggobj + geom_point(data = feature.coords, aes(x, y), size = 2.5, color = "darkred")
   }
 
   ## Plot factors
   if (nrow(H.coords.plot) > 0) {
     label.pts <- rbind(H.coords.plot, feature.coords)
-    ggobj <- ggobj + geom_point(data = H.coords.plot, aes(x, y), size = 2.5, color = "darkred")
+    ggobj <- ggobj + geom_point(data = H.coords.plot, aes(x, y), size = 2.5, color = "darkblue")
     ggobj <- ggobj + ggrepel::geom_text_repel(data = label.pts, mapping = aes(x, y, label = name),
                                               size = label.size, box.padding = 0.15)
   } else if (!is.null(feature.coords)) {
