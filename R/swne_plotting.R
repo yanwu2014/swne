@@ -219,8 +219,8 @@ PlotSWNE <- function(swne.embedding, alpha.plot = 0.25, sample.groups = NULL, do
   sample.groups <- factor(sample.groups[rownames(sample.coords)])
   sample.coords$pt.size <- pt.size
 
+  set.seed(seed)
   if (!is.null(sample.groups)) {
-    set.seed(seed)
     sample.groups <- factor(sample.groups, levels = sample(levels(sample.groups)))
     sample.coords$sample.groups <- sample.groups[rownames(sample.coords)]
   } else {
@@ -368,8 +368,9 @@ FeaturePlotSWNE <- function(swne.embedding, feature.scores, feature.name = NULL,
 PlotDims <- function(dim.scores, sample.groups = NULL, x.lab = "tsne1", y.lab = "tsne2",
                      main.title = NULL, pt.size = 1.0, font.size = 12, alpha.plot = 1.0, do.label = T,
                      label.size = 4, show.legend = T, show.axes = T, seed = NULL) {
+
+  set.seed(seed)
   if (!is.null(sample.groups)) {
-    set.seed(seed)
     sample.groups <- factor(sample.groups, levels = sample(levels(sample.groups)))
   }
 
