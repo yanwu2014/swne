@@ -28,5 +28,6 @@ Imports:
   reshape,
   usedist,
   plyr,
-  liger
+  liger,
+  hash
 RoxygenNote: 6.0.1
