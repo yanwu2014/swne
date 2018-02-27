@@ -367,7 +367,7 @@ DesignMatrix <- function(groups.list, max.groups = 2, min.cells = 5, drop.cells 
 }
 
 .single_groups <- function(groups.list, min.cells = 1) {
-  groups.matrix <- DesignMatrix(groups.list, max.genotypes = 1, min.cells = min.cells)
+  groups.matrix <- DesignMatrix(groups.list, max.groups = 1, min.cells = min.cells)
   groups.list <- lapply(colnames(groups.matrix), function(g) {
     rownames(groups.matrix)[which(groups.matrix[,g] == 1)]
   })
