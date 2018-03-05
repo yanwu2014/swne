@@ -16,7 +16,7 @@ We highly recommend using SWNE with either Seurat (http://satijalab.org/seurat/)
 For a quick example using the pbmc dataset from 10x genomics, see pbmc3k_swne.R and the pre-computed
 Seurat object under the Examples directory. The SWNE plot for the pbmc cells is shown below.
 
-<img src="Figures/pbmc3k_swne_plot.png" width="300" height="300" />
+<img src="Figures/pbmc3k_swne_plot.png" width="500" height="500" />
 
 ## Scripts
 To recreate the figures from our preprint, see the Scripts/ directory. The raw data for the hematopoietic cells can be
