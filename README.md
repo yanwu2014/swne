@@ -16,7 +16,7 @@ We highly recommend using SWNE with either Seurat (http://satijalab.org/seurat/)
 For a quick example using the pbmc dataset from 10x genomics, see pbmc3k_swne.R and the pre-computed
 Seurat object under the Examples directory.
 
-![SWNE plot of 3000 pbmc cells with key marker genes emberdded](Figures/pbmc3k_swne_plot.pdf)
+![SWNE plot of 3k pbmc cells with key marker genes emberdded](Figures/pbmc3k_swne_plot.png)
 
 ## Scripts
 To recreate the figures from our preprint, see the Scripts/ directory. The raw data is listed in the preprint.
