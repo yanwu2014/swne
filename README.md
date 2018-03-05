@@ -14,9 +14,10 @@ You can find our bioRxiv preprint here: https://www.biorxiv.org/content/early/20
 We highly recommend using SWNE with either Seurat (http://satijalab.org/seurat/) or Pagoda2 (https://github.com/hms-dbmi/pagoda2), two general single cell RNA-seq analysis pipelines. 
 
 For a quick example using the pbmc dataset from 10x genomics, see pbmc3k_swne.R and the pre-computed
-Seurat object under the Examples directory.
+Seurat object under the Examples directory. The SWNE plot for the pbmc cells is shown below.
 
-![SWNE plot of 3k pbmc cells with key marker genes emberdded](Figures/pbmc3k_swne_plot.png)
+<img src="Figures/pbmc3k_swne_plot.png" width="300" height="300" />
 
 ## Scripts
-To recreate the figures from our preprint, see the Scripts/ directory. The raw data is listed in the preprint.
+To recreate the figures from our preprint, see the Scripts/ directory. The raw data for the hematopoietic cells can be
+found at the GEO accession GSE72857, while the raw data for the neural cells can be found at the GEO accession GSE97930. The PBMC dataset can be found at the 10X genomics website: https://support.10xgenomics.com/single-cell-gene-expression/datasets/1.1.0/pbmc3k.
