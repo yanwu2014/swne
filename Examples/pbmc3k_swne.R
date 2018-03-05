@@ -34,7 +34,7 @@ n.comp.res <- FindNumFactors(norm.counts[var.genes,], k.range = k.range, n.cores
 n.comp.res$k
 
 ## Run NMF
-k <- 6
+k <- 8
 nmf.res <- RunNMF(norm.counts[var.genes,], k = k, alpha = 0, init = "ica", n.cores = n.cores, loss = loss)
 nmf.scores <- nmf.res$H
 
@@ -61,7 +61,8 @@ gene.factor.cors.plot <- gene.factor.cors[unique(top.factor.genes.df$feature),]
 ggHeat(gene.factor.cors.plot, clustering = "col")
 
 ## Rename some factors
-swne.embedding <- RenameFactors(swne.embedding, name.mapping = c("factor_1" = "B-Cell Signaling"))
+# swne.embedding <- RenameFactors(swne.embedding, name.mapping = c("factor_1" = "B-Cell Signaling"))
+swne.embedding$H.coords$name <- ""
 
 ## Pick some key genes to embed
 genes.embed <- c("MS4A1", "GNLY", "CD3E", "CD14", 
@@ -74,5 +75,7 @@ nmf.res$W <- ProjectFeatures(norm.counts, nmf.scores, loss = loss, n.cores = n.c
 swne.embedding <- EmbedFeatures(swne.embedding, nmf.res$W[genes.embed,], n_pull = 3)
 
 ## Remake SWNE plot
+pdf("pbmc3k_swne_plot.pdf", width = 6.5, height = 6.5)
 PlotSWNE(swne.embedding, alpha.plot = 0.4, sample.groups = cell.clusters, do.label = T,
          label.size = 4, pt.size = 1.5, show.legend = T, seed = seed)
+dev.off()
