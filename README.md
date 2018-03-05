@@ -1,7 +1,11 @@
 # swne
-Similarity Weighted Nonnegative Embedding (SWNE), a method for visualizing high dimensional datasets
+Similarity Weighted Nonnegative Embedding (SWNE), is a method for visualizing high dimensional datasets.
+SWNE uses Nonnegative Matrix Factorization to decompose datasets into latent factors, projects
+those factors onto 2 dimensions, and embeds samples and key features in 2 dimensions relative to the
+factors. SWNE can capture both the local and global dataset structure, and allows
+factors and relevant features to be embedded directly onto the visualization, facilitating interpretation
+of the data.
 
-## Manuscripts
 You can find our bioRxiv preprint here: https://www.biorxiv.org/content/early/2018/03/05/276261
 
 ## Installation instructions
@@ -19,7 +23,7 @@ is shown below.
 
 <img src="Figures/pbmc3k_swne_plot.png" width="550" height="550" />
 
-## Scripts
+## Recreating Figures
 To recreate the figures from our preprint, see the Scripts/ directory. The raw data for the hematopoietic cells can be
 found at the GEO accession GSE72857, while the raw data for the neural cells can be found at the GEO accession GSE97930. 
 The PBMC dataset can be found at the 10X genomics website: https://support.10xgenomics.com/single-cell-gene-expression/datasets/1.1.0/pbmc3k.
