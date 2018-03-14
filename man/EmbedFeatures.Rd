@@ -4,13 +4,15 @@
 \alias{EmbedFeatures}
 \title{Embeds features relative to factor coordinates}
 \usage{
-EmbedFeatures(swne.embedding, feature.assoc, alpha.exp = 1, n_pull = NULL,
-  scale.cols = T)
+EmbedFeatures(swne.embedding, feature.assoc, features.embed, alpha.exp = 1,
+  n_pull = NULL, scale.cols = T)
 }
 \arguments{
 \item{swne.embedding}{Existing swne embedding from EmbedSWNE}
 
 \item{feature.assoc}{Feature loadings or correlations (features x factors)}
+
+\item{features.embed}{Names of features to embed}
 
 \item{alpha.exp}{Increasing alpha.exp increases how much the factors "pull" the features}
 

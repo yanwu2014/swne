@@ -110,6 +110,7 @@ EmbedSWNE <- function(H, SNN = NULL, alpha.exp = 1, snn.exp = 1.0, n_pull = NULL
 #'
 #' @param swne.embedding Existing swne embedding from EmbedSWNE
 #' @param feature.assoc Feature loadings or correlations (features x factors)
+#' @param features.embed Names of features to embed
 #' @param alpha.exp Increasing alpha.exp increases how much the factors "pull" the features
 #' @param n_pull Number of factors pulling on each feature. Must be >= 3
 #' @param scale.cols Whether or not to scale the input columns to 0 - 1
@@ -117,9 +118,9 @@ EmbedSWNE <- function(H, SNN = NULL, alpha.exp = 1, snn.exp = 1.0, n_pull = NULL
 #'
 #' @export
 #'
-EmbedFeatures <- function(swne.embedding, feature.assoc, alpha.exp = 1, n_pull = NULL,
+EmbedFeatures <- function(swne.embedding, feature.assoc, features.embed, alpha.exp = 1, n_pull = NULL,
                           scale.cols = T) {
-  feature.assoc <- t(feature.assoc)
+  feature.assoc <- t(feature.assoc[features.embed,])
   stopifnot(nrow(swne.embedding$H.coords) == nrow(feature.assoc))
 
   if (scale.cols) {

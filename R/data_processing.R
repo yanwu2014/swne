@@ -239,3 +239,25 @@ ScaleCounts <- function(counts, batch = NULL, method = "log", adj.var = T, plot.
 
   return(norm.counts)
 }
+
+
+#' Embeds features relative to factor coordinates
+#'
+#' @param se.obj Seurat object with multiple batches aligned via CCA alignment
+#' @return Reconstructed gene expression matrix from the aligned CCs
+#'
+#' @export
+#'
+ExtractCCASeurat <- function(se.obj) {
+  if (!ncol(se.obj@dr$cca.aligned@cell.embeddings) != length(se.obj@cell.names)) {
+    stop("Run CCA alignment first")
+  }
+
+  cc.scores <- se.obj@dr$cca.aligned@cell.embeddings
+  cc.loadings <- se.obj@dr$cca@gene.loadings[,1:ncol(cc.scores)]
+
+  gene.expr <- cc.loadings %*% t(cc.scores)
+  gene.expr <- t(apply(gene.expr, 1, function(x) (x - min(x))/(max(x) - min(x))))
+
+  return(gene.expr)
+}
