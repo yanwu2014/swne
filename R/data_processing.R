@@ -241,14 +241,14 @@ ScaleCounts <- function(counts, batch = NULL, method = "log", adj.var = T, plot.
 }
 
 
-#' Embeds features relative to factor coordinates
+#' Reconstructs the gene expression matrix from the CCA gene loadings and cell embeddings
 #'
 #' @param se.obj Seurat object with multiple batches aligned via CCA alignment
-#' @return Reconstructed gene expression matrix from the aligned CCs
+#' @return Reconstructed gene expression matrix
 #'
 #' @export
 #'
-ExtractCCASeurat <- function(se.obj) {
+ExtractDebatchedSeurat <- function(se.obj) {
   if (!ncol(se.obj@dr$cca.aligned@cell.embeddings) != length(se.obj@cell.names)) {
     stop("Run CCA alignment first")
   }
