@@ -94,7 +94,7 @@ swne.embedding <- RenameFactors(swne.embedding, name.mapping = c("factor_4" = "M
 
 ## Embed selected genes onto swne plot
 genes.embed <- c("Apoe", "Mt2","Flt3", "Sun2", "Pglyrp1")
-swne.embedding <- EmbedFeatures(swne.embedding, nmf.res$W[genes.embed,], n_pull = 4, scale.cols = F)
+swne.embedding <- EmbedFeatures(swne.embedding, nmf.res$W, genes.embed, n_pull = 4, scale.cols = F)
 
 seed <- 3589274
 cluster_colors <- c("Bas" = "#E088B8", "DC" = "#46C7EF", "Eos" = "#EFAD1E", "Ery" = "#8CB3DF", "M" = "#53C0AD", 

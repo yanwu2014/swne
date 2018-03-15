@@ -38,7 +38,7 @@ top.assoc.genes.df <- SummarizeAssocFeatures(nmf.res$W, features.return = 2)
 
 swne.embedding <- EmbedSWNE(H, SNN = se.obj@snn, alpha.exp = 1, snn.exp = 1, n_pull = 4, dist.use = "IC")
 swne.embedding <- RenameFactors(swne.embedding, c("factor_1" = "biological_factor_1", "factor_2" = "biological_factor_2"))
-swne.embedding <- EmbedFeatures(swne.embedding, nmf.res$W[c("Gene5707", "Gene4298"),], n_pull = 4)
+swne.embedding <- EmbedFeatures(swne.embedding, nmf.res$W, c("Gene5707", "Gene4298"), n_pull = 4)
 
 seed <- 43859279
 pdf("sim_swne_plot_nolabels.pdf", width = 5, height = 5)

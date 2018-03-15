@@ -27,7 +27,7 @@ levels(cell.clusters)
 loss <- "mse" ## Loss function
 k.range <- seq(1,10,1) ## Range of factors to iterate over
 n.cores <- 16 ## Number of cores to use
-seed <- 32566 ## Set seed for 
+seed <- 32566 ## Set seed for
 
 ## Identify optimal number of factors
 n.comp.res <- FindNumFactors(norm.counts[var.genes,], k.range = k.range, n.cores = n.cores, do.plot = T, loss = loss)
@@ -40,7 +40,7 @@ nmf.scores <- nmf.res$H
 
 ## Run SWNE embedding
 snn.matrix <- se.obj@snn[colnames(nmf.scores), colnames(nmf.scores)]
-swne.embedding <- EmbedSWNE(nmf.scores, snn.matrix, alpha.exp = 1.0, snn.exp = 1, 
+swne.embedding <- EmbedSWNE(nmf.scores, snn.matrix, alpha.exp = 1.0, snn.exp = 1,
                             n_pull = 4, dist.use = "IC")
 
 ## Plot SWNE
@@ -49,7 +49,7 @@ PlotSWNE(swne.embedding, alpha.plot = 0.4, sample.groups = cell.clusters, do.lab
 
 ## Plot tSNE for comparison
 tsne.scores <- GetCellEmbeddings(se.obj, reduction.type = "tsne")
-PlotDims(tsne.scores, sample.groups = cell.clusters, pt.size = 1, label.size = 3, alpha = 0.5, 
+PlotDims(tsne.scores, sample.groups = cell.clusters, pt.size = 1, label.size = 3, alpha = 0.5,
          show.legend = F, seed = seed)
 
 ## Annotate factors with marker genes
@@ -65,14 +65,14 @@ ggHeat(gene.factor.cors.plot, clustering = "col")
 swne.embedding$H.coords$name <- ""
 
 ## Pick some key genes to embed
-genes.embed <- c("MS4A1", "GNLY", "CD3E", "CD14", 
+genes.embed <- c("MS4A1", "GNLY", "CD3E", "CD14",
                  "FCER1A", "FCGR3A", "LYZ", "PPBP", "CD8A")
 
 ## Calculate gene loadings for all genes
 nmf.res$W <- ProjectFeatures(norm.counts, nmf.scores, loss = loss, n.cores = n.cores)
 
 ## Project key genes onto embedding
-swne.embedding <- EmbedFeatures(swne.embedding, nmf.res$W[genes.embed,], n_pull = 3)
+swne.embedding <- EmbedFeatures(swne.embedding, nmf.res$W, genes.embed, n_pull = 3)
 
 ## Remake SWNE plot
 pdf("pbmc3k_swne_plot.pdf", width = 6.5, height = 6.5)

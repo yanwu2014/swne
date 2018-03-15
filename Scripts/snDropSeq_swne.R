@@ -107,7 +107,7 @@ swne.embedding <- RenameFactors(swne.embedding, name.mapping =
 
 ## Embed genes
 genes.embed <- c("PLP1", "CBLN2", "LHFPL3", "SLC1A2", "FSTL5", "NRGN", "GRIK1")
-swne.embedding <- EmbedFeatures(swne.embedding, nmf.res$W[genes.embed,], n_pull = 4, scale.cols = F)
+swne.embedding <- EmbedFeatures(swne.embedding, nmf.res$W, genes.embed, n_pull = 4, scale.cols = F)
 
 pdf("snDropSeq_swne_plot_clusters.pdf", width = 6.5, height = 6.5)
 PlotSWNE(swne.embedding, alpha.plot = 0.4, sample.groups = clusters, do.label = T, 
@@ -198,7 +198,7 @@ dev.off()
 ex.swne.embedding$H.coords$name <- ""
 
 genes.embed <- c("NTNG1", "DAB1", "HS3ST2", "DCC", "POSTN")
-ex.swne.embedding <- EmbedFeatures(ex.swne.embedding, ex.nmf.res$W[genes.embed,], n_pull = 4, scale.cols = F)
+ex.swne.embedding <- EmbedFeatures(ex.swne.embedding, ex.nmf.res$W, genes.embed, n_pull = 4, scale.cols = F)
 
 pdf("snDropSeq_swne_ex_neurons.pdf", width = 6.5, height = 6.5)
 PlotSWNE(ex.swne.embedding, alpha.plot = 0.4, sample.groups = ex.clusters, do.label = T, 
