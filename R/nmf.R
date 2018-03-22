@@ -173,6 +173,7 @@ FindNumFactors <- function(A, k.range = seq(1,10,1), alpha = 0, n.cores = 1, do.
 RunNMF <- function(A, k, alpha = 0, init = "random", n.cores = 1, loss = "mse", n.rand.init = 5,
                    init.zeros = "uniform") {
   if (any(A < 0)) stop('The input matrix contains negative elements !')
+  if (k < 3) stop("k must be greater than or equal to 3 to create a viable SWNE plot")
 
   if (!init %in% c("ica", "nnsvd", "random")) {
     stop("Invalid initialization method")
