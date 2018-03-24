@@ -11,8 +11,10 @@ You can find our bioRxiv preprint here: https://www.biorxiv.org/content/early/20
 ## Installation instructions
 
 1. Install devtools with `install.packages("devtools")` if not already installed
-2. Install liger with `devtools::install_github("JEFworks/liger")`
-3. Install swne with `devtools::install_github("yanwu2014/swne")`
+2. Install swne with `devtools::install_github("yanwu2014/swne")`
+
+### Optionally install:
+1. liger with `devtools::install_github("JEFworks/liger")` for additioanl geneset enrichment functionality
 
 ## Usage
 We highly recommend using SWNE with either Seurat (http://satijalab.org/seurat/) or Pagoda2 (https://github.com/hms-dbmi/pagoda2), two general single cell RNA-seq analysis pipelines. 

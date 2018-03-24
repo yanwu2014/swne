@@ -1,7 +1,14 @@
 #### Matrix processing functions
 
-## Extract a field from a delimited string
-.extract_field <- function (string, field = 1, delim = "_") {
+#' Extract a field from a delimited string
+#'
+#' @param string Input string
+#' @param field Field to extract
+#' @param delim Character delimiter
+#'
+#' @export
+#'
+ExtractField <- function (string, field = 1, delim = "_") {
   fields <- as.numeric(unlist(strsplit(x = as.character(x = field), split = ",")))
   if (length(fields) == 1) {
     return(strsplit(string, split = delim)[[1]][field])
@@ -37,9 +44,9 @@ ReadData <- function(matrix.dir, make.sparse = T) {
     cell.names <- readLines(barcode.loc)
     gene.names <- readLines(gene.loc)
     if (all(grepl(pattern = "\\-1$", cell.names))) {
-      cell.names <- as.vector(as.character(sapply(cell.names, .extract_field, field = 1, delim = "-")))
+      cell.names <- as.vector(as.character(sapply(cell.names, ExtractField, field = 1, delim = "-")))
     }
-    rownames(counts) <- make.unique(names = as.character(sapply(gene.names, .extract_field, field = 2, delim = "\\t")))
+    rownames(counts) <- make.unique(names = as.character(sapply(gene.names, ExtractField, field = 2, delim = "\\t")))
     colnames(counts) <- cell.names
 
   } else {
@@ -53,9 +60,10 @@ ReadData <- function(matrix.dir, make.sparse = T) {
   return(counts)
 }
 
-## Internal function for winsorizing a matrix
-## Adapted from pagoda2: https://github.com/hms-dbmi/pagoda2
-.winsorize_matrix <- function(mat, trim) {
+
+#' Internal function for winsorizing a matrix
+#' Adapted from pagoda2: https://github.com/hms-dbmi/pagoda2
+winsorize_matrix <- function(mat, trim) {
   if(trim < 1) {
     trim <- trim*ncol(mat)
   }
@@ -85,7 +93,7 @@ FilterData <- function(x, min.samples.frac, trim, min.nonzero.features = 500, ma
   x <- x[ , Matrix::colSums(x > 0) > min.nonzero.features]
   x <- x[Matrix::rowSums(x > 0) > min.cells, ]
   if (trim > 0) {
-    x <- t(.winsorize_matrix(t(x), trim = trim))
+    x <- t(winsorize_matrix(t(x), trim = trim))
   }
   return(x)
 }
@@ -146,7 +154,7 @@ NormalizeCounts <- function(counts, depthScale = 1e3, batch = NULL) {
 #'
 #' @return Dataframe with adjusted feature variances
 #'
-#' @import mgcv
+#' @importFrom mgcv gam
 #' @export
 #'
 AdjustVariance <- function(counts, gam.k = 5, plot = F, max.adjusted.variance = 1e3, min.adjusted.variance = 1e-3,
@@ -165,7 +173,6 @@ AdjustVariance <- function(counts, gam.k = 5, plot = F, max.adjusted.variance = 
     m <- lm(v ~ m, data = df[vi,])
   } else {
     if(verbose) cat(" using gam ")
-    require(mgcv)
     m <- mgcv::gam(v ~ s(m, k = gam.k), data = df[vi,])
   }
   df$res <- -Inf;  df$res[vi] <- resid(m,type='response')
@@ -199,8 +206,8 @@ AdjustVariance <- function(counts, gam.k = 5, plot = F, max.adjusted.variance = 
 }
 
 
-## Freeman-Tukey transform for variance stabilization
-.ft_transform <- function(A) {
+#' Freeman-Tukey transform for variance stabilization
+ft_transform <- function(A) {
   return(sqrt(A) + sqrt(A + 1))
 }
 
@@ -236,7 +243,7 @@ ScaleCounts <- function(counts, batch = NULL, method = "log", adj.var = T, plot.
       x/length(x) * rank.scale
     })
   } else if (method == "ft") {
-    norm.counts@x <- .ft_transform(norm.counts@x)
+    norm.counts@x <- ft_transform(norm.counts@x)
   } else if (method == "log") {
     norm.counts@x <- log(norm.counts@x + 1)
   }

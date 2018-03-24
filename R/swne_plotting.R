@@ -10,7 +10,7 @@ NULL
 #### SWNE functions ####
 
 #' Helper function for normalizing vectors with different methods.
-.normalize_vector <- function(x, method = "scale", n_ranks = 10000) {
+normalize_vector <- function(x, method = "scale", n_ranks = 10000) {
   stopifnot(method %in% c("rank", "scale", "bounded"))
   if (method == "scale") {
     x.scale <- (x - mean(x))/sd(x)
@@ -27,7 +27,7 @@ NULL
 
 
 #' Calculates the coordinates of the NMF factors via Sammon mapping
-.get_factor_coords <- function(H, distance = "pearson") {
+get_factor_coords <- function(H, distance = "pearson") {
   H <- t(H)
   stopifnot(distance %in% c("pearson", "IC"))
   if (distance == "pearson") {
@@ -37,7 +37,7 @@ NULL
   }
 
   H.coords <- MASS::sammon(H.dist, k = 2, niter = 250)$points
-  H.coords <- apply(H.coords, 2, .normalize_vector, method = "bounded")
+  H.coords <- apply(H.coords, 2, normalize_vector, method = "bounded")
   colnames(H.coords) <- c("x","y")
 
   return(H.coords)
@@ -45,7 +45,7 @@ NULL
 
 
 #' Calculate sample coordinates using the NMF scores and NMF factor coordinates
-.get_sample_coords <- function(H, H.coords, alpha = 1, n_pull = NULL) {
+get_sample_coords <- function(H, H.coords, alpha = 1, n_pull = NULL) {
   if (n_pull < 3) { n_pull <- 3 }
   if (is.null(n_pull) || n_pull > nrow(H.coords)) { n_pull <- nrow(H.coords) }
 
@@ -83,12 +83,12 @@ NULL
 EmbedSWNE <- function(H, SNN = NULL, alpha.exp = 1, snn.exp = 1.0, n_pull = NULL, dist.use = "pearson",
                       min.snn = 0.0) {
   H <- H[ ,colSums(H) > 0]
-  H.coords <- .get_factor_coords(H, distance = dist.use)
+  H.coords <- get_factor_coords(H, distance = dist.use)
   H.coords <- data.frame(H.coords)
   H.coords$name <- rownames(H.coords)
   rownames(H.coords) <- NULL
 
-  sample.coords <- .get_sample_coords(H, H.coords, alpha = alpha.exp, n_pull = n_pull)
+  sample.coords <- get_sample_coords(H, H.coords, alpha = alpha.exp, n_pull = n_pull)
 
   if (!is.null(SNN)) {
     SNN@x[SNN@x < min.snn] <- 0
@@ -122,10 +122,10 @@ EmbedFeatures <- function(swne.embedding, feature.assoc, features.embed, alpha.e
   stopifnot(nrow(swne.embedding$H.coords) == nrow(feature.assoc))
 
   if (scale.cols) {
-    feature.assoc <- apply(feature.assoc, 2, .normalize_vector, method = "bounded")
+    feature.assoc <- apply(feature.assoc, 2, normalize_vector, method = "bounded")
   }
 
-  feature.coords <- .get_sample_coords(feature.assoc, swne.embedding$H.coords, alpha = alpha.exp, n_pull = n_pull)
+  feature.coords <- get_sample_coords(feature.assoc, swne.embedding$H.coords, alpha = alpha.exp, n_pull = n_pull)
   feature.coords <- data.frame(feature.coords)
   feature.coords$name <- rownames(feature.coords); rownames(feature.coords) <- NULL;
 
@@ -148,7 +148,7 @@ EmbedFeatures <- function(swne.embedding, feature.assoc, features.embed, alpha.e
 #' @export
 #'
 ProjectSWNE <- function(swne.embedding, H.test, SNN.test = NULL, alpha.exp = 1, snn.exp = 1, n_pull = NULL) {
-  sample.coords.test <- .get_sample_coords(H.test, swne.embedding$H.coords, alpha = alpha.exp, n_pull = n_pull)
+  sample.coords.test <- get_sample_coords(H.test, swne.embedding$H.coords, alpha = alpha.exp, n_pull = n_pull)
   sample.coords.train <- as.matrix(swne.embedding$sample.coords)
   sample.coords.all <- rbind(sample.coords.test, sample.coords.train)
 
@@ -306,7 +306,7 @@ FeaturePlotSWNE <- function(swne.embedding, feature.scores, feature.name = NULL,
   min.quantile <- feature.quantiles[[1]]; max.quantile <- feature.quantiles[[2]];
   feature.scores[feature.scores < min.quantile] <- min.quantile
   feature.scores[feature.scores > max.quantile] <- max.quantile
-  feature.scores <- .normalize_vector(feature.scores, method = "bounded")
+  feature.scores <- normalize_vector(feature.scores, method = "bounded")
 
   sample.coords$pt.size <- pt.size
   sample.coords$feature <- feature.scores
@@ -427,7 +427,7 @@ FeaturePlotDims <- function(dim.scores, feature.scores, feature.name = NULL, x.l
   min.quantile <- feature.quantiles[[1]]; max.quantile <- feature.quantiles[[2]];
   feature.scores[feature.scores < min.quantile] <- min.quantile
   feature.scores[feature.scores > max.quantile] <- max.quantile
-  feature.scores <- .normalize_vector(feature.scores, method = "bounded")
+  feature.scores <- normalize_vector(feature.scores, method = "bounded")
 
   sample.coords$pt.size <- pt.size
   sample.coords$feature <- feature.scores

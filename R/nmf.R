@@ -2,13 +2,12 @@
 
 ## NNSVD helper functions
 .pos <- function(x) { as.numeric(x >= 0) * x }
-
 .neg <- function(x) { - as.numeric(x < 0) * x }
-
 .norm <- function(x) { sqrt(drop(crossprod(x))) }
 
+
 #' Nonnegative SVD initialization
-.nnsvd_init <- function(A, k, LINPACK, eps, init.zeros) {
+nnsvd_init <- function(A, k, LINPACK, eps, init.zeros) {
   size <- dim(A);
   m <- size[1]; n <- size[2];
 
@@ -66,9 +65,9 @@
 #' Independent component analysis initialization.
 #' Negative values are set to a small, random number.
 #'
-#' @import ica
+#' @importFrom ica icafast
 #'
-.ica_init <- function(A, k, eps, init.zeros) {
+ica_init <- function(A, k, eps, init.zeros) {
   ica.res <- ica::icafast(t(A), nc = k)
   nmf.init <- list(W = ica.res$M, H = t(ica.res$S))
 
@@ -89,7 +88,7 @@
 
 
 #' KL divergence. Pseudocounts added to avoid NAs
-.kl_div <- function(x, y, pseudocount = 1e-12) {
+kl_div <- function(x, y, pseudocount = 1e-12) {
   x <- x + pseudocount; y <- y + pseudocount;
   stopifnot(length(x) == length(y))
   return(x*log(x/y) - x + y)
@@ -135,7 +134,7 @@ FindNumFactors <- function(A, k.range = seq(1,10,1), alpha = 0, n.cores = 1, do.
     A.hat.ind <- as.numeric(A.hat[ind])
 
     mse  <- mean((A.ind - A.hat.ind)^2)
-    mkl <- mean(.kl_div(A.ind, A.hat.ind))
+    mkl <- mean(kl_div(A.ind, A.hat.ind))
     pearson.r <- cor(A.ind, A.hat.ind)
     spearman.r <- cor(A.ind, A.hat.ind, method = "spearman")
 
@@ -196,9 +195,9 @@ RunNMF <- function(A, k, alpha = 0, init = "random", n.cores = 1, loss = "mse", 
   A.mean <- mean(A)
 
   if (init == "ica") {
-    nmf.init <- .ica_init(A, k, eps = 1e-8, init.zeros = init.zeros)
+    nmf.init <- ica_init(A, k, eps = 1e-8, init.zeros = init.zeros)
   } else if (init == "nnsvd") {
-    nmf.init <- .nnsvd_init(A, k, LINPACK = T, eps = 1e-8, init.zeros = init.zeros)
+    nmf.init <- nnsvd_init(A, k, LINPACK = T, eps = 1e-8, init.zeros = init.zeros)
   } else {
     nmf.init <- NULL
   }

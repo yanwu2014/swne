@@ -19,7 +19,7 @@ ReadGenesets <- function(genesets.file) {
 
 
 #' Helper function for filtering genesets
-.clean_genesets <- function(genesets, min.size = 5, max.size = 500, annot = FALSE) {
+clean_genesets <- function(genesets, min.size = 5, max.size = 500, annot = FALSE) {
   genesets <- as.list(genesets)
   size <- unlist(lapply(genesets, length))
   genesets <- genesets[size > min.size & size < max.size]
@@ -39,7 +39,7 @@ ReadGenesets <- function(genesets.file) {
 #'
 FilterGenesets <- function(genesets, gene.names, min.size = 5, max.size = 500) {
   genesets <- lapply(genesets, function (x) return(x[x %in% gene.names]))
-  genesets <- .clean_genesets(genesets, min.size = min.size, max.size = max.size)
+  genesets <- clean_genesets(genesets, min.size = min.size, max.size = max.size)
   return(genesets)
 }
 
@@ -63,7 +63,7 @@ WriteGenesets <- function(genesets, file.name) {
 #### Functions for annotating NMF factors ####
 
 #' Creates a genes x genesets indicator matrix
-.genesets_indicator <- function(genesets, inv = F, return.numeric = F) {
+genesets_indicator <- function(genesets, inv = F, return.numeric = F) {
   genes <- unique(unlist(genesets, F, F))
 
   ind <- matrix(F, length(genes), length(genesets))
@@ -95,7 +95,7 @@ WriteGenesets <- function(genesets, file.name) {
 #'
 ClusterIndicatorMatrix <- function(clusters) {
   clusters.list <- UnflattenGroups(clusters)
-  return(t(.genesets_indicator(clusters.list, return.numeric = T)))
+  return(t(genesets_indicator(clusters.list, return.numeric = T)))
 }
 
 
@@ -117,11 +117,11 @@ ProjectGenesets <- function(norm.counts, genesets, method = "lm", loss = "mse", 
   if (!method %in% c("lm", "mf")) { stop("Invalid method") }
 
   if (method == "lm") {
-    full.genesets.matrix <- .genesets_indicator(genesets, inv = F, return.numeric = T)
+    full.genesets.matrix <- genesets_indicator(genesets, inv = F, return.numeric = T)
     genesets.H <- ProjectSamples(norm.counts[rownames(full.genesets.matrix),], full.genesets.matrix,
                                   loss = loss, n.cores = n.cores)
   } else if (method == "mf") {
-    genesets.mask <- .genesets_indicator(genesets, inv = T)
+    genesets.mask <- genesets_indicator(genesets, inv = T)
     nmf.res <- NNLM::nnmf(as.matrix(norm.counts[rownames(genesets.mask),]), k = ncol(genesets.mask), loss = loss,
                           mask = list(W = genesets.mask), n.threads = n.cores)
     colnames(nmf.res$W) <- rownames(nmf.res$H) <- colnames(genesets.mask)
@@ -370,7 +370,7 @@ DesignMatrix <- function(groups.list, max.groups = 2, min.cells = 5, drop.cells 
 }
 
 #' Helper function for filtering out cells belonging to more than one group
-.single_groups <- function(groups.list, min.cells = 1) {
+single_groups <- function(groups.list, min.cells = 1) {
   groups.matrix <- DesignMatrix(groups.list, max.groups = 1, min.cells = min.cells)
   groups.list <- lapply(colnames(groups.matrix), function(g) {
     rownames(groups.matrix)[which(groups.matrix[,g] == 1)]
@@ -393,7 +393,7 @@ FlattenGroups <- function(groups.list) {
   cell.names <- unlist(groups.list, F, F)
   if (length(cell.names) > length(unique(cell.names))) {
     print("Warning: removing all samples belonging to multiple groups")
-    groups.list <- .single_groups(groups.list)
+    groups.list <- single_groups(groups.list)
     cell.names <- unlist(groups.list, F, F)
   }
 

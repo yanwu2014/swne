@@ -29,8 +29,8 @@ Imports:
   plyr,
   ica,
   hash,
+  mgcv,
   FNN
 Suggests:
-  liger,
-  Seurat
+  liger
 RoxygenNote: 6.0.1
