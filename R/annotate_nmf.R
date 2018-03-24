@@ -1,4 +1,4 @@
-## Geneset handling functions
+#### Geneset handling functions ####
 
 #' Load genesets from gmt file. For more info on the .gmt file format, see [link]
 #'
@@ -18,7 +18,7 @@ ReadGenesets <- function(genesets.file) {
 }
 
 
-## Helper function for filtering genesets
+#' Helper function for filtering genesets
 .clean_genesets <- function(genesets, min.size = 5, max.size = 500, annot = FALSE) {
   genesets <- as.list(genesets)
   size <- unlist(lapply(genesets, length))
@@ -60,9 +60,9 @@ WriteGenesets <- function(genesets, file.name) {
 }
 
 
-## Functions for annotating NMF factors
+#### Functions for annotating NMF factors ####
 
-## Creates a genes x genesets indicator matrix
+#' Creates a genes x genesets indicator matrix
 .genesets_indicator <- function(genesets, inv = F, return.numeric = F) {
   genes <- unique(unlist(genesets, F, F))
 
@@ -110,6 +110,7 @@ ClusterIndicatorMatrix <- function(clusters) {
 #'
 #' @return List of gene loadings and factor scores, with each factor corresponding to a geneset
 #'
+#' @import NNLM
 #' @export
 #'
 ProjectGenesets <- function(norm.counts, genesets, method = "lm", loss = "mse", n.cores = 1) {
@@ -177,11 +178,14 @@ FactorAssociation <- function(feature.mat, nmf.scores, n.cores = 8, metric = "IC
   snow::clusterExport(cl, c("nmf.scores", "MutualInf"), envir = environment())
   if (metric == "IC") {
     source.log <- snow::parLapply(cl, 1:length(cl), function(i) library(MASS))
-    assoc <- t(snow::parApply(cl, feature.mat, 1, function(v) apply(nmf.scores, 1, function(u) MutualInf(u, v))))
+    assoc <- t(snow::parApply(cl, feature.mat, 1, function(v)
+      apply(nmf.scores, 1, function(u) MutualInf(u, v))))
   } else if (metric == "pearson") {
-    assoc <- t(snow::parApply(cl, feature.mat, 1, function(v) apply(nmf.scores, 1, function(u) cor(u, v))))
+    assoc <- t(snow::parApply(cl, feature.mat, 1, function(v)
+      apply(nmf.scores, 1, function(u) cor(u, v))))
   } else if (metric == "spearman") {
-    assoc <- t(snow::parApply(cl, feature.mat, 1, function(v) apply(nmf.scores, 1, function(u) cor(u, v, method = "spearman"))))
+    assoc <- t(snow::parApply(cl, feature.mat, 1, function(v)
+      apply(nmf.scores, 1, function(u) cor(u, v, method = "spearman"))))
   } else {
     stop("Invalid correlation metric")
   }
@@ -232,7 +236,6 @@ SummarizeAssocFeatures <- function(feature.factor.assoc, features.return = 10, f
 #' @return Dataframe summarizing the gsea results
 #'
 #' @import liger
-#'
 #' @export
 #'
 RunGSEA <- function(gene.factor.assoc, genesets, power = 1, n.rand = 1000, n.cores = 1) {
@@ -296,7 +299,7 @@ MutualInf <-  function(x, y, n.grid = 25) {
 }
 
 
-## Genotype/group handling functions
+#### Genotype/group handling functions ####
 
 #' Convert groups list to design matrix
 #'
@@ -366,6 +369,7 @@ DesignMatrix <- function(groups.list, max.groups = 2, min.cells = 5, drop.cells 
   return(design.mat)
 }
 
+#' Helper function for filtering out cells belonging to more than one group
 .single_groups <- function(groups.list, min.cells = 1) {
   groups.matrix <- DesignMatrix(groups.list, max.groups = 1, min.cells = min.cells)
   groups.list <- lapply(colnames(groups.matrix), function(g) {
@@ -374,6 +378,7 @@ DesignMatrix <- function(groups.list, max.groups = 2, min.cells = 5, drop.cells 
   names(groups.list) <- colnames(groups.matrix)
   return(groups.list)
 }
+
 
 #' Convert list of sample groups into a flat vector.
 #' Removes all samples belonging to multiple groups

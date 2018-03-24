@@ -1,12 +1,13 @@
+#### NMF initialization functions
 
-## NMF initialization
+## NNSVD helper functions
 .pos <- function(x) { as.numeric(x >= 0) * x }
 
 .neg <- function(x) { - as.numeric(x < 0) * x }
 
 .norm <- function(x) { sqrt(drop(crossprod(x))) }
 
-## Nonnegative SVD initialization
+#' Nonnegative SVD initialization
 .nnsvd_init <- function(A, k, LINPACK, eps, init.zeros) {
   size <- dim(A);
   m <- size[1]; n <- size[2];
@@ -62,7 +63,11 @@
 }
 
 
-## Independent component analysis initialization. Negative values are set to a small, random number.
+#' Independent component analysis initialization.
+#' Negative values are set to a small, random number.
+#'
+#' @import ica
+#'
 .ica_init <- function(A, k, eps, init.zeros) {
   ica.res <- ica::icafast(t(A), nc = k)
   nmf.init <- list(W = ica.res$M, H = t(ica.res$S))
@@ -83,7 +88,7 @@
 }
 
 
-## KL divergence. Pseudocounts added to avoid NAs
+#' KL divergence. Pseudocounts added to avoid NAs
 .kl_div <- function(x, y, pseudocount = 1e-12) {
   x <- x + pseudocount; y <- y + pseudocount;
   stopifnot(length(x) == length(y))
@@ -106,6 +111,7 @@
 #'
 #' @return Reconstruction error at each number of NMF factors specified in k.range
 #'
+#' @import NNLM
 #' @export
 #'
 FindNumFactors <- function(A, k.range = seq(1,10,1), alpha = 0, n.cores = 1, do.plot = T,
@@ -113,6 +119,7 @@ FindNumFactors <- function(A, k.range = seq(1,10,1), alpha = 0, n.cores = 1, do.
   if (!is.null(seed)) { set.seed(seed) }
   if (!loss %in% c("mse", "mkl")) { stop("Invalid loss function") }
   if (!recon.err %in% c("mse", "mkl", "pearson", "spearman")) { stop("Invalid error function") }
+  if (ncol(A) > 15000) print("Warning: This function can be slow for very large datasets")
 
   A <- as.matrix(A)
   nzero <- which(A > 0)
@@ -168,6 +175,7 @@ FindNumFactors <- function(A, k.range = seq(1,10,1), alpha = 0, n.cores = 1, do.
 #'
 #' @return List of W (features x factors) and H (factors x samples)
 #'
+#' @import NNLM
 #' @export
 #'
 RunNMF <- function(A, k, alpha = 0, init = "random", n.cores = 1, loss = "mse", n.rand.init = 5,
@@ -220,6 +228,7 @@ RunNMF <- function(A, k, alpha = 0, init = "random", n.cores = 1, loss = "mse", 
 #'
 #' @return W matrix (feature loadings) for newdata
 #'
+#' @import NNLM
 #' @export
 #'
 ProjectFeatures <- function(newdata, H, alpha = rep(0,3), loss = "mse", n.cores = 1) {
@@ -238,6 +247,7 @@ ProjectFeatures <- function(newdata, H, alpha = rep(0,3), loss = "mse", n.cores 
 #'
 #' @return H matrix (scores) for newdata
 #'
+#' @import NNLM
 #' @export
 #'
 ProjectSamples <- function(newdata, W, alpha = rep(0,3), loss = "mse", n.cores = 1) {

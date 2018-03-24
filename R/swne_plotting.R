@@ -1,8 +1,6 @@
 #' @import methods
 #' @import ggplot2
 #' @import RColorBrewer
-#' @import Matrix
-#' @import NNLM
 #' @import ggrepel
 #' @import usedist
 #' @useDynLib swne
@@ -11,7 +9,7 @@ NULL
 
 #### SWNE functions ####
 
-## Normalize vector with different methods.
+#' Helper function for normalizing vectors with different methods.
 .normalize_vector <- function(x, method = "scale", n_ranks = 10000) {
   stopifnot(method %in% c("rank", "scale", "bounded"))
   if (method == "scale") {
@@ -28,7 +26,7 @@ NULL
 }
 
 
-## Calculate the coordinates of the NMF factors via Sammon mapping
+#' Calculates the coordinates of the NMF factors via Sammon mapping
 .get_factor_coords <- function(H, distance = "pearson") {
   H <- t(H)
   stopifnot(distance %in% c("pearson", "IC"))
@@ -46,7 +44,7 @@ NULL
 }
 
 
-## Calculate sample coordinates using the NMF scores and NMF factor coordinates
+#' Calculate sample coordinates using the NMF scores and NMF factor coordinates
 .get_sample_coords <- function(H, H.coords, alpha = 1, n_pull = NULL) {
   if (n_pull < 3) { n_pull <- 3 }
   if (is.null(n_pull) || n_pull > nrow(H.coords)) { n_pull <- nrow(H.coords) }

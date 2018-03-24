@@ -27,7 +27,7 @@ levels(cell.clusters)
 loss <- "mse" ## Loss function
 k.range <- seq(1,10,1) ## Range of factors to iterate over
 n.cores <- 16 ## Number of cores to use
-seed <- 32566 ## Set seed for
+seed <- 32566 ## Set seed for cluster colors
 
 ## Identify optimal number of factors
 n.comp.res <- FindNumFactors(norm.counts[var.genes,], k.range = k.range, n.cores = n.cores, do.plot = T, loss = loss)
@@ -75,7 +75,5 @@ nmf.res$W <- ProjectFeatures(norm.counts, nmf.scores, loss = loss, n.cores = n.c
 swne.embedding <- EmbedFeatures(swne.embedding, nmf.res$W, genes.embed, n_pull = 3)
 
 ## Remake SWNE plot
-pdf("pbmc3k_swne_plot.pdf", width = 6.5, height = 6.5)
 PlotSWNE(swne.embedding, alpha.plot = 0.4, sample.groups = cell.clusters, do.label = T,
          label.size = 4, pt.size = 1.5, show.legend = T, seed = seed)
-dev.off()

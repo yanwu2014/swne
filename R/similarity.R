@@ -1,4 +1,4 @@
-## SNN functions
+#### SNN functions ####
 
 #' SNN Graph Construction. Adapted from Seurat.
 #'

@@ -1,4 +1,4 @@
-## Matrix processing functions
+#### Matrix processing functions
 
 ## Extract a field from a delimited string
 .extract_field <- function (string, field = 1, delim = "_") {
@@ -18,6 +18,7 @@
 #'
 #' @return Returns either a dense or sparse matrix
 #'
+#' @import Matrix
 #' @export
 #'
 ReadData <- function(matrix.dir, make.sparse = T) {
@@ -32,7 +33,7 @@ ReadData <- function(matrix.dir, make.sparse = T) {
     if (!file.exists(gene.loc)) { stop("Gene name file missing") }
     if (!file.exists(matrix.loc)) { stop("Expression matrix file missing") }
 
-    counts <- readMM(file = matrix.loc)
+    counts <- Matrix::readMM(file = matrix.loc)
     cell.names <- readLines(barcode.loc)
     gene.names <- readLines(gene.loc)
     if (all(grepl(pattern = "\\-1$", cell.names))) {
@@ -75,6 +76,7 @@ ReadData <- function(matrix.dir, make.sparse = T) {
 #'
 #' @return Filtered and winsorized data matrix
 #'
+#' @import Matrix
 #' @export
 #'
 FilterData <- function(x, min.samples.frac, trim, min.nonzero.features = 500, max.sample.sum = 50000) {
@@ -98,6 +100,7 @@ FilterData <- function(x, min.samples.frac, trim, min.nonzero.features = 500, ma
 #'
 #' @return Normalized data matrix with batch effects removed
 #'
+#' @import Matrix
 #' @export
 #'
 NormalizeCounts <- function(counts, depthScale = 1e3, batch = NULL) {
@@ -143,6 +146,7 @@ NormalizeCounts <- function(counts, depthScale = 1e3, batch = NULL) {
 #'
 #' @return Dataframe with adjusted feature variances
 #'
+#' @import mgcv
 #' @export
 #'
 AdjustVariance <- function(counts, gam.k = 5, plot = F, max.adjusted.variance = 1e3, min.adjusted.variance = 1e-3,
