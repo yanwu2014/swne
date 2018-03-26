@@ -1,0 +1,146 @@
+---
+title: "SWNE Walkthrough using Seurat"
+author: "Yan Wu"
+date: "3/26/2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+This is a quick walkthrough demonstrating how to generate SWNE plots alongside the [Seurat](http://satijalab.org/seurat/) pipeline using a [3k PBMC](https://support.10xgenomics.com/single-cell-gene-expression/datasets/1.1.0/pbmc3k) dataset as an example.
+
+To save time we will be using the pre-computed Seurat object `pbmc3k_seurat.Robj`.
+
+First let's load the required libraries
+```{r message=FALSE,warning=FALSE}
+library(Seurat)
+library(swne)
+```
+
+Next let's load the Seurat object
+```{r}
+se.obj <- readRDS("pbmc3k_seurat.Robj")
+```
+
+Pull out the raw counts, filter cells and genes, and trim each gene to reduce outliers
+```{r}
+counts <- as(se.obj@raw.data, "dgCMatrix")[,se.obj@cell.names]
+counts <- FilterData(counts, min.samples.frac = 0.0025, min.nonzero.features = 200, trim = 0.001)
+dim(counts)
+```
+
+We need to scale the data and adjust gene variance, while keeping the scaled matrix nonnegative.
+```{r}
+norm.counts <- ScaleCounts(counts, batch = NULL, method = "log", adj.var = T)
+```
+
+Most scRNA-seq pipelines only use a subset of highly overdispersed genes for analysis. We'll pull out those variable genes here, as well as the cluster labels.
+```{r}
+## Pull out overdispersed genes as defined by Seurat
+var.genes <- intersect(se.obj@var.genes, rownames(counts));
+length(var.genes)
+
+## Pull out cell clusters as defined by Seurat
+cell.clusters <- se.obj@ident; names(cell.clusters) <- se.obj@cell.names;
+levels(cell.clusters)
+```
+
+Set some key parameters. The loss function defines what type of error metric the NMF algorithm will use. We typically use the mean squared error (mse). Another metric is the mean KL divergence (mkl). Also defines the number of cores to use.
+```{r}
+loss <- "mse" ## Loss function
+n.cores <- 16 ## Number of cores to use
+```
+
+We use the `FindNumFactors` function to identify the optimal number of factors to use. This function can be slow for large datasets, since it iterates over different values of `k`, so a simple "hack" is to just set `k` equal to the number of significant principal components.
+```{r}
+k.range <- seq(2,10,2) ## Range of factors to iterate over
+k.res <- FindNumFactors(norm.counts[var.genes,], k.range = k.range, n.cores = n.cores, do.plot = T, loss = loss)
+k.res$k
+```
+
+We then run the NMF decomposition. We can initialize the NMF using either Independent Component Analysis (ica), Nonnegative SVD (nnsvd), or a completely random initialization. The output of `RunNMF` is a list of the gene loadings (W) and NMF embedding (H).
+```{r}
+k <- 6
+nmf.res <- RunNMF(norm.counts[var.genes,], k = k, alpha = 0, init = "ica", n.cores = n.cores, loss = loss)
+nmf.scores <- nmf.res$H
+```
+
+We can either use the pre-computed Shared Nearest Neighbors (SNN) matrix from Seurat or re-compute it ourselves.
+```{r}
+# pc.scores <- t(GetCellEmbeddings(se.obj, reduction.type = "pca", dims.use = 1:k))
+# snn <- CalcSNN(pc.scores)
+snn <- se.obj@snn
+```
+
+Runs the SWNE embedding. The three key parameters are `alpha.exp`, `snn.exp`, and `n_pull`, which control how the factors and neighboring cells affect the cell coordinates.
+```{r message=FALSE,warning=FALSE}
+alpha.exp <- 1.25 # Increase this > 1.0 to move the cells closer to the factors. Values > 2 start to distort the data.
+snn.exp <- 1.0 # Lower this < 1.0 to move similar cells closer to each other
+n_pull <- 4 # The number of factors pulling on each cell. Must be at least 3.
+swne.embedding <- EmbedSWNE(nmf.scores, snn, alpha.exp = alpha.exp, snn.exp = snn.exp,
+                            n_pull = n_pull, dist.use = "IC")
+```
+
+Makes the initial SWNE plot. We set a seed so that the cluster colors are reproducible across different plots.
+```{r fig.width=5,fig.height=5}
+color.seed <- 32566 ## Set seed for cluster colors
+PlotSWNE(swne.embedding, alpha.plot = 0.4, sample.groups = cell.clusters, do.label = T,
+         label.size = 3.5, pt.size = 1.25, show.legend = F, seed = color.seed)
+```
+
+Create a t-SNE plot for comparison
+```{r fig.width=5,fig.height=5}
+tsne.scores <- GetCellEmbeddings(se.obj, reduction.type = "tsne")
+PlotDims(tsne.scores, sample.groups = cell.clusters, pt.size = 1, label.size = 3.5, alpha = 0.4,
+         show.legend = F, seed = color.seed, show.axes = F)
+```
+
+For now, let's hide the factors by setting their names to the empty string `""`. We'll interpret them later
+```{r}
+swne.embedding$H.coords$name <- ""
+```
+
+To help with interpreting these cell clusters, let's pick some key PBMC genes to embed.
+```{r}
+genes.embed <- c("MS4A1", "GNLY", "CD3E", "CD14",
+                 "FCER1A", "FCGR3A", "LYZ", "PPBP", "CD8A")
+```
+
+Since we only ran NMF on the overdispersed genes, we need to project the rest of the genes onto the NMF projection to get gene loadings for all genes.
+```{r}
+nmf.res$W <- ProjectFeatures(norm.counts, nmf.scores, loss = loss, n.cores = n.cores)
+```
+
+Now we can embed the key PBMC genes onto the visualization and remake the plot
+```{r}
+swne.embedding <- EmbedFeatures(swne.embedding, nmf.res$W, genes.embed, n_pull = 4)
+```
+
+We'll remake the SWNE plot, this time showing the embedded genes. The closer a cell or a cluster is to a gene, the higher the expression level.
+```{r fig.width=5,fig.height=5}
+PlotSWNE(swne.embedding, alpha.plot = 0.4, sample.groups = cell.clusters, do.label = T,
+         label.size = 3.5, pt.size = 1.25, show.legend = F, seed = color.seed)
+```
+
+We can validate this by overlaying the expression of one of these key genes onto the plot.
+```{r fig.width=5,fig.height=5}
+gene.use <- "CD8A"
+gene.expr <- norm.counts[gene.use,]
+FeaturePlotSWNE(swne.embedding, gene.expr, gene.use, alpha.plot = 0.4, label.size = 3.5, pt.size = 1.25)
+```
+
+We can also interpret the factors by using the gene loadings matrix. Here, we extract the top 3 genes for each factor by gene loading. Since NMF tends to create a parts-based representation of the data, the factors often correspond to key biological processes or gene modules that explain the data.
+```{r}
+gene.loadings <- nmf.res$W
+top.factor.genes.df <- SummarizeAssocFeatures(gene.loadings, features.return = 3)
+head(top.factor.genes.df)
+```
+
+We can also make a heatmap to visualize the top factors for each gene
+```{r fig.width=4,fig.height=5.5}
+gene.loadings.heat <- gene.loadings[unique(top.factor.genes.df$feature),]
+ggHeat(gene.loadings.heat, clustering = "col")
+```
+
