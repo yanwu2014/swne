@@ -158,7 +158,7 @@ NormalizeCounts <- function(counts, depthScale = 1e3, batch = NULL) {
 #' @export
 #'
 AdjustVariance <- function(counts, gam.k = 5, plot = F, max.adjusted.variance = 1e3, min.adjusted.variance = 1e-3,
-                           verbose = T, q.val = 0.05) {
+                        verbose = T, q.val = 0.05) {
   counts <- Matrix::t(counts)
 
   if(verbose) cat("calculating variance fit ...")
@@ -167,13 +167,13 @@ AdjustVariance <- function(counts, gam.k = 5, plot = F, max.adjusted.variance = 
   df$m <- log(df$m); df$v <- log(df$v);
   rownames(df) <- colnames(counts);
   vi <- which(is.finite(df$v) & df$nobs >= 0);
-  if(length(vi) < gam.k*1.5) { gam.k=1 };# too few genes
+  if(length(vi) < gam.k*1.5) { gam.k = 1 };# too few genes
   if(gam.k < 2) {
     if(verbose) cat(" using lm ")
     m <- lm(v ~ m, data = df[vi,])
   } else {
     if(verbose) cat(" using gam ")
-    m <- mgcv::gam(v ~ s(m, k = gam.k), data = df[vi,])
+    m <- mgcv::gam(as.formula(paste0("v ~ s(m, k = ", gam.k, ")")), data = df[vi,])
   }
   df$res <- -Inf;  df$res[vi] <- resid(m,type='response')
   n.obs <- df$nobs; #diff(counts@p)
@@ -219,19 +219,20 @@ ft_transform <- function(A) {
 #' @param method Scaling method
 #' @param adj.var Whether or not to apply mean variance adjustment for features
 #' @param plot.var.adj Whether or not to plot the mean variance relationship
+#' @param gam.k Number of additive models to use for variance modeling
 #'
 #' @return Normalized and scaled data matrix
 #'
 #' @export
 #'
-ScaleCounts <- function(counts, batch = NULL, method = "log", adj.var = T, plot.var.adj = F) {
+ScaleCounts <- function(counts, batch = NULL, method = "log", adj.var = T, plot.var.adj = F, gam.k = 10) {
   stopifnot(method %in% c("log", "logrank", "ft", "none"))
 
   scale.factor <- median(Matrix::colSums(counts))
   norm.counts <- NormalizeCounts(counts, batch = batch, depthScale = scale.factor)
 
   if (adj.var) {
-    varinfo.df <- AdjustVariance(norm.counts, plot = plot.var.adj)
+    varinfo.df <- AdjustVariance(norm.counts, plot = plot.var.adj, gam.k = gam.k)
     norm.counts <- norm.counts[rownames(varinfo.df),] * varinfo.df$gsf
   }
 

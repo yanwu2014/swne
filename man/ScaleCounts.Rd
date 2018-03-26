@@ -5,7 +5,7 @@
 \title{Normalize, adjust feature variance, and scale data matrix}
 \usage{
 ScaleCounts(counts, batch = NULL, method = "log", adj.var = T,
-  plot.var.adj = F)
+  plot.var.adj = F, gam.k = 10)
 }
 \arguments{
 \item{counts}{Input data matrix}
@@ -17,6 +17,8 @@ ScaleCounts(counts, batch = NULL, method = "log", adj.var = T,
 \item{adj.var}{Whether or not to apply mean variance adjustment for features}
 
 \item{plot.var.adj}{Whether or not to plot the mean variance relationship}
+
+\item{gam.k}{Number of additive models to use for variance modeling}
 }
 \value{
 Normalized and scaled data matrix
