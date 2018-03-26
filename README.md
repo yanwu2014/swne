@@ -14,7 +14,7 @@ You can find our bioRxiv preprint here: https://www.biorxiv.org/content/early/20
 2. Install swne with `devtools::install_github("yanwu2014/swne")`
 
 ### Optionally install:
-1. liger with `devtools::install_github("JEFworks/liger")` for additioanl geneset enrichment functionality
+1. liger with `devtools::install_github("JEFworks/liger")` for additional geneset enrichment functionality
 
 ## Usage
 We highly recommend using SWNE with either Seurat (http://satijalab.org/seurat/) or Pagoda2 (https://github.com/hms-dbmi/pagoda2), two general single cell RNA-seq analysis pipelines. 
@@ -26,6 +26,17 @@ is shown below.
 <img src="Figures/pbmc3k_swne_plot.png" width="550" height="550" />
 
 ## Recreating Figures
-To recreate the figures from our preprint, see the Scripts/ directory. The raw data for the hematopoietic cells can be
-found at the GEO accession GSE72857, while the raw data for the neural cells can be found at the GEO accession GSE97930. 
-The PBMC dataset can be found at the 10X genomics website: https://support.10xgenomics.com/single-cell-gene-expression/datasets/1.1.0/pbmc3k.
+To recreate the figures from our preprint, see the Scripts/ directory. 
+
+The raw data for the hematopoietic cells can be found, courtesy of the monocle2 developers, at
+http://www.gs.washington.edu/~xqiu/proj2/RGE_analysis_data.tar.gz. After untarring the directory,
+cd to the Notebook/ sub-directory. The debatched expression matrix and informative genes can be found in
+the Paul_Cell_MARSseq_GSE72857.RData file, and the metdata can be found in the GSE72857_experimental_design.txt
+file.
+
+The raw data for the neural cells can be found at the GEO accession GSE97930. We only used the cerebellar
+(GSE97930_CerebellarHem_snDrop-seq_UMI_Count_Matrix_08-01-2017.txt.gz) and the visual cortex
+(GSE97930_VisualCortex_snDrop-seq_UMI_Count_Matrix_08-01-2017.txt.gz) datasets. The metadata file can be 
+found in the Scripts/ directory.
+
+The raw PBMC dataset can be found at the 10X genomics website: https://support.10xgenomics.com/single-cell-gene-expression/datasets/1.1.0/pbmc3k.
