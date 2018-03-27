@@ -16,14 +16,12 @@ You can find our bioRxiv preprint [here](https://www.biorxiv.org/content/early/2
 ### Optionally install:
 1. liger with `devtools::install_github("JEFworks/liger")` for additional geneset enrichment functionality
 
-## Usage and Examples
-We highly recommend using SWNE with either [Seurat](http://satijalab.org/seurat/) or [Pagoda2](https://github.com/hms-dbmi/pagoda2), two general single cell RNA-seq analysis pipelines. 
+## Seurat walkthrough
+For a quick example using the pbmc dataset from 10x genomics, see this [walkthrough](https://yanwu2014.github.io/swne/Examples/pbmc3k_swne_seurat.html) which generates SWNE visualizations using data processed with the [Seurat](http://satijalab.org/seurat/) pipeline. The pre-computed [Seurat object](https://github.com/yanwu2014/swne/blob/master/Examples/pbmc3k_seurat.Robj) can be downloaded from the Examples directory.
 
-### Seurat walkthrough
-For a quick example using the pbmc dataset from 10x genomics, see this [walkthrough](https://yanwu2014.github.io/swne/Examples/pbmc3k_swne_seurat.html) which generates SWNE visualizations with the Seurat pipeline. The pre-computed [Seurat object](https://github.com/yanwu2014/swne/blob/master/Examples/pbmc3k_seurat.Robj) can be downloaded from the Examples directory.
+## Pagoda2 walkthrough
+See this [walkthrough](https://yanwu2014.github.io/swne/Examples/pbmc3k_swne_pagoda2.html) to generate SWNE visualizations using data processed with the [Pagoda2](https://github.com/hms-dbmi/pagoda2) pipeline. The pre-computed [Pagoda2 object](https://github.com/yanwu2014/swne/blob/master/Examples/pbmc3k_pagoda2.Robj) can also be downloaded from the Examples directory.
 
-### Pagoda2 walkthrough
-See this [walkthrough](https://yanwu2014.github.io/swne/Examples/pbmc3k_swne_pagoda2.html) to generate SWNE visualizations with the Pagoda2 pipeline. The pre-computed [Pagoda2 object](https://github.com/yanwu2014/swne/blob/master/Examples/pbmc3k_pagoda2.Robj) can be downloaded from the Examples directory.
 
 ## Recreating Figures
 To recreate the figures from our preprint, see the Scripts/ directory. 
