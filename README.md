@@ -6,7 +6,7 @@ factors. SWNE can capture both the local and global dataset structure, and allow
 factors and relevant features to be embedded directly onto the visualization, facilitating interpretation
 of the data.
 
-You can find our bioRxiv preprint here: https://www.biorxiv.org/content/early/2018/03/05/276261
+You can find our bioRxiv preprint here: https://www.biorxiv.org/content/early/2018/03/05/276261.1
 
 ## Installation instructions
 
