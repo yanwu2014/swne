@@ -65,7 +65,7 @@ k.res$k
 
 We then run the NMF decomposition. We can initialize the NMF using either Independent Component Analysis (ica), Nonnegative SVD (nnsvd), or a completely random initialization. The output of `RunNMF` is a list of the gene loadings (W) and NMF embedding (H).
 ```{r}
-k <- 12
+k <- 10
 nmf.res <- RunNMF(norm.counts[od.genes,], k = k, alpha = 0, init = "ica", n.cores = n.cores, loss = loss)
 nmf.scores <- nmf.res$H
 ```
@@ -157,3 +157,8 @@ gene.loadings.heat <- gene.loadings[unique(top.factor.genes.df$feature),]
 ggHeat(gene.loadings.heat, clustering = "col")
 ```
 
+Extract cluster colors for compatibility with other plotting methods (i.e. Monocle)
+```{r}
+color.mapping <- ExtractSWNEColors(swne.embedding, sample.groups = clusters, seed = color.seed)
+color.mapping
+```

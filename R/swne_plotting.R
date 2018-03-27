@@ -528,3 +528,24 @@ ggHeat <- function(m, rescaling = 'none', clustering = 'none', labCol = T, labRo
   ## finally add the fill colour ramp of your choice (default is blue to red)-- and return
   return(g2 + scale_fill_gradient2(low = heatscale[1], mid = heatscale[2], high = heatscale[3], guide = guide_colorbar(title = legend.title)))
 }
+
+
+#' Extracts the exact colors used to plot each cluster (the hex codes) for a given color seed
+#'
+#' @param swne.embedding SWNE embedding (list of factor and sample coordinates) from EmbedSWNE
+#' @param sample.groups Factor defining sample groups
+#' @param seed Seed for sample groups color reproducibility
+#'
+#' @return vector of color hex codes with clusters as the name
+#'
+#' @export
+ExtractSWNEColors <- function(swne.embedding, sample.groups, seed) {
+  swne.ggobj <- PlotSWNE(swne.embedding, sample.groups = sample.groups, seed = seed)
+  swne.ggobj <- ggplot2::ggplot_build(swne.ggobj)
+
+  sample.colors <- swne.ggobj$data[[1]]$fill
+  color.mapping <- unique(sample.colors)
+  names(color.mapping) <- unique(as.character(sample.groups))
+
+  return(color.mapping)
+}
