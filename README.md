@@ -19,16 +19,16 @@ You can find our bioRxiv preprint [here](https://www.biorxiv.org/content/early/2
 ## Usage and Examples
 We highly recommend using SWNE with either [Seurat](http://satijalab.org/seurat/) or [Pagoda2](https://github.com/hms-dbmi/pagoda2), two general single cell RNA-seq analysis pipelines. 
 
-For a quick example using the pbmc dataset from 10x genomics, see this [walkthrough](https://yanwu2014.github.io/swne/Examples/pbmc3k_swne_seurat.html) which generates an SWNE plot with the Seurat pipeline. The pre-computed [Seurat object](https://github.com/yanwu2014/swne/blob/master/Examples/pbmc3k_seurat.Robj) can be downloaded from the Examples directory.
+### Seurat walkthrough
+For a quick example using the pbmc dataset from 10x genomics, see this [walkthrough](https://yanwu2014.github.io/swne/Examples/pbmc3k_swne_seurat.html) which generates SWNE visualizations with the Seurat pipeline. The pre-computed [Seurat object](https://github.com/yanwu2014/swne/blob/master/Examples/pbmc3k_seurat.Robj) can be downloaded from the Examples directory.
 
-The SWNE plot for the pbmc dataset with key marker genes embedded is shown below.
-<img src="Figures/pbmc3k_swne_plot.png" width="550" height="550" />
+### Pagoda2 walkthrough
+See this [walkthrough](https://yanwu2014.github.io/swne/Examples/pbmc3k_swne_pagoda2.html) to generate SWNE visualizations with the Pagoda2 pipeline. The pre-computed [Pagoda2 object](https://github.com/yanwu2014/swne/blob/master/Examples/pbmc3k_pagoda2.Robj) can be downloaded from the Examples directory.
 
 ## Recreating Figures
 To recreate the figures from our preprint, see the Scripts/ directory. 
 
-The raw data for the hematopoietic cells can be found, courtesy of the monocle2 developers, at
-http://www.gs.washington.edu/~xqiu/proj2/RGE_analysis_data.tar.gz. After untarring the directory,
+The raw data for the hematopoietic cells can be found, courtesy of the monocle2 developers, [here](http://www.gs.washington.edu/~xqiu/proj2/RGE_analysis_data.tar.gz). After untarring the directory,
 cd to the Notebook/ sub-directory. The debatched expression matrix and informative genes can be found in
 the Paul_Cell_MARSseq_GSE72857.RData file, and the metdata can be found in the GSE72857_experimental_design.txt
 file.
@@ -38,4 +38,4 @@ The raw data for the neural cells can be found at the GEO accession GSE97930. We
 (GSE97930_VisualCortex_snDrop-seq_UMI_Count_Matrix_08-01-2017.txt.gz) datasets. The metadata file can be 
 found in the Scripts/ directory.
 
-The raw PBMC dataset can be found at the 10X genomics website: https://support.10xgenomics.com/single-cell-gene-expression/datasets/1.1.0/pbmc3k.
+The raw PBMC dataset can be found at the 10X genomics [website](https://support.10xgenomics.com/single-cell-gene-expression/datasets/1.1.0/pbmc3k).
