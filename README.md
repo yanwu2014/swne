@@ -6,7 +6,7 @@ factors. SWNE can capture both the local and global dataset structure, and allow
 factors and relevant features to be embedded directly onto the visualization, facilitating interpretation
 of the data.
 
-You can find our bioRxiv preprint here: https://www.biorxiv.org/content/early/2018/03/05/276261.1
+You can find our bioRxiv preprint [here](https://www.biorxiv.org/content/early/2018/03/05/276261.1).
 
 ## Installation instructions
 
@@ -16,13 +16,12 @@ You can find our bioRxiv preprint here: https://www.biorxiv.org/content/early/20
 ### Optionally install:
 1. liger with `devtools::install_github("JEFworks/liger")` for additional geneset enrichment functionality
 
-## Usage
-We highly recommend using SWNE with either Seurat (http://satijalab.org/seurat/) or Pagoda2 (https://github.com/hms-dbmi/pagoda2), two general single cell RNA-seq analysis pipelines. 
+## Usage and Examples
+We highly recommend using SWNE with either [Seurat](http://satijalab.org/seurat/) or [Pagoda2](https://github.com/hms-dbmi/pagoda2), two general single cell RNA-seq analysis pipelines. 
 
-For a quick example using the pbmc dataset from 10x genomics, see pbmc3k_swne.R and the pre-computed
-Seurat object under the Examples directory. The SWNE plot for the pbmc dataset with key marker genes embedded
-is shown below.
+For a quick example using the pbmc dataset from 10x genomics, see this [walkthrough](https://yanwu2014.github.io/swne/Examples/pbmc3k_swne_seurat.html) which generates an SWNE plot with the Seurat pipeline. The pre-computed [Seurat object](https://github.com/yanwu2014/swne/blob/master/Examples/pbmc3k_seurat.Robj) can be downloaded from the Examples directory.
 
+The SWNE plot for the pbmc dataset with key marker genes embedded is shown below.
 <img src="Figures/pbmc3k_swne_plot.png" width="550" height="550" />
 
 ## Recreating Figures
