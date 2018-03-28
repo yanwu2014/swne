@@ -10,7 +10,7 @@ PlotDims(dim.scores, sample.groups = NULL, x.lab = "tsne1",
   show.axes = T, seed = NULL)
 }
 \arguments{
-\item{dim.scores}{2D embedding coordinates. Must be 2 x n.samples}
+\item{dim.scores}{2D embedding coordinates. Must be N x 2 samples}
 
 \item{sample.groups}{Factor defining sample groups}
 

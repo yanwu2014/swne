@@ -405,7 +405,7 @@ PlotDims <- function(dim.scores, sample.groups = NULL, x.lab = "tsne1", y.lab = 
 
 #' Plots 2d embedding with feature overlayed
 #'
-#' @param dim.scores SWNE embedding (list of NMF and sample coordinates) from EmbedSWNE
+#' @param dim.scores dim.scores 2D embedding coordinates. Must be N x 2 samples
 #' @param feature.score Feature vector to overlay
 #' @param feature.name Name of feature
 #' @param x.lab X axis label

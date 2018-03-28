@@ -10,7 +10,7 @@ FeaturePlotDims(dim.scores, feature.scores, feature.name = NULL,
   color.palette = "YlOrRd")
 }
 \arguments{
-\item{dim.scores}{SWNE embedding (list of NMF and sample coordinates) from EmbedSWNE}
+\item{dim.scores}{dim.scores 2D embedding coordinates. Must be N x 2 samples}
 
 \item{feature.name}{Name of feature}
 
