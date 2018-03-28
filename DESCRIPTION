@@ -16,21 +16,23 @@ LazyData: true
 LinkingTo: 
   Rcpp,
   RcppArmadillo
-Imports: 
-  Rcpp (>= 0.12.14),
-  RcppArmadillo (>= 0.8.300.1.0),
-  NNLM (>= 0.4.1),
-  ggplot2 (>= 2.2.1),
-  RColorBrewer (>= 1.1.2),
-  Matrix (>= 1.2.11),
-  ggrepel (>= 0.7.0),
+Imports:
+  Rcpp,
+  RcppArmadillo,
+  NNLM,
+  ggplot2,
+  RColorBrewer,
+  Matrix,
+  ggrepel,
   reshape,
   usedist,
   plyr,
   ica,
-  hash,
   mgcv,
-  FNN
+  FNN,
+  MASS
 Suggests:
+  snow,
+  hash,
   liger
 RoxygenNote: 6.0.1

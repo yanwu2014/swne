@@ -9,12 +9,10 @@
 #'                  computing the neighborhood overlap for the SNN construction.
 #' @param print.output Whether or not to print output to the console
 #'
-#' @import FNN
-#' @importFrom Matrix sparseMatrix
-#'
 #' @return Returns similarity matrix in sparse matrix format
 #'
-#' @import Seurat
+#' @importFrom FNN get.knn
+#' @importFrom Matrix sparseMatrix
 #' @export
 #'
 CalcSNN <- function(data.use, k = 10, k.scale = 10, prune.SNN = 1/15, print.output = T) {
@@ -32,9 +30,6 @@ CalcSNN <- function(data.use, k = 10, k.scale = 10, prune.SNN = 1/15, print.outp
                     train.nn.ranked = nn.ranked, prune.SNN = prune.SNN,
                     print.output = print.output)
   Matrix::diag(w) <- 1
-  # w <- Seurat:::CalcSNNSparse(cell.names = colnames(data.use), k = k, nn.large = nn.large,
-  #                             nn.ranked = nn.ranked, prune.SNN = prune.SNN,
-  #                             print.output = print.output)
   return(w)
 }
 
@@ -51,6 +46,8 @@ CalcSNN <- function(data.use, k = 10, k.scale = 10, prune.SNN = 1/15, print.outp
 #'
 #' @return A n.test x n.train matrix with the shared nearest neighbors between test and training data
 #'
+#' @importFrom FNN get.knn
+#' @importFrom Matrix sparseMatrix
 #' @export
 #'
 ProjectSNN <- function(test.matrix, train.matrix, k = 20, k.scale = 10, prune.SNN = 1/15, print.output = T) {

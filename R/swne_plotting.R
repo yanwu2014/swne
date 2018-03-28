@@ -1,8 +1,5 @@
 #' @import methods
 #' @import ggplot2
-#' @import RColorBrewer
-#' @import ggrepel
-#' @import usedist
 #' @useDynLib swne
 #' @importFrom Rcpp evalCpp
 NULL
@@ -27,6 +24,9 @@ normalize_vector <- function(x, method = "scale", n_ranks = 10000) {
 
 
 #' Calculates the coordinates of the NMF factors via Sammon mapping
+#'
+#' @importFrom usedist dist_make
+#'
 get_factor_coords <- function(H, distance = "pearson") {
   H <- t(H)
   stopifnot(distance %in% c("pearson", "IC"))
@@ -205,6 +205,7 @@ RenameFactors <- function(swne.embedding, name.mapping, set.empty = T) {
 #'
 #' @return ggplot2 object with swne plot
 #'
+#' @import ggrepel
 #' @export
 #'
 PlotSWNE <- function(swne.embedding, alpha.plot = 0.25, sample.groups = NULL, do.label = F,
@@ -362,6 +363,7 @@ FeaturePlotSWNE <- function(swne.embedding, feature.scores, feature.name = NULL,
 #'
 #' @return ggplot2 object with 2d plot
 #'
+#' @import ggrepel
 #' @export
 #'
 PlotDims <- function(dim.scores, sample.groups = NULL, x.lab = "tsne1", y.lab = "tsne2",

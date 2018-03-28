@@ -174,8 +174,14 @@ CalcGenesetLoadings <- function(W, W.genesets.project, top.genesets) {
 #' @export
 #'
 FactorAssociation <- function(feature.mat, nmf.scores, n.cores = 8, metric = "IC") {
+  if (!requireNamespace("snow", quietly = TRUE)) {
+    stop("Package \"snow\" needed for this function to work. Please install it.",
+         call. = FALSE)
+  }
+
   cl <- snow::makeCluster(n.cores, type = "SOCK")
   snow::clusterExport(cl, c("nmf.scores", "MutualInf"), envir = environment())
+
   if (metric == "IC") {
     source.log <- snow::parLapply(cl, 1:length(cl), function(i) library(MASS))
     assoc <- t(snow::parApply(cl, feature.mat, 1, function(v)
@@ -239,6 +245,11 @@ SummarizeAssocFeatures <- function(feature.factor.assoc, features.return = 10, f
 #' @export
 #'
 RunGSEA <- function(gene.factor.assoc, genesets, power = 1, n.rand = 1000, n.cores = 1) {
+  if (!requireNamespace("liger", quietly = TRUE)) {
+    stop("Package \"liger\" needed for this function to work. Please install it.",
+         call. = FALSE)
+  }
+
   nmfs <- colnames(gene.factor.assoc)
   gsea.list <- lapply(nmfs, function(nf) {
     gene.assocs <- gene.factor.assoc[,nf]
@@ -262,6 +273,7 @@ RunGSEA <- function(gene.factor.assoc, genesets, power = 1, n.rand = 1000, n.cor
 #'
 #' @return Mutual information between x and y
 #'
+#' @import MASS
 #' @export
 #'
 MutualInf <-  function(x, y, n.grid = 25) {
@@ -315,6 +327,11 @@ MutualInf <-  function(x, y, n.grid = 25) {
 #' @export
 #'
 DesignMatrix <- function(groups.list, max.groups = 2, min.cells = 5, drop.cells = T) {
+  if (!requireNamespace("hash", quietly = TRUE)) {
+    stop("Package \"hash\" needed for this function to work. Please install it.",
+         call. = FALSE)
+  }
+
   require(hash)
   cell.names <- unique(unlist(groups.list, F, F))
   single.groups <- names(groups.list)
@@ -370,6 +387,9 @@ DesignMatrix <- function(groups.list, max.groups = 2, min.cells = 5, drop.cells 
 }
 
 #' Helper function for filtering out cells belonging to more than one group
+#'
+#' @import Matrix
+#'
 single_groups <- function(groups.list, min.cells = 1) {
   groups.matrix <- DesignMatrix(groups.list, max.groups = 1, min.cells = min.cells)
   groups.list <- lapply(colnames(groups.matrix), function(g) {

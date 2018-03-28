@@ -168,5 +168,4 @@ Extract cluster colors for compatibility with other plotting methods (i.e. Monoc
 color.mapping <- ExtractSWNEColors(swne.embedding, sample.groups = cell.clusters, seed = color.seed)
 color.mapping
 TSNEPlot(se.obj, colors.use = color.mapping)
-
 ```
