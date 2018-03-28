@@ -87,7 +87,7 @@ VelocytoArrows <- function(emb, vel, pca.red = NULL, n = 200, scale = "sqrt", co
   if(n>nrow(cc)) { n <- nrow(cc) }
   # TODO: add kNN based on high-dimensional correlation or Euclidean distances
   # define kNNs based on the embedding (L2 distance)
-  if (is.null(pc.emb)) {
+  if (is.null(pca.red)) {
     emb.knn <- velocyto.R:::balancedKNN(t(emb),k=n,maxl=nrow(emb),dist='euclidean',n.threads=n.cores)
   } else {
     emb.knn <- velocyto.R:::balancedKNN(t(pca.red),k=n,maxl=nrow(emb),dist='euclidean',n.threads=n.cores)
