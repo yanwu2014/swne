@@ -347,7 +347,7 @@ FeaturePlotSWNE <- function(swne.embedding, feature.scores, feature.name = NULL,
 
 #' Plots 2D embedding
 #'
-#' @param dim.scores 2D embedding coordinates. Must be 2 x n.samples
+#' @param dim.scores 2D embedding coordinates. Must be N x 2 samples
 #' @param sample.groups Factor defining sample groups
 #' @param x.lab X axis label
 #' @param y.lab Y axis label
@@ -381,17 +381,21 @@ PlotDims <- function(dim.scores, sample.groups = NULL, x.lab = "tsne1", y.lab = 
     xlab(x.lab) + ylab(y.lab) + ggtitle(main.title) +
     guides(colour = guide_legend(override.aes = list(alpha = 1, size = label.size)))
 
-  if (!show.axes) { ggobj <- ggobj + theme_void() }
+  if (!show.axes) {
+    ggobj <- ggobj + theme_void()
+  } else {
+    ggobj <- ggobj + theme_classic()
+  }
 
   if (do.label && is.factor(sample.groups)) {
     group.pts.x <- tapply(gg.df$x, gg.df$sample.groups, function(v) median(v))
     group.pts.y <- tapply(gg.df$y, gg.df$sample.groups, function(v) median(v))
     group.pts <- data.frame(x = group.pts.x, y = group.pts.y)
     group.pts$ident <- levels(gg.df$sample.groups)
-  }
 
-  ggobj <- ggobj + ggrepel::geom_text_repel(data = group.pts, mapping = aes(label = ident), size = label.size,
-                                            box.padding = 0.15)
+    ggobj <- ggobj + ggrepel::geom_text_repel(data = group.pts, mapping = aes(label = ident), size = label.size,
+                                              box.padding = 0.15)
+  }
 
   if (!show.legend) { ggobj <- ggobj + theme(legend.position = "none") }
 
@@ -442,7 +446,12 @@ FeaturePlotDims <- function(dim.scores, feature.scores, feature.name = NULL, x.l
     scale_color_distiller(palette = color.palette, direction = 1, guide =
                             guide_colorbar(title = feature.name, ticks = F, label = F))
 
-  if (!show.axes) { ggobj <- ggobj + theme_void() }
+  if (!show.axes) {
+    ggobj <- ggobj + theme_void()
+  } else {
+    ggobj <- ggobj + theme_classic()
+  }
+
   ggobj <- ggobj + theme(text = element_text(size = font.size))
 
   ggobj
