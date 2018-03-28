@@ -29,7 +29,7 @@ PlotSWNEVelocyto <- function(swne.embedding, swne.arrows, alpha.plot = 0.25, sam
 
   ## Add pre-computed arrows
   swne.ggobj <- swne.ggobj +
-    geom_segment(aes(x = x1, y = y1, xend = x2, yend = y2, alpha = arrow.alpha), size = arrow.lwd,
+    geom_segment(aes(x = x1, y = y1, xend = x2, yend = y2), alpha = arrow.alpha, size = arrow.lwd,
                  arrow = grid::arrow(angle = 50, length = grid::unit(head.size, "npc")),
                  data = swne.arrows)
   return(swne.ggobj)
