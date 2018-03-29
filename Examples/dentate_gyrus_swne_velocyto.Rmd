@@ -1,0 +1,104 @@
+---
+title: "Integrating SWNE with RNA Velocity"
+author: "Yan Wu"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+This is a quick walkthrough demonstrating how to overlay [RNA velocity](http://velocyto.org/) on an SWNE plots using [Velocyto.R](https://github.com/velocyto-team/velocyto.R) and [Pagoda2](https://github.com/hms-dbmi/pagoda2). The pre-computed Pagoda2 and Veloctyo objects were generated using the [Veloctyo.R Dentate Gyrus walkthrough](http://pklab.med.harvard.edu/velocyto/notebooks/R/DG1.nb.html). 
+
+First let's load the required libraries
+```{r message=FALSE,warning=FALSE}
+library(pagoda2)
+library(velocyto.R)
+library(swne)
+```
+
+
+Next let's load the pre-computed Pagoda2 and Veloctyo objects
+```{r}
+load("~/swne/Examples/dentate_gyrus.p2.velocyto.RData.gz")
+```
+
+
+Pull out counts matrix and overdispersed genes from the Pagoda2 object, and scale/normalize the counts
+```{r}
+norm.counts <- ScaleCounts(t(r$misc$rawCounts), batch = NULL, method = "log", adj.var = T)
+od.genes <- rownames(r$misc$PCA$v)
+```
+
+Set SWNE parameters, including the loss function and the number of cores to use
+```{r}
+loss <- "mse" ## Loss function
+n.cores <- 32 ## Number of cores to use
+```
+
+Identify the optimal number of factors to use using `FindNumFactors`. We set a range of `k` to iterate over, and the `FindNumFactors` identifies the `k` that minimizes reconstruction error.
+```{r}
+k.range <- seq(4,16,2) ## Range of factors to iterate over
+n.comp.res <- FindNumFactors(norm.counts[od.genes,], k.range = k.range, n.cores = n.cores, do.plot = T, loss = loss)
+n.comp.res$k
+```
+
+We then run the NMF decomposition. We can initialize the NMF using either Independent Component Analysis (ica), Nonnegative SVD (nnsvd), or a completely random initialization. The output of `RunNMF` is a list of the gene loadings (W) and NMF embedding (H).
+```{r}
+k <- 12
+nmf.res <- RunNMF(norm.counts[od.genes,], k = k, alpha = 0, init = "ica", n.cores = n.cores, loss = loss)
+nmf.scores <- nmf.res$H
+```
+
+Compute the SNN matrix from the PCA embedding
+```{r results=FALSE,message=FALSE,warning=FALSE}
+pc.scores <- t(r$reductions$PCA)
+snn <- CalcSNN(pc.scores, k = 30, k.scale = 10, prune.SNN = 1/15)
+```
+
+Runs the SWNE embedding. The three key parameters are `alpha.exp`, `snn.exp`, and `n_pull`, which control how the factors and neighboring cells affect the cell coordinates.
+```{r message=FALSE,warning=FALSE}
+alpha.exp <- 1.25 # Increase this > 1.0 to move the cells closer to the factors. Values > 2 start to distort the data.
+snn.exp <- 1.0 # Lower this < 1.0 to move similar cells closer to each other
+n_pull <- 4 # The number of factors pulling on each cell. Must be at least 3.
+swne.embedding <- EmbedSWNE(nmf.scores, snn, alpha.exp = alpha.exp, snn.exp = snn.exp,
+                            n_pull = n_pull, dist.use = "IC")
+```
+
+Let's find some genes to embed and hide the factors for now
+```{r}
+nmf.res$W <- ProjectFeatures(norm.counts, nmf.scores, loss = loss, n.cores = n.cores)
+top.genes.df <- SummarizeAssocFeatures(nmf.res$W, features.return = 1)
+genes.embed <- unique(top.genes.df$feature)
+
+## Embed features
+swne.embedding <- EmbedFeatures(swne.embedding, nmf.res$W, genes.embed, alpha.exp = 1.25, n_pull = 4)
+
+## Hide factors
+swne.embedding$H.coords$name <- ""
+```
+
+
+Let's make the SWNE plot
+```{r}
+cluster.label <- r$clusters$PCA$multilevel
+levels(cluster.label) <- sapply(levels(cluster.label), function(i) paste("C", i, sep = ""))
+color.seed <- 213597
+PlotSWNE(swne.embedding, alpha.plot = 0.3, sample.groups = cluster.label, do.label = T,
+         label.size = 3.5, pt.size = 1.5, show.legend = F, seed = color.seed)
+```
+
+Now we'll use the `VeloctyoArrows` function (adapted from Velocyto.R) to give us the info on the arrows
+```{r}
+swne.cell.emb <- as.matrix(swne.embedding$sample.coords) ## SWNE cell embeddings
+swne.arrows <- VelocytoArrows(swne.cell.emb, rvel.cd, pca.red = t(pc.scores), n = 250, scale = "sqrt", 
+                              grid.n = 40, min.grid.cell.mass = 0.5, min.arrow.size = 0.0025, 
+                              arrow.scale = 0.04, max.grid.arrow.length = 0.04, n.cores = n.cores)
+```
+
+Finally let's make the SWNE plot with RNA velocity arrows
+```{r}
+PlotSWNEVelocyto(swne.embedding, swne.arrows, alpha.plot = 0.3, sample.groups = cluster.label,
+                 arrow.lwd = 0.5, arrow.alpha = 0.5, head.size = 6e-3, do.label = T, label.size = 3.5, 
+                 pt.size = 1.5, show.legend = F, seed = color.seed)
+```
