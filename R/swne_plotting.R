@@ -26,14 +26,17 @@ normalize_vector <- function(x, method = "scale", n_ranks = 10000) {
 #' Calculates the coordinates of the NMF factors via Sammon mapping
 #'
 #' @importFrom usedist dist_make
+#' @importFrom proxy simil
 #'
-get_factor_coords <- function(H, distance = "pearson") {
+get_factor_coords <- function(H, distance = "IC") {
   H <- t(H)
-  stopifnot(distance %in% c("pearson", "IC"))
+  stopifnot(distance %in% c("pearson", "IC", "cosine"))
   if (distance == "pearson") {
     H.dist <- sqrt(2*(1 - cor(H)))
   } else if (distance == "IC") {
     H.dist <- sqrt(2*(1 - as.matrix(usedist::dist_make(t(H), distance_fcn = MutualInf, method = "IC"))))
+  } else if (distance == "cosine") {
+    H.dist <- sqrt(2*(1 - proxy::simil(H, method = "cosine", by_rows = T)))
   }
 
   H.coords <- MASS::sammon(H.dist, k = 2, niter = 250)$points
@@ -73,14 +76,14 @@ get_sample_coords <- function(H, H.coords, alpha = 1, n_pull = NULL) {
 #' @param alpha.exp Increasing alpha.exp increases how much the NMF factors "pull" the samples
 #' @param snn.exp Decreasing snn.exp increases the effect of the similarity matrix on the embedding
 #' @param n_pull Number of factors pulling on each sample. Must be >= 3
-#' @param dist.use Similarity function to use for calculating factor positions. Options include pearson and IC.
+#' @param dist.use Similarity function to use for calculating factor positions. Options include pearson, IC, cosine.
 #' @param min.snn Minimum SNN value
 #'
 #' @return A list of factor (H.coords) and sample coordinates (sample.coords) in 2D
 #'
 #' @export
 #'
-EmbedSWNE <- function(H, SNN = NULL, alpha.exp = 1, snn.exp = 1.0, n_pull = NULL, dist.use = "pearson",
+EmbedSWNE <- function(H, SNN = NULL, alpha.exp = 1, snn.exp = 1.0, n_pull = NULL, dist.use = "IC",
                       min.snn = 0.0) {
   H <- H[ ,colSums(H) > 0]
   H.coords <- get_factor_coords(H, distance = dist.use)
