@@ -10,7 +10,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 This is a quick walkthrough demonstrating how to generate SWNE plots alongside the [Seurat](http://satijalab.org/seurat/) pipeline using a [3k PBMC](https://support.10xgenomics.com/single-cell-gene-expression/datasets/1.1.0/pbmc3k) dataset as an example.
 
-To save time we will be using the pre-computed Seurat object `pbmc3k_seurat.Robj`.
+To save time we will be using the pre-computed Seurat object `pbmc3k_seurat.Robj`, which can be downloaded [here](ftp://genome-miner.ucsd.edu/swne_files/pbmc3k_seurat.Robj).
 
 
 First let's load the required libraries
