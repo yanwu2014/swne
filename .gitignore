@@ -3,3 +3,6 @@
 .RData
 .Ruserdata
 testing/
+Examples/dentate_gyrus.p2.velocyto.RData.gz
+Examples/pbmc3k_pagoda2.Robj
+Examples/pbmc3k_seurat.Robj
