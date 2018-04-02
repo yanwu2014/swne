@@ -8,7 +8,7 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-This is a quick walkthrough demonstrating how to overlay [RNA velocity](http://velocyto.org/) on an SWNE plots using [Velocyto.R](https://github.com/velocyto-team/velocyto.R) and [Pagoda2](https://github.com/hms-dbmi/pagoda2). The pre-computed Pagoda2 and Veloctyo objects were generated using the [Veloctyo.R Dentate Gyrus walkthrough](http://pklab.med.harvard.edu/velocyto/notebooks/R/DG1.nb.html). 
+This is a quick walkthrough demonstrating how to overlay [RNA velocity](http://velocyto.org/) on an SWNE plots using [Velocyto.R](https://github.com/velocyto-team/velocyto.R) and [Pagoda2](https://github.com/hms-dbmi/pagoda2). The pre-computed Pagoda2 and Veloctyo objects were generated using the [Veloctyo.R Dentate Gyrus walkthrough](http://pklab.med.harvard.edu/velocyto/notebooks/R/DG1.nb.html), and can be downloaded [here](ftp://genome-miner.ucsd.edu/swne_files/dentate_gyrus.p2.velocyto.RData.gz)
 
 First let's load the required libraries
 ```{r message=FALSE,warning=FALSE}
