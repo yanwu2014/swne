@@ -36,7 +36,7 @@ get_factor_coords <- function(H, distance = "IC") {
   } else if (distance == "IC") {
     H.dist <- sqrt(2*(1 - as.matrix(usedist::dist_make(t(H), distance_fcn = MutualInf, method = "IC"))))
   } else if (distance == "cosine") {
-    H.dist <- sqrt(2*(1 - proxy::simil(H, method = "cosine", by_rows = T)))
+    H.dist <- sqrt(2*(1 - proxy::simil(H, method = "cosine", by_rows = F)))
   }
 
   H.coords <- MASS::sammon(H.dist, k = 2, niter = 250)$points
