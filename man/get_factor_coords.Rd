@@ -4,7 +4,7 @@
 \alias{get_factor_coords}
 \title{Calculates the coordinates of the NMF factors via Sammon mapping}
 \usage{
-get_factor_coords(H, distance = "pearson")
+get_factor_coords(H, method = "sammon", distance = "IC")
 }
 \description{
 Calculates the coordinates of the NMF factors via Sammon mapping

@@ -28,18 +28,27 @@ normalize_vector <- function(x, method = "scale", n_ranks = 10000) {
 #' @importFrom usedist dist_make
 #' @importFrom proxy simil
 #'
-get_factor_coords <- function(H, distance = "IC") {
+get_factor_coords <- function(H, method = "sammon", distance = "IC") {
   H <- t(H)
   stopifnot(distance %in% c("pearson", "IC", "cosine"))
-  if (distance == "pearson") {
-    H.dist <- sqrt(2*(1 - cor(H)))
-  } else if (distance == "IC") {
-    H.dist <- sqrt(2*(1 - as.matrix(usedist::dist_make(t(H), distance_fcn = MutualInf, method = "IC"))))
-  } else if (distance == "cosine") {
-    H.dist <- sqrt(2*(1 - proxy::simil(H, method = "cosine", by_rows = F)))
+
+  if (method == "sammon") {
+    if (distance == "pearson") {
+      H.dist <- sqrt(2*(1 - cor(H)))
+    } else if (distance == "IC") {
+      H.dist <- sqrt(2*(1 - as.matrix(usedist::dist_make(t(H), distance_fcn = MutualInf, method = "IC"))))
+    } else if (distance == "cosine") {
+      H.dist <- sqrt(2*(1 - proxy::simil(H, method = "cosine", by_rows = F)))
+    }
+
+    H.coords <- MASS::sammon(H.dist, k = 2, niter = 250)$points
+  } else if (method == "pca") {
+    H.pca <- prcomp(t(H), center = T, scale = T, rank = 2)
+    H.coords <- H.pca$x
+  } else {
+    stop("Invalid factor projection method")
   }
 
-  H.coords <- MASS::sammon(H.dist, k = 2, niter = 250)$points
   H.coords <- apply(H.coords, 2, normalize_vector, method = "bounded")
   colnames(H.coords) <- c("x","y")
 
@@ -55,12 +64,8 @@ get_sample_coords <- function(H, H.coords, alpha = 1, n_pull = NULL) {
   sample.coords <- t(sapply(1:ncol(H), function(i) {
     pull.ix <- order(H[,i], decreasing = T)[1:n_pull]
     pull.sum <- sum(H[pull.ix,i]^alpha)
-    x <- sum(sapply(pull.ix, function(j) {
-      H.coords[j,1] * ( H[j,i]^alpha/pull.sum )
-    }))
-    y <- sum(sapply(pull.ix, function(j) {
-      H.coords[j,2] * ( H[j,i]^alpha/pull.sum )
-    }))
+    x <- sum(H.coords[pull.ix,1] * ( H[pull.ix,i]^alpha/pull.sum ))
+    y <- sum(H.coords[pull.ix,2] * ( H[pull.ix,i]^alpha/pull.sum ))
     return(c(x,y))
   }))
   colnames(sample.coords) <- c("x","y")
@@ -72,10 +77,11 @@ get_sample_coords <- function(H, H.coords, alpha = 1, n_pull = NULL) {
 #' Projects NMF factors and samples in a 2D
 #'
 #' @param H NMF factors (factors x samples)
-#' @param SNN Shared nearest neighbors matrix (or other similarity matrix)
+#' @param snn Shared nearest neighbors matrix (or other similarity matrix)
 #' @param alpha.exp Increasing alpha.exp increases how much the NMF factors "pull" the samples
 #' @param snn.exp Decreasing snn.exp increases the effect of the similarity matrix on the embedding
 #' @param n_pull Number of factors pulling on each sample. Must be >= 3
+#' @param proj.method Method to use for projecting factors. Currently either "pca", or "sammon"
 #' @param dist.use Similarity function to use for calculating factor positions. Options include pearson, IC, cosine.
 #' @param min.snn Minimum SNN value
 #'
@@ -83,24 +89,27 @@ get_sample_coords <- function(H, H.coords, alpha = 1, n_pull = NULL) {
 #'
 #' @export
 #'
-EmbedSWNE <- function(H, SNN = NULL, alpha.exp = 1, snn.exp = 1.0, n_pull = NULL, dist.use = "IC",
-                      min.snn = 0.0) {
+EmbedSWNE <- function(H, snn = NULL, alpha.exp = 1, snn.exp = 1.0, n_pull = NULL, proj.method = "sammon",
+                      dist.use = "cosine", min.snn = 0.0) {
   H <- H[ ,colSums(H) > 0]
-  H.coords <- get_factor_coords(H, distance = dist.use)
+  if (!is.null(snn)) {
+    snn@x[snn@x < min.snn] <- 0
+    snn@x <- snn@x^snn.exp
+    snn <- snn/Matrix::rowSums(snn)
+
+    H.smooth <- t(as.matrix(snn %*% t(H)))
+    H.coords <- get_factor_coords(H.smooth, method = proj.method, distance = dist.use)
+  } else {
+    H.coords <- get_factor_coords(H, method = proj.method, distance = dist.use)
+  }
+
   H.coords <- data.frame(H.coords)
-  H.coords$name <- rownames(H.coords)
-  rownames(H.coords) <- NULL
+  H.coords$name <- rownames(H.coords); rownames(H.coords) <- NULL;
 
   sample.coords <- get_sample_coords(H, H.coords, alpha = alpha.exp, n_pull = n_pull)
-
-  if (!is.null(SNN)) {
-    SNN@x[SNN@x < min.snn] <- 0
-    SNN@x <- SNN@x^snn.exp
-    SNN <- SNN/Matrix::rowSums(SNN)
-
-    x <- sapply(1:nrow(SNN), function(i) sum(SNN[i,]*sample.coords[,1]))
-    y <- sapply(1:nrow(SNN), function(i) sum(SNN[i,]*sample.coords[,2]))
-    sample.coords <- as.matrix(data.frame(x, y)); rownames(sample.coords) <- colnames(H);
+  if (!is.null(snn)) {
+    sample.coords <- as.matrix(snn %*% sample.coords)
+    rownames(sample.coords) <- colnames(H)
   }
 
   return(list(H.coords = H.coords, sample.coords = data.frame(sample.coords)))

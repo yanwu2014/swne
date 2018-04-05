@@ -13,7 +13,8 @@ You can find our bioRxiv preprint [here](https://www.biorxiv.org/content/early/2
 1. Install devtools with `install.packages("devtools")` if not already installed
 2. Install swne with `devtools::install_github("yanwu2014/swne")`
 
-### Optionally install:
+Optionally install:
+
 1. liger with `devtools::install_github("JEFworks/liger")` for additional geneset enrichment functionality
 
 ## Walkthroughs and examples
