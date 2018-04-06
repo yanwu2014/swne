@@ -23,7 +23,7 @@ library(Matrix)
 
 Next let's load the Pagoda2 object
 ```{r}
-p2 <- readRDS("pbmc3k_pagoda2.Robj")
+p2 <- readRDS("/media/Home_Raid1/yan/swne/Data/pbmc3k_pagoda2.Robj")
 ```
 
 
@@ -84,7 +84,7 @@ alpha.exp <- 1.25 # Increase this > 1.0 to move the cells closer to the factors.
 snn.exp <- 1.0 # Lower this < 1.0 to move similar cells closer to each other
 n_pull <- 4 # The number of factors pulling on each cell. Must be at least 3.
 swne.embedding <- EmbedSWNE(nmf.scores, snn, alpha.exp = alpha.exp, snn.exp = snn.exp,
-                            n_pull = n_pull, proj.method = "pca", dist.use = "IC")
+                            n_pull = n_pull, proj.method = "sammon", dist.use = "cosine")
 ```
 
 

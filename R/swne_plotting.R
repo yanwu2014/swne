@@ -27,10 +27,18 @@ normalize_vector <- function(x, method = "scale", n_ranks = 10000) {
 #'
 #' @importFrom usedist dist_make
 #' @importFrom proxy simil
+#' @importFrom proxy dist
 #'
-get_factor_coords <- function(H, method = "sammon", distance = "IC") {
+get_factor_coords <- function(H, method = "sammon", pca.red = F, distance = "cosine") {
   H <- t(H)
-  stopifnot(distance %in% c("pearson", "IC", "cosine"))
+  if (!distance %in% c("pearson", "IC", "cosine", "euclidean")) {
+    stop(paste("Distance must be one of:", c("pearson", "IC", "cosine", "euclidean")))
+  }
+
+  if (pca.red) {
+    H.pca <- prcomp(t(H), center = T, scale = F, rank = ncol(H))
+    H <- t(H.pca$x)
+  }
 
   if (method == "sammon") {
     if (distance == "pearson") {
@@ -39,12 +47,11 @@ get_factor_coords <- function(H, method = "sammon", distance = "IC") {
       H.dist <- sqrt(2*(1 - as.matrix(usedist::dist_make(t(H), distance_fcn = MutualInf, method = "IC"))))
     } else if (distance == "cosine") {
       H.dist <- sqrt(2*(1 - proxy::simil(H, method = "cosine", by_rows = F)))
+    } else {
+      H.dist <- proxy::dist(H, method = "Euclidean", by_rows = F)
     }
 
     H.coords <- MASS::sammon(H.dist, k = 2, niter = 250)$points
-  } else if (method == "pca") {
-    H.pca <- prcomp(t(H), center = T, scale = T, rank = 2)
-    H.coords <- H.pca$x
   } else {
     stop("Invalid factor projection method")
   }
@@ -77,38 +84,39 @@ get_sample_coords <- function(H, H.coords, alpha = 1, n_pull = NULL) {
 #' Projects NMF factors and samples in a 2D
 #'
 #' @param H NMF factors (factors x samples)
-#' @param snn Shared nearest neighbors matrix (or other similarity matrix)
+#' @param SNN Shared nearest neighbors matrix (or other similarity matrix)
 #' @param alpha.exp Increasing alpha.exp increases how much the NMF factors "pull" the samples
 #' @param snn.exp Decreasing snn.exp increases the effect of the similarity matrix on the embedding
 #' @param n_pull Number of factors pulling on each sample. Must be >= 3
-#' @param proj.method Method to use for projecting factors. Currently either "pca", or "sammon"
-#' @param dist.use Similarity function to use for calculating factor positions. Options include pearson, IC, cosine.
+#' @param proj.method Method to use for projecting factors. Currently only supports "sammon"
+#' @param pca.red Whether or not to run PCA on transposed H matrix before calculating factor distances
+#' @param dist.use Similarity function to use for calculating factor positions. Options include pearson, IC, cosine, euclidean.
 #' @param min.snn Minimum SNN value
 #'
 #' @return A list of factor (H.coords) and sample coordinates (sample.coords) in 2D
 #'
 #' @export
 #'
-EmbedSWNE <- function(H, snn = NULL, alpha.exp = 1, snn.exp = 1.0, n_pull = NULL, proj.method = "sammon",
-                      dist.use = "cosine", min.snn = 0.0) {
+EmbedSWNE <- function(H, SNN = NULL, alpha.exp = 1, snn.exp = 1.0, n_pull = NULL, proj.method = "sammon",
+                      pca.red = F, dist.use = "cosine", min.snn = 0.0) {
   H <- H[ ,colSums(H) > 0]
-  if (!is.null(snn)) {
-    snn@x[snn@x < min.snn] <- 0
-    snn@x <- snn@x^snn.exp
-    snn <- snn/Matrix::rowSums(snn)
+  if (!is.null(SNN)) {
+    SNN@x[SNN@x < min.snn] <- 0
+    SNN@x <- SNN@x^snn.exp
+    SNN <- SNN/Matrix::rowSums(SNN)
 
-    H.smooth <- t(as.matrix(snn %*% t(H)))
-    H.coords <- get_factor_coords(H.smooth, method = proj.method, distance = dist.use)
+    H.smooth <- t(as.matrix(SNN %*% t(H)))
+    H.coords <- get_factor_coords(H.smooth, method = proj.method, pca.red = pca.red, distance = dist.use)
   } else {
-    H.coords <- get_factor_coords(H, method = proj.method, distance = dist.use)
+    H.coords <- get_factor_coords(H, method = proj.method, pca.red = pca.red, distance = dist.use)
   }
 
   H.coords <- data.frame(H.coords)
   H.coords$name <- rownames(H.coords); rownames(H.coords) <- NULL;
 
   sample.coords <- get_sample_coords(H, H.coords, alpha = alpha.exp, n_pull = n_pull)
-  if (!is.null(snn)) {
-    sample.coords <- as.matrix(snn %*% sample.coords)
+  if (!is.null(SNN)) {
+    sample.coords <- as.matrix(SNN %*% sample.coords)
     rownames(sample.coords) <- colnames(H)
   }
 

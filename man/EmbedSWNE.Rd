@@ -4,13 +4,13 @@
 \alias{EmbedSWNE}
 \title{Projects NMF factors and samples in a 2D}
 \usage{
-EmbedSWNE(H, snn = NULL, alpha.exp = 1, snn.exp = 1, n_pull = NULL,
-  proj.method = "sammon", dist.use = "cosine", min.snn = 0)
+EmbedSWNE(H, SNN = NULL, alpha.exp = 1, snn.exp = 1, n_pull = NULL,
+  proj.method = "sammon", pca.red = F, dist.use = "cosine", min.snn = 0)
 }
 \arguments{
 \item{H}{NMF factors (factors x samples)}
 
-\item{snn}{Shared nearest neighbors matrix (or other similarity matrix)}
+\item{SNN}{Shared nearest neighbors matrix (or other similarity matrix)}
 
 \item{alpha.exp}{Increasing alpha.exp increases how much the NMF factors "pull" the samples}
 
@@ -18,9 +18,11 @@ EmbedSWNE(H, snn = NULL, alpha.exp = 1, snn.exp = 1, n_pull = NULL,
 
 \item{n_pull}{Number of factors pulling on each sample. Must be >= 3}
 
-\item{proj.method}{Method to use for projecting factors. Currently either "pca", or "sammon"}
+\item{proj.method}{Method to use for projecting factors. Currently only supports "sammon"}
 
-\item{dist.use}{Similarity function to use for calculating factor positions. Options include pearson, IC, cosine.}
+\item{pca.red}{Whether or not to run PCA on transposed H matrix before calculating factor distances}
+
+\item{dist.use}{Similarity function to use for calculating factor positions. Options include pearson, IC, cosine, euclidean.}
 
 \item{min.snn}{Minimum SNN value}
 }
