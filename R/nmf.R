@@ -68,7 +68,7 @@ nnsvd_init <- function(A, k, LINPACK, eps, init.zeros) {
 #' @importFrom ica icafast
 #'
 ica_init <- function(A, k, eps, init.zeros) {
-  ica.res <- ica::icafast(t(A), nc = k)
+  ica.res <- ica::icafast(t(A), nc = k, maxit = 25, tol = 1e-4)
   nmf.init <- list(W = ica.res$M, H = t(ica.res$S))
 
   A.mean <- mean(A)
@@ -171,13 +171,12 @@ FindNumFactors <- function(A, k.range = seq(1,10,1), alpha = 0, n.cores = 1, do.
 #' @param loss Type of loss function to use
 #' @param n.rand.init If random initialization is used, number of random restarts
 #' @param init.zeros What to do with zeros in the initialization
-#'
 #' @return List of W (features x factors) and H (factors x samples)
 #'
 #' @import NNLM
 #' @export
 #'
-RunNMF <- function(A, k, alpha = 0, init = "random", n.cores = 1, loss = "mse", n.rand.init = 5,
+RunNMF <- function(A, k, alpha = 0, init = "random", n.cores = 1, loss = "mse", n.rand.init = 3,
                    init.zeros = "uniform") {
   if (any(A < 0)) stop('The input matrix contains negative elements !')
   if (k < 3) stop("k must be greater than or equal to 3 to create a viable SWNE plot")
@@ -195,13 +194,12 @@ RunNMF <- function(A, k, alpha = 0, init = "random", n.cores = 1, loss = "mse", 
   A.mean <- mean(A)
 
   if (init == "ica") {
-    nmf.init <- ica_init(A, k, eps = 1e-8, init.zeros = init.zeros)
+    nmf.init <- ica_init(A, k, eps = 1e-6, init.zeros = init.zeros)
   } else if (init == "nnsvd") {
-    nmf.init <- nnsvd_init(A, k, LINPACK = T, eps = 1e-8, init.zeros = init.zeros)
+    nmf.init <- nnsvd_init(A, k, LINPACK = T, eps = 1e-6, init.zeros = init.zeros)
   } else {
     nmf.init <- NULL
   }
-
 
   if(is.null(nmf.init)) {
     nmf.res.list <- lapply(1:n.rand.init, function(i) nnmf(A, k = k, alpha = alpha, init = nmf.init,

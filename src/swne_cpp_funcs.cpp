@@ -1,12 +1,21 @@
-// [[Rcpp::depends(RcppArmadillo)]]
-
 #include <RcppArmadillo.h>
+#include <RcppEigen.h>
 #include <Rcpp.h>
 #include <math.h>
 #include <vector>
 #include <stdexcept>
 #include <queue>
+#include <cmath>
+#include <unordered_map>
+// #include <fstream>
+// #include <string>
+// #include <iomanip>
+// include "data_manipulation.h"
+
 using namespace Rcpp;
+
+// [[Rcpp::depends(RcppArmadillo)]]
+// [[Rcpp::depends(RcppEigen)]]
 
 // Adapted from pagoda2: https://github.com/hms-dbmi/pagoda2
 // calculates factor-stratified sums for each column
@@ -142,4 +151,32 @@ int inplaceWinsorizeSparseCols(SEXP sY, const int n) {
     }
   }
   return(1);
+}
+
+
+typedef Eigen::Triplet<double> T;
+// Adapted from Seurat
+//[[Rcpp::export]]
+Eigen::SparseMatrix<double> ComputeSNN(Eigen::MatrixXd nn_ranked, double prune) {
+  std::vector<T> tripletList;
+  int k = nn_ranked.cols();
+  tripletList.reserve(nn_ranked.rows() * nn_ranked.cols());
+  for(int j=0; j<nn_ranked.cols(); ++j){
+    for(int i=0; i<nn_ranked.rows(); ++i) {
+      tripletList.push_back(T(i, nn_ranked(i, j) - 1, 1));
+    }
+  }
+  Eigen::SparseMatrix<double> SNN(nn_ranked.rows(), nn_ranked.rows());
+  SNN.setFromTriplets(tripletList.begin(), tripletList.end());
+  SNN = SNN * (SNN.transpose());
+  for (int i=0; i < SNN.outerSize(); ++i){
+    for (Eigen::SparseMatrix<double>::InnerIterator it(SNN, i); it; ++it){
+      it.valueRef() = it.value()/(k + (k - it.value()));
+      if(it.value() < prune){
+        it.valueRef() = 0;
+      }
+    }
+  }
+  SNN.prune(0.0); // actually remove pruned values
+  return SNN;
 }

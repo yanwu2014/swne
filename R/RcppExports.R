@@ -13,3 +13,7 @@ inplaceWinsorizeSparseCols <- function(sY, n) {
     .Call('_swne_inplaceWinsorizeSparseCols', PACKAGE = 'swne', sY, n)
 }
 
+ComputeSNN <- function(nn_ranked, prune) {
+    .Call('_swne_ComputeSNN', PACKAGE = 'swne', nn_ranked, prune)
+}
+

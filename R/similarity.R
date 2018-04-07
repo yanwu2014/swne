@@ -26,9 +26,9 @@ CalcSNN <- function(data.use, k = 10, k.scale = 10, prune.SNN = 1/15, print.outp
   nn.ranked <- cbind(1:n.cells, my.knn$nn.index[, 1:(k - 1)])
   nn.large <- my.knn$nn.index
 
-  w <- compute_snn(train.cell.names = colnames(data.use), k = k, train.nn.large = nn.large,
-                    train.nn.ranked = nn.ranked, prune.SNN = prune.SNN,
-                    print.output = print.output)
+  w <- ComputeSNN(nn.ranked, prune.SNN)
+  colnames(w) <- rownames(w) <- colnames(data.use)
+
   Matrix::diag(w) <- 1
   return(w)
 }
@@ -57,33 +57,23 @@ ProjectSNN <- function(test.matrix, train.matrix, k = 20, k.scale = 10, prune.SN
 
   train.knn <- FNN::get.knn(data = t(train.matrix), k = k.scale * k)
   train.nn.ranked <- cbind(1:n.train.cells, train.knn$nn.index[, 1:(k - 1)])
-  train.nn.large <- train.knn$nn.index
 
   test.knn <- FNN::get.knnx(data = t(train.matrix), query = t(test.matrix), k = k * k.scale)
   test.nn.ranked <- cbind(1:n.test.cells, test.knn$nn.index[, 1:(k - 1)])
   test.nn.large <- test.knn$nn.index
 
-  w <- compute_snn(colnames(train.matrix), k, train.nn.large, train.nn.ranked,
-                    test.cell.names = colnames(test.matrix),
-                    test.nn.large = test.nn.large, test.nn.ranked = test.nn.ranked,
-                    prune.SNN = prune.SNN, print.output = print.output)
+  w <- compute_projected_snn(colnames(train.matrix), k, train.nn.ranked, colnames(test.matrix),
+                             test.nn.large, test.nn.ranked, prune.SNN, print.output)
   return(w)
 }
 
 
 #' Helper function for calculating a SNN graph
 #' Adapted from Seurat
-compute_snn <- function(train.cell.names, k, train.nn.large, train.nn.ranked, test.cell.names = NULL,
-                        test.nn.large = NULL, test.nn.ranked = NULL, prune.SNN = 1/15, print.output = T) {
-
-  if(any(is.null(c(test.cell.names, test.nn.large, test.nn.ranked)))) {
-    print("Computing single dataset SNN")
-    test.cell.names <- train.cell.names
-    test.nn.large <- train.nn.large
-    test.nn.ranked <- train.nn.ranked
-  } else {
-    print("Computing test data SNN projected onto training data")
-  }
+compute_projected_snn <- function(train.cell.names, k, train.nn.ranked, test.cell.names,
+                                  test.nn.large, test.nn.ranked, prune.SNN = 1/15,
+                                  print.output = T) {
+  print("Computing test data SNN projected onto training data")
 
   n.train.cells <- length(train.cell.names)
   n.test.cells <- length(test.cell.names)

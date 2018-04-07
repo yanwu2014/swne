@@ -5,7 +5,7 @@
 \title{Runs NMF decomposition on a data matrix: A = WH.}
 \usage{
 RunNMF(A, k, alpha = 0, init = "random", n.cores = 1, loss = "mse",
-  n.rand.init = 5, init.zeros = "uniform")
+  n.rand.init = 3, init.zeros = "uniform")
 }
 \arguments{
 \item{A}{Input data matrix}

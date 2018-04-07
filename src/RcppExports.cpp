@@ -2,6 +2,7 @@
 // Generator token: 10BE3573-1514-4C36-9D1C-5A225CD40393
 
 #include <RcppArmadillo.h>
+#include <RcppEigen.h>
 #include <Rcpp.h>
 
 using namespace Rcpp;
@@ -42,11 +43,24 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// ComputeSNN
+Eigen::SparseMatrix<double> ComputeSNN(Eigen::MatrixXd nn_ranked, double prune);
+RcppExport SEXP _swne_ComputeSNN(SEXP nn_rankedSEXP, SEXP pruneSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Eigen::MatrixXd >::type nn_ranked(nn_rankedSEXP);
+    Rcpp::traits::input_parameter< double >::type prune(pruneSEXP);
+    rcpp_result_gen = Rcpp::wrap(ComputeSNN(nn_ranked, prune));
+    return rcpp_result_gen;
+END_RCPP
+}
 
 static const R_CallMethodDef CallEntries[] = {
     {"_swne_colSumByFac", (DL_FUNC) &_swne_colSumByFac, 2},
     {"_swne_colMeanVarS", (DL_FUNC) &_swne_colMeanVarS, 2},
     {"_swne_inplaceWinsorizeSparseCols", (DL_FUNC) &_swne_inplaceWinsorizeSparseCols, 2},
+    {"_swne_ComputeSNN", (DL_FUNC) &_swne_ComputeSNN, 2},
     {NULL, NULL, 0}
 };
 
