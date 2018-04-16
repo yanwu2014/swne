@@ -168,17 +168,15 @@ EmbedFeatures <- function(swne.embedding, feature.assoc, features.embed, alpha.e
 #' @param snn.exp Decreasing snn.exp increases the effect of the similarity matrix on the embedding
 #' @param n_pull Number of factors pulling on each sample. Must be >= 3
 #'
-#' @return Matrix of sample embeddings
+#' @return SWNE embedding for the test data
 #'
 #' @export
 #'
 ProjectSWNE <- function(swne.embedding, H.test, SNN = NULL, alpha.exp = 1, snn.exp = 1, n_pull = NULL) {
   sample.coords.test <- get_sample_coords(H.test, swne.embedding$H.coords, alpha = alpha.exp, n_pull = n_pull)
-  sample.coords.train <- as.matrix(swne.embedding$sample.coords)
-  sample.coords.all <- rbind(sample.coords.test, sample.coords.train)
 
   if (!is.null(SNN)) {
-    SNN <- SNN[rownames(sample.coords.test), rownames(sample.coords.train)]
+    SNN <- SNN[rownames(sample.coords.test), rownames(swne.embedding$sample.coords)]
 
     snn.diag <- Matrix::Diagonal(ncol(H.test))
     rownames(snn.diag) <- colnames(snn.diag) <- colnames(H.test)
@@ -187,13 +185,19 @@ ProjectSWNE <- function(swne.embedding, H.test, SNN = NULL, alpha.exp = 1, snn.e
     SNN <- SNN^snn.exp
     SNN <- SNN/Matrix::rowSums(SNN)
 
-    sample.coords.test <- as.matrix(SNN %*% sample.coords)
-    rownames(sample.coords.test) <- colnames(H)
-    sample.coords.test <- data.frame(x, y); rownames(sample.coords.test) <- colnames(H.test);
+    sample.coords.train <- as.matrix(swne.embedding$sample.coords)
+    sample.coords.all <- rbind(sample.coords.test, sample.coords.train)
+
+    sample.coords.test <- as.matrix(SNN %*% sample.coords.all)
+    rownames(sample.coords.test) <- colnames(H.test)
+    sample.coords.test <- data.frame(sample.coords.test)
   } else {
     sample.coords.test <- data.frame(sample.coords.test)
   }
-  return(sample.coords.test)
+
+  swne.embedding.test <- swne.embedding
+  swne.embedding.test$sample.coords <- sample.coords.test
+  return(swne.embedding.test)
 }
 
 
