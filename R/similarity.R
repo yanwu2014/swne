@@ -70,6 +70,8 @@ ProjectSNN <- function(test.matrix, train.matrix, k = 20, k.scale = 10, prune.SN
 
 #' Helper function for calculating a SNN graph
 #' Adapted from Seurat
+#'
+#' @import compiler
 compute_projected_snn <- function(train.cell.names, k, train.nn.ranked, test.cell.names,
                                   test.nn.large, test.nn.ranked, prune.SNN = 1/15,
                                   print.output = T) {
@@ -122,4 +124,5 @@ compute_projected_snn <- function(train.cell.names, k, train.nn.ranked, test.cel
   rownames(w) <- test.cell.names
   colnames(w) <- train.cell.names
   return(w)
-}
+}; compute_projected_snn <- compiler::cmpfun(compute_projected_snn)
+

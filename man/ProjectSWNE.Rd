@@ -4,7 +4,7 @@
 \alias{ProjectSWNE}
 \title{Projects new data onto an existing swne embedding}
 \usage{
-ProjectSWNE(swne.embedding, H.test, SNN.test = NULL, alpha.exp = 1,
+ProjectSWNE(swne.embedding, H.test, SNN = NULL, alpha.exp = 1,
   snn.exp = 1, n_pull = NULL)
 }
 \arguments{
@@ -12,7 +12,7 @@ ProjectSWNE(swne.embedding, H.test, SNN.test = NULL, alpha.exp = 1,
 
 \item{H.test}{Test factor scores}
 
-\item{SNN.test}{Test SNN matrix}
+\item{SNN}{Test SNN matrix}
 
 \item{alpha.exp}{Increasing alpha.exp increases how much the factors "pull" the samples}
 

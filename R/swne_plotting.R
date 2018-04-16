@@ -64,6 +64,8 @@ get_factor_coords <- function(H, method = "sammon", pca.red = F, distance = "cos
 
 
 #' Calculate sample coordinates using the NMF scores and NMF factor coordinates
+#'
+#' @import compiler
 get_sample_coords <- function(H, H.coords, alpha = 1, n_pull = NULL) {
   if (n_pull < 3) { n_pull <- 3 }
   if (is.null(n_pull) || n_pull > nrow(H.coords)) { n_pull <- nrow(H.coords) }
@@ -78,7 +80,8 @@ get_sample_coords <- function(H, H.coords, alpha = 1, n_pull = NULL) {
   colnames(sample.coords) <- c("x","y")
   rownames(sample.coords) <- colnames(H)
   return(sample.coords)
-}
+}; get_sample_coords <- cmpfun(get_sample_coords);
+
 
 
 #' Projects NMF factors and samples in a 2D
@@ -160,7 +163,7 @@ EmbedFeatures <- function(swne.embedding, feature.assoc, features.embed, alpha.e
 #'
 #' @param swne.embedding Existing swne embedding from EmbedSWNE
 #' @param H.test Test factor scores
-#' @param SNN.test Test SNN matrix
+#' @param SNN Test SNN matrix
 #' @param alpha.exp Increasing alpha.exp increases how much the factors "pull" the samples
 #' @param snn.exp Decreasing snn.exp increases the effect of the similarity matrix on the embedding
 #' @param n_pull Number of factors pulling on each sample. Must be >= 3
@@ -169,20 +172,23 @@ EmbedFeatures <- function(swne.embedding, feature.assoc, features.embed, alpha.e
 #'
 #' @export
 #'
-ProjectSWNE <- function(swne.embedding, H.test, SNN.test = NULL, alpha.exp = 1, snn.exp = 1, n_pull = NULL) {
+ProjectSWNE <- function(swne.embedding, H.test, SNN = NULL, alpha.exp = 1, snn.exp = 1, n_pull = NULL) {
   sample.coords.test <- get_sample_coords(H.test, swne.embedding$H.coords, alpha = alpha.exp, n_pull = n_pull)
   sample.coords.train <- as.matrix(swne.embedding$sample.coords)
   sample.coords.all <- rbind(sample.coords.test, sample.coords.train)
 
   if (!is.null(SNN.test)) {
-    SNN.test <- SNN.test[rownames(sample.coords.test), rownames(sample.coords.train)]
-    SNN.diag <- Matrix::Diagonal(ncol(H.test)); rownames(SNN.diag) <- colnames(SNN.diag) <- colnames(H.test);
-    SNN.test <- cbind(SNN.diag, SNN.test); rm(SNN.diag);
-    SNN.test <- SNN.test^snn.exp
-    SNN.test <- SNN.test/Matrix::rowSums(SNN.test)
+    SNN <- SNN[rownames(sample.coords.test), rownames(sample.coords.train)]
 
-    x <- sapply(1:nrow(SNN.test), function(i) sum(SNN.test[i,]*sample.coords.all[,1]))
-    y <- sapply(1:nrow(SNN.test), function(i) sum(SNN.test[i,]*sample.coords.all[,2]))
+    snn.diag <- Matrix::Diagonal(ncol(H.test))
+    rownames(snn.diag) <- colnames(snn.diag) <- colnames(H.test)
+    SNN <- cbind(snn.diag, SNN); rm(snn.diag);
+
+    SNN <- SNN^snn.exp
+    SNN <- SNN/Matrix::rowSums(SNN)
+
+    sample.coords.test <- as.matrix(SNN %*% sample.coords)
+    rownames(sample.coords.test) <- colnames(H)
     sample.coords.test <- data.frame(x, y); rownames(sample.coords.test) <- colnames(H.test);
   } else {
     sample.coords.test <- data.frame(sample.coords.test)
