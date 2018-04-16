@@ -4,7 +4,7 @@
 \alias{nnsvd_init}
 \title{Nonnegative SVD initialization}
 \usage{
-nnsvd_init(A, k, LINPACK, eps, init.zeros)
+nnsvd_init(A, k, LINPACK)
 }
 \description{
 Nonnegative SVD initialization

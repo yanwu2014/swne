@@ -7,7 +7,9 @@
 
 
 #' Nonnegative SVD initialization
-nnsvd_init <- function(A, k, LINPACK, eps, init.zeros) {
+#'
+#' @import compiler
+nnsvd_init <- function(A, k, LINPACK) {
   size <- dim(A);
   m <- size[1]; n <- size[2];
 
@@ -41,25 +43,8 @@ nnsvd_init <- function(A, k, LINPACK, eps, init.zeros) {
     }
   }
 
-  #actually these numbers are zeros
-  W[W < eps] <- 0;
-  H[H < eps] <- 0;
-
-  ind1 <- W == 0; ind2 <- H == 0;
-  A.mean <- mean(A);
-
-  if (init.zeros == "random") {
-    n1 <- sum(ind1); n2 <- sum(ind2);
-    A.mean <- mean(A);
-    W[ind1] <-  runif(n1, min = 0, max = A.mean) / 100
-    H[ind2] <-  runif(n2, min = 0, max = A.mean) / 100
-  } else if (init.zeros == "uniform") {
-    W[ind1] <-  A.mean / 100
-    H[ind2] <-  A.mean / 100
-  }
-
   return(list(W = W, H = H))
-}
+}; nnsvd_init <- compiler::cmpfun(nnsvd_init);
 
 
 #' Independent component analysis initialization.
@@ -67,24 +52,11 @@ nnsvd_init <- function(A, k, LINPACK, eps, init.zeros) {
 #'
 #' @importFrom ica icafast
 #'
-ica_init <- function(A, k, eps, init.zeros) {
+ica_init <- function(A, k) {
   ica.res <- ica::icafast(t(A), nc = k, maxit = 25, tol = 1e-4)
-  nmf.init <- list(W = ica.res$M, H = t(ica.res$S))
-
-  A.mean <- mean(A)
-  nmf.init$W[nmf.init$W < eps] <- 0; nmf.init$H[nmf.init$H < eps] <- 0;
-  zero.idx.w <- which(nmf.init$W == 0); zero.idx.h <- which(nmf.init$H == 0);
-
-  if (init.zeros == "random") {
-    nmf.init$W[zero.idx.w] <- runif(length(zero.idx.w), 0, A.mean/100)
-    nmf.init$H[zero.idx.h] <- runif(length(zero.idx.h), 0, A.mean/100)
-  } else if (init.zeros == "uniform") {
-    nmf.init$W[zero.idx.w] <- A.mean / 100
-    nmf.init$H[zero.idx.h] <- A.mean / 100
-  }
-
-  return(nmf.init)
+  return(list(W = ica.res$M, H = t(ica.res$S)))
 }
+
 
 
 #' KL divergence. Pseudocounts added to avoid NAs
@@ -105,7 +77,6 @@ kl_div <- function(x, y, pseudocount = 1e-12) {
 #' @param seed Random seed for selecting missing data
 #' @param na.frac Fraction of data to set as missing
 #' @param loss Loss function to use for NMF
-#' @param recon.err Error function to minimize
 #' @param max.iter Maximum iterations for NMF run
 #'
 #' @return Reconstruction error at each number of NMF factors specified in k.range
@@ -113,11 +84,10 @@ kl_div <- function(x, y, pseudocount = 1e-12) {
 #' @import NNLM
 #' @export
 #'
-FindNumFactors <- function(A, k.range = seq(1,10,1), alpha = 0, n.cores = 1, do.plot = T,
-                           seed = NULL, na.frac = 0.3, loss = "mse", recon.err = "mse", max.iter = 1000) {
+FindNumFactors <- function(A, k.range = seq(2,12,2), alpha = 0, n.cores = 1, do.plot = T,
+                           seed = NULL, na.frac = 0.3, loss = "mse", max.iter = 1000) {
   if (!is.null(seed)) { set.seed(seed) }
   if (!loss %in% c("mse", "mkl")) { stop("Invalid loss function") }
-  if (!recon.err %in% c("mse", "mkl", "pearson", "spearman")) { stop("Invalid error function") }
   if (ncol(A) > 15000) print("Warning: This function can be slow for very large datasets")
 
   A <- as.matrix(A)
@@ -135,21 +105,14 @@ FindNumFactors <- function(A, k.range = seq(1,10,1), alpha = 0, n.cores = 1, do.
 
     mse  <- mean((A.ind - A.hat.ind)^2)
     mkl <- mean(kl_div(A.ind, A.hat.ind))
-    pearson.r <- cor(A.ind, A.hat.ind)
-    spearman.r <- cor(A.ind, A.hat.ind, method = "spearman")
 
-    return(c(mse, mkl, pearson.r, spearman.r))
+    return(c(mse, mkl))
   })
-  rownames(err) <- c("mse", "mkl", "pearson", "spearman")
-
-  if (recon.err %in% c("pearson", "spearman")) {
-    min.idx <- which.max(err[recon.err,])
-  } else {
-    min.idx <- which.min(err[recon.err,])
-  }
+  rownames(err) <- c("mse", "mkl")
+  min.idx <- which.max(err[loss,])
 
   if (do.plot) {
-    plot(k.range, err[recon.err,], col = "blue", type = 'b', main = "Model selection",
+    plot(k.range, err[loss,], col = "blue", type = 'b', main = "Model selection",
          xlab = "Number of factors", ylab = recon.err)
   }
 
@@ -176,8 +139,8 @@ FindNumFactors <- function(A, k.range = seq(1,10,1), alpha = 0, n.cores = 1, do.
 #' @import NNLM
 #' @export
 #'
-RunNMF <- function(A, k, alpha = 0, init = "random", n.cores = 1, loss = "mse", n.rand.init = 3,
-                   init.zeros = "uniform") {
+RunNMF <- function(A, k, alpha = 0, init = "ica", n.cores = 1, loss = "mse", n.rand.init = 3,
+                   init.zeros = "random") {
   if (any(A < 0)) stop('The input matrix contains negative elements !')
   if (k < 3) stop("k must be greater than or equal to 3 to create a viable SWNE plot")
 
@@ -191,12 +154,14 @@ RunNMF <- function(A, k, alpha = 0, init = "random", n.cores = 1, loss = "mse", 
 
   A <- as.matrix(A)
   if (any(A < 0)) { stop("Input matrix has negative values") }
-  A.mean <- mean(A)
 
   if (init == "ica") {
-    nmf.init <- ica_init(A, k, eps = 1e-6, init.zeros = init.zeros)
+    nmf.init <- ica_init(A, k)
   } else if (init == "nnsvd") {
-    nmf.init <- nnsvd_init(A, k, LINPACK = T, eps = 1e-6, init.zeros = init.zeros)
+    nmf.init <- nnsvd_init(A, k, LINPACK = T)
+  } else if (init == "graph.embed") {
+    stopifnot(ncol(snn) == ncol(A))
+    nmf.init <- graph_embedding_init(A, snn, k)
   } else {
     nmf.init <- NULL
   }
@@ -206,7 +171,20 @@ RunNMF <- function(A, k, alpha = 0, init = "random", n.cores = 1, loss = "mse", 
                                                            n.threads = n.cores, loss = loss, verbose = F))
     err <- sapply(nmf.res.list, function(x) tail(x[[loss]], n = 1))
     nmf.res <- nmf.res.list[[which.min(err)]]
+
   } else {
+    ## Deal with zeros in the nmf initialization
+    A.mean <- mean(A); zero.eps <- 1e-6;
+    nmf.init$W[nmf.init$W < zero.eps] <- 0; nmf.init$H[nmf.init$H < zero.eps] <- 0;
+    zero.idx.w <- which(nmf.init$W == 0); zero.idx.h <- which(nmf.init$H == 0);
+
+    if (init.zeros == "random") {
+      nmf.init$W[zero.idx.w] <- runif(length(zero.idx.w), 0, A.mean/100)
+      nmf.init$H[zero.idx.h] <- runif(length(zero.idx.h), 0, A.mean/100)
+    } else if (init.zeros == "uniform") {
+      nmf.init$W[zero.idx.w] <- A.mean / 100
+      nmf.init$H[zero.idx.h] <- A.mean / 100
+    }
     nmf.res <- NNLM::nnmf(A, k = k, alpha = alpha, init = nmf.init, n.threads = n.cores, loss = loss)
   }
 

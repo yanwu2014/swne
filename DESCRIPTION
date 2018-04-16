@@ -33,11 +33,11 @@ Imports:
   mgcv,
   FNN,
   MASS,
-  compiler
+  compiler,
+  proxy
 Suggests:
   velocyto.R,
   snow,
   hash,
-  liger,
-  proxy
+  liger
 RoxygenNote: 6.0.1

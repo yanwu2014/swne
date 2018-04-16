@@ -4,9 +4,9 @@
 \alias{FindNumFactors}
 \title{Determines the optimal number of NMF factors to use via reconstruction error}
 \usage{
-FindNumFactors(A, k.range = seq(1, 10, 1), alpha = 0, n.cores = 1,
+FindNumFactors(A, k.range = seq(2, 12, 2), alpha = 0, n.cores = 1,
   do.plot = T, seed = NULL, na.frac = 0.3, loss = "mse",
-  recon.err = "mse", max.iter = 1000)
+  max.iter = 1000)
 }
 \arguments{
 \item{A}{Input data matrix}
@@ -24,8 +24,6 @@ FindNumFactors(A, k.range = seq(1, 10, 1), alpha = 0, n.cores = 1,
 \item{na.frac}{Fraction of data to set as missing}
 
 \item{loss}{Loss function to use for NMF}
-
-\item{recon.err}{Error function to minimize}
 
 \item{max.iter}{Maximum iterations for NMF run}
 }

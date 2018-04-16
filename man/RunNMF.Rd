@@ -4,8 +4,8 @@
 \alias{RunNMF}
 \title{Runs NMF decomposition on a data matrix: A = WH.}
 \usage{
-RunNMF(A, k, alpha = 0, init = "random", n.cores = 1, loss = "mse",
-  n.rand.init = 3, init.zeros = "uniform")
+RunNMF(A, k, alpha = 0, init = "ica", n.cores = 1, loss = "mse",
+  n.rand.init = 3, init.zeros = "random")
 }
 \arguments{
 \item{A}{Input data matrix}

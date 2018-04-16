@@ -98,13 +98,15 @@ get_sample_coords <- function(H, H.coords, alpha = 1, n_pull = NULL) {
 #' @export
 #'
 EmbedSWNE <- function(H, SNN = NULL, alpha.exp = 1, snn.exp = 1.0, n_pull = NULL, proj.method = "sammon",
-                      pca.red = F, dist.use = "cosine", min.snn = 0.0) {
+                      pca.red = F, dist.use = "cosine", snn.factor.proj = T, min.snn = 0.0) {
   H <- H[ ,colSums(H) > 0]
   if (!is.null(SNN)) {
     SNN@x[SNN@x < min.snn] <- 0
     SNN@x <- SNN@x^snn.exp
     SNN <- SNN/Matrix::rowSums(SNN)
+  }
 
+  if (!is.null(SNN) && snn.factor.proj) {
     H.smooth <- t(as.matrix(SNN %*% t(H)))
     H.coords <- get_factor_coords(H.smooth, method = proj.method, pca.red = pca.red, distance = dist.use)
   } else {
