@@ -177,7 +177,7 @@ ProjectSWNE <- function(swne.embedding, H.test, SNN = NULL, alpha.exp = 1, snn.e
   sample.coords.train <- as.matrix(swne.embedding$sample.coords)
   sample.coords.all <- rbind(sample.coords.test, sample.coords.train)
 
-  if (!is.null(SNN.test)) {
+  if (!is.null(SNN)) {
     SNN <- SNN[rownames(sample.coords.test), rownames(sample.coords.train)]
 
     snn.diag <- Matrix::Diagonal(ncol(H.test))
