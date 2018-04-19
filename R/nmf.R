@@ -113,7 +113,7 @@ FindNumFactors <- function(A, k.range = seq(2,12,2), alpha = 0, n.cores = 1, do.
 
   if (do.plot) {
     plot(k.range, err[loss,], col = "blue", type = 'b', main = "Model selection",
-         xlab = "Number of factors", ylab = recon.err)
+         xlab = "Number of factors", ylab = loss)
   }
 
   res <- list()
