@@ -2,6 +2,8 @@
 library(Seurat)
 library(swne)
 
+#### Split pbmc3k dataset in half and project one half onto the other ####
+
 ## Read in Seurat object
 se.obj <- readRDS("pbmc3k_seurat.Robj")
 
@@ -57,3 +59,32 @@ PlotSWNE(swne.embedding.test, alpha.plot = 0.4, sample.groups = clusters, do.lab
          label.size = 4.5, pt.size = 1.25, show.legend = F, seed = color.seed)
 dev.off()
 
+
+#### Project pbmc33k dataset onto pbmc3k dataset ####
+
+## Project pbmc33k dataset
+pbmc33k <- readRDS("pbmc33k_seurat.Robj")
+norm.counts.33k <- ScaleCounts(as(pbmc33k@raw.data[,pbmc33k@cell.names], "dgCMatrix"), method = "ft")
+
+## Project NMF
+proj.genes.33k <- intersect(var.genes, rownames(norm.counts.train))
+H.33k <- ProjectSamples(norm.counts.33k[proj.genes.33k,], nmf.res$W[proj.genes.33k,], loss = loss, n.cores = n.cores)
+
+## Project SNN
+cm <- rowMeans(norm.counts.33k[proj.genes.33k,])
+pc.scores.33k <- t(t(norm.counts.33k[proj.genes.33k,] - cm) %*% pc.train$rotation[proj.genes.33k,])
+
+snn.33k <- ProjectSNN(pc.scores.33k, pc.scores, k = 20, k.scale = 10)
+
+## Create test SWNE embedding
+swne.embedding.33k <- ProjectSWNE(swne.embedding.train, H.33k, snn.33k, alpha.exp = 1.5,
+                                   snn.exp = 0.25, n_pull = 4)
+
+clusters.33k <- pbmc33k@ident; names(clusters.33k) <- pbmc33k@cell.names;
+
+pdf("pbmc33k_swne_plot_projected.pdf", height = 7, width = 8)
+PlotSWNE(swne.embedding.33k, alpha.plot = 0.3, sample.groups = clusters.33k, do.label = T,
+         label.size = 4, pt.size = 1.0, show.legend = F, seed = color.seed)
+dev.off()
+
+save.image("swne_projection_demo.RData")

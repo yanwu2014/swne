@@ -3,25 +3,23 @@ library(splatter)
 library(pagoda2)
 setwd("/media/Scratch_SSD/Yan/R_Analysis/swne-dev/simulations")
 
-# ## Generate data
-# splat.seed <- 3250879
-# n.cells <- c(1e3, 5e3, 1e4, 5e4)
-# 
-# simulated.data <- lapply(n.cells, function(n) {
-#   splat.params <- newSplatParams(batchCells = n, nGenes = 1e4,
-#                                  group.prob = c(0.45, 0.15, 0.15, 0.15, 0.1),
-#                                  de.prob = c(0.25, 0.05, 0.05, 0.05, 0.25),
-#                                  seed = splat.seed)
-#   
-#   ## Generate synthetic data using fitted parameters
-#   splat.groups <- splatSimulateGroups(splat.params, verbose = F)
-#   counts <- as(splat.groups@assays@.xData$data$counts, "dgCMatrix")
-#   colnames(counts) <- paste(colnames(counts), splat.groups@colData@listData$Group, sep = "_")
-#   
-#   return(as(counts, "dgCMatrix"))
-# })
+## Generate data
+splat.seed <- 3250879
+n.cells <- c(1e3, 5e3, 1e4, 5e4)
 
-load("splatter.runtime.sim.RData")
+simulated.data <- lapply(n.cells, function(n) {
+  splat.params <- newSplatParams(batchCells = n, nGenes = 1e4,
+                                 group.prob = c(0.45, 0.15, 0.15, 0.15, 0.1),
+                                 de.prob = c(0.25, 0.05, 0.05, 0.05, 0.25),
+                                 seed = splat.seed)
+
+  ## Generate synthetic data using fitted parameters
+  splat.groups <- splatSimulateGroups(splat.params, verbose = F)
+  counts <- as(splat.groups@assays@.xData$data$counts, "dgCMatrix")
+  colnames(counts) <- paste(colnames(counts), splat.groups@colData@listData$Group, sep = "_")
+
+  return(as(counts, "dgCMatrix"))
+})
 
 library(swne)
 run_swne <- function(counts, n.genes, init, k, n.cores) {

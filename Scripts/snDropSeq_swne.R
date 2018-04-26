@@ -41,7 +41,7 @@ levels(region) <- c("Visual Cortex", "Lateral Cerebellum")
 ## Normalize counts matrix
 norm.counts <- ScaleCounts(se.obj@raw.data[,se.obj@cell.names], batch = NULL, method = "ft", adj.var = T)
 
-## NMF analysis
+#### Run SWNE on full dataset ####
 loss <- "mse"
 k.range <- seq(2,24,2)
 n.cores <- 24
@@ -243,3 +243,25 @@ FeaturePlotSWNE(ex.gene.swne.embedding, norm.counts[gene,], pt.size = 0.5, label
 dev.off()
 
 save.image("snDropSeq_swne.RData")
+
+# ## Look at effect of different SNNs
+# # ex.snn <- CalcSNN(ex.nmf.scores, k = 30)
+# ex.snn <- CalcSNN(ex.norm.counts[ex.se.obj@var.genes,], k = 30)
+# ex.swne.embedding <- EmbedSWNE(ex.nmf.scores, ex.snn, alpha.exp = 5.0, snn.exp = 0.25, 
+#                                n_pull = 4, snn.factor.proj = T, pca.red = F, dist.use = "cosine")
+# 
+# ## Hide all factors
+# ex.swne.embedding$H.coords$name <- ""
+# 
+# genes.embed <- c("NTNG1", "DAB1", "HS3ST2", "DCC", "POSTN")
+# ex.swne.embedding <- EmbedFeatures(ex.swne.embedding, ex.nmf.res$W, genes.embed, n_pull = 4, scale.cols = F)
+# 
+# pdf("snDropSeq_swne_ex_neurons_vargenes.pdf", width = 6.5, height = 6.5)
+# PlotSWNE(ex.swne.embedding, alpha.plot = 0.3, sample.groups = ex.clusters, do.label = T, 
+#          label.size = 4.0, pt.size = 1.0, show.legend = F, seed = seed)
+# dev.off()
+# 
+# pdf("snDropSeq_swne_ex_neurons_vargenes_nolabels.pdf", width = 6.5, height = 6.5)
+# PlotSWNE(ex.swne.embedding, alpha.plot = 0.3, sample.groups = ex.clusters, do.label = T, 
+#          label.size = 0, pt.size = 1.0, show.legend = F, seed = seed)
+# dev.off()

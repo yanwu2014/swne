@@ -176,16 +176,45 @@ setwd("/media/Scratch_SSD/Yan/R_Analysis/swne-dev/simulations")
 load("splatter_discrete_analysis.RData")
 library(swne)
 
-k.range <- c(3, 6, 9, 12)
-for (k in k.range) {
-  nmf.res <- RunNMF(norm.counts[var.genes,], k = k, alpha = 0, init = nmf.init, 
-                    n.cores = n.cores, loss = loss)
-  swne.embedding <- EmbedSWNE(nmf.res$H, SNN = snn, alpha.exp = 1.0, snn.exp = 0.2, n_pull = k,
-                              snn.factor.proj = T, dist.use = "cosine")
+k.range <- c(3, 4, 6, 12)
+k.range.embeddings <- lapply(k.range, function(k) {
+  nmf.res <- RunNMF(norm.counts[var.genes,], k = k, alpha = 0, init = "random", 
+                    n.cores = n.cores, loss = loss, n.rand.init = 5)
+  swne.embedding <- EmbedSWNE(nmf.res$H, SNN = snn, alpha.exp = 2.5, snn.exp = 0.1, n_pull = 4,
+                              pca.red = T, snn.factor.proj = T, dist.use = "cosine")
   swne.embedding$H.coords$name <- ""
   
-  pdf(paste("splatter_discrete_swne_k", k, ".pdf", sep = ""), width = 4, height = 4)
+  pdf(paste("splatter_discrete_swne_k", k, ".pdf", sep = ""), width = 3.5, height = 3.5)
   print(PlotSWNE(swne.embedding, alpha.plot = 0.4, sample.groups = clusters, do.label = T, label.size = 4.5, 
                  pt.size = 1.5, seed = color.seed, show.legend = F))
   dev.off()
-}
+  
+  return(t(as.matrix(swne.embedding$sample.coords)))
+})
+names(k.range.embeddings) <- k.range
+
+
+## Correlate pairwise distances for embeddings
+k.range.embeddings.cor <- sapply(k.range.embeddings, function(emb) {
+  emb.dist <- CalcPairwiseDist(emb, clusters, "euclidean")
+  cor(emb.dist, clust.dist)
+})
+print(k.range.embeddings.cor)
+
+pdf("k_range_discrete_cl_dist_cor.pdf", width = 2.75, height = 4)
+ggBarplot(k.range.embeddings.cor, fill.color = "skyblue")
+dev.off()
+
+
+## Calculate silhouette scores for embeddings
+k.range.si.avg.scores <- sapply(k.range.embeddings, function(emb) {
+  emb.dist <- dist(t(emb))
+  mean(cluster::silhouette(as.integer(clusters), emb.dist)[,3])
+})
+print(k.range.si.avg.scores)
+
+pdf("k_range_discrete_cl_silhouette.pdf", width = 2.75, height = 4)
+ggBarplot(k.range.si.avg.scores, fill.color = "skyblue")
+dev.off()
+
+save.image("splatter_discrete_analysis.RData")
