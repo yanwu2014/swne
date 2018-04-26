@@ -20,17 +20,26 @@ Optionally install:
 ## Walkthroughs and examples
 Since SWNE is primarily meant for visualization and interpretation of the data, we typically use either [Seurat](http://satijalab.org/seurat/) or [Pagoda2](https://github.com/hms-dbmi/pagoda2) as a primary scRNA-seq pipeline. All the R markdown files used to generate the walkthroughs can be found under the Examples/ directory.
 
-1. A basic [walkthrough](https://yanwu2014.github.io/swne/Examples/pbmc3k_swne_seurat.html) of 3k PBMC cells starting from a pre-computed Seurat object, which can be found at: (ftp://genome-miner.ucsd.edu/swne_files/pbmc3k_seurat.Robj)
-2. A basic [walkthrough](https://yanwu2014.github.io/swne/Examples/pbmc3k_swne_pagoda2.html) of 3k PBMC cells starting from a pre-computed Pagoda2 object, which can be found at: (ftp://genome-miner.ucsd.edu/swne_files/pbmc3k_pagoda2.Robj)
-3. An [walkthrough](https://yanwu2014.github.io/swne/Examples/dentate_gyrus_swne_velocyto.html) integrating [RNA velocity](https://www.biorxiv.org/content/early/2017/10/19/206052) with SWNE for a developmental mouse dentate gyrus dataset. The pre-computed Pagoda2 and Velocyto objects can be found here: (ftp://genome-miner.ucsd.edu/swne_files/dentate_gyrus.p2.velocyto.RData.gz)
+1. A basic [walkthrough](https://yanwu2014.github.io/swne/Examples/pbmc3k_swne_seurat.html) of 3k PBMC cells starting from a pre-computed Seurat object, which can be found at: ftp://genome-miner.ucsd.edu/swne_files/pbmc3k_seurat.Robj
+2. A basic [walkthrough](https://yanwu2014.github.io/swne/Examples/pbmc3k_swne_pagoda2.html) of 3k PBMC cells starting from a pre-computed Pagoda2 object, which can be found at: ftp://genome-miner.ucsd.edu/swne_files/pbmc3k_pagoda2.Robj
+3. An [walkthrough](https://yanwu2014.github.io/swne/Examples/dentate_gyrus_swne_velocyto.html) integrating [RNA velocity](https://www.biorxiv.org/content/early/2017/10/19/206052) with SWNE for a developmental mouse dentate gyrus dataset. The pre-computed Pagoda2 and Velocyto objects can be found here: ftp://genome-miner.ucsd.edu/swne_files/dentate_gyrus.p2.velocyto.RData.gz
 
 ## Recreating Figures
 To recreate the figures from our preprint, see the Scripts/ directory. 
 
-To generate the simulated discrete and trajectory datasets, use `splatter_generate.R`. The simulated datasets we generated can be found [here](ftp://genome-miner.ucsd.edu/swne_files/splatter_simulated_data.tar.gz). To generate the visualizations and embedding evaluations, run `splatter_discrete_swne.R` and `splatter_trajectory_swne.R` for the discrete and trajectory simulations, respectively. To benchmark SWNE runtimes, use `splatter_runtime_analysis.R`.
+To generate the simulated discrete and trajectory datasets, use `splatter_generate.R`. The simulated datasets we generated can be found here: 
+* ftp://genome-miner.ucsd.edu/swne_files/splatter_simulated_data.tar.gz
 
-The data needed to run `hemato_swne.R` can be found here: (ftp://genome-miner.ucsd.edu/swne_files/hemato_data.tar.gz). The raw data for the hematopoietic cells can be found, courtesy of the monocle2 developers, [here](http://www.gs.washington.edu/~xqiu/proj2/RGE_analysis_data.tar.gz).
+To generate the visualizations and embedding evaluations, run `splatter_discrete_swne.R` and `splatter_trajectory_swne.R` for the discrete and trajectory simulations, respectively. To benchmark SWNE runtimes, use `splatter_runtime_analysis.R`.
 
-The data needed to run `snDropSeq_swne.R` on the cerebellar and visual cortex data can be found here: (ftp://genome-miner.ucsd.edu/swne_files/neuronal_data.tar.gz). The raw data can be found at the GEO accession GSE97930.
+The data needed to run `hemato_swne.R` can be found here: 
+* ftp://genome-miner.ucsd.edu/swne_files/hemato_data.tar.gz
+
+The raw data for the hematopoietic cells can be found, courtesy of the monocle2 developers, [here](http://www.gs.washington.edu/~xqiu/proj2/RGE_analysis_data.tar.gz).
+
+The data needed to run `snDropSeq_swne.R` on the cerebellar and visual cortex data can be found here: 
+* ftp://genome-miner.ucsd.edu/swne_files/neuronal_data.tar.gz)
+
+The raw data can be found at the GEO accession GSE97930.
 
 The raw PBMC dataset can be found at the 10X genomics [website](https://support.10xgenomics.com/single-cell-gene-expression/datasets/1.1.0/pbmc3k).
