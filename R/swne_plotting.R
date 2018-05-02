@@ -105,6 +105,7 @@ EmbedSWNE <- function(H, SNN = NULL, alpha.exp = 1, snn.exp = 1.0, n_pull = NULL
   if (is.null(SNN) && (colnames(H) != rownames(SNN) || colnames(H) != colnames(SNN))) {
     stop("Column names of H must match row and column names of the SNN matrix")
   }
+
   H <- H[ ,colSums(H) > 0]
 
   if (!is.null(SNN)) {

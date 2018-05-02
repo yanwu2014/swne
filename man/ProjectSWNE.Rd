@@ -21,7 +21,7 @@ ProjectSWNE(swne.embedding, H.test, SNN = NULL, alpha.exp = 1,
 \item{n_pull}{Number of factors pulling on each sample. Must be >= 3}
 }
 \value{
-Matrix of sample embeddings
+SWNE embedding for the test data
 }
 \description{
 Projects new data onto an existing swne embedding

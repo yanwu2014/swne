@@ -11,11 +11,8 @@ You can find our bioRxiv preprint [here](https://www.biorxiv.org/content/early/2
 ## Installation instructions
 
 1. Install devtools with `install.packages("devtools")` if not already installed
-2. Install swne with `devtools::install_github("yanwu2014/swne")`
-
-Optionally install:
-
-1. liger with `devtools::install_github("JEFworks/liger")` for additional geneset enrichment functionality
+2. liger with `devtools::install_github("JEFworks/liger")` for geneset enrichment functionality
+3. Install swne with `devtools::install_github("yanwu2014/swne")`
 
 ## Walkthroughs and examples
 Since SWNE is primarily meant for visualization and interpretation of the data, we typically use either [Seurat](http://satijalab.org/seurat/) or [Pagoda2](https://github.com/hms-dbmi/pagoda2) as a primary scRNA-seq pipeline. All the R markdown files used to generate the walkthroughs can be found under the Examples/ directory.

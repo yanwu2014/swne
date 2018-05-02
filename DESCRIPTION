@@ -34,10 +34,10 @@ Imports:
   FNN,
   MASS,
   compiler,
-  proxy
+  proxy,
+  liger,
+  hash
 Suggests:
   velocyto.R,
-  snow,
-  hash,
-  liger
+  snow
 RoxygenNote: 6.0.1
