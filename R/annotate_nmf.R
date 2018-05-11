@@ -54,9 +54,10 @@ FilterGenesets <- function(genesets, gene.names, min.size = 5, max.size = 500) {
 #' @export
 #'
 WriteGenesets <- function(genesets, file.name) {
+  if (file.exists(file.name)) { file.remove(file.name) }
   genesets <- lapply(names(genesets), function(name) {x <- genesets[[name]]; x <- c(name,name,x); return(x);})
   n.cols <- 1.5*max(unlist(lapply(genesets, length)))
-  empty <- lapply(genesets, write, file.name, append=TRUE, ncolumns = n.cols, sep = '\t')
+  invisible(lapply(genesets, write, file.name, append = T, ncolumns = n.cols, sep = '\t'))
 }
 
 
