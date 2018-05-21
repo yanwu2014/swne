@@ -17,10 +17,10 @@ You can find our bioRxiv preprint [here](https://www.biorxiv.org/content/early/2
 ## Walkthroughs and examples
 Since SWNE is primarily meant for visualization and interpretation of the data, we typically use either [Seurat](http://satijalab.org/seurat/) or [Pagoda2](https://github.com/hms-dbmi/pagoda2) as a primary scRNA-seq pipeline. All the R markdown files used to generate the walkthroughs can be found under the Examples/ directory.
 
-1. A basic [walkthrough](https://yanwu2014.github.io/swne/Examples/pbmc3k_swne_seurat.html) of 3k PBMC cells starting from a pre-computed Seurat object, which can be found at: ftp://genome-miner.ucsd.edu/swne_files/pbmc3k_seurat.Robj
-2. A basic [walkthrough](https://yanwu2014.github.io/swne/Examples/pbmc3k_swne_pagoda2.html) of 3k PBMC cells starting from a pre-computed Pagoda2 object, which can be found at: ftp://genome-miner.ucsd.edu/swne_files/pbmc3k_pagoda2.Robj
-3. A [walkthrough](https://yanwu2014.github.io/swne/Examples/multiple_pancreas_alignment_swne.html) using SWNE to visualize four pancreas datasets that have undergone batch alignment with Seurat's [manifold alignment](https://www.nature.com/articles/nbt.4096). The pre-computed Seurat object can be found at: ftp://genome-miner.ucsd.edu/swne_files/pancreas_integrated_seurat.Robj. The script used to generate the object can be found [here](https://yanwu2014.github.io/swne/Examples/multiple_pancreas_workflow.R) and the raw datasets can be found [here](http://bit.ly/IAexpmat).
-4. A [walkthrough](https://yanwu2014.github.io/swne/Examples/dentate_gyrus_swne_velocyto.html) integrating [RNA velocity](https://www.biorxiv.org/content/early/2017/10/19/206052) with SWNE for a developmental mouse dentate gyrus dataset. The pre-computed Pagoda2 and Velocyto objects can be found here: ftp://genome-miner.ucsd.edu/swne_files/dentate_gyrus.p2.velocyto.RData.gz
+1. A basic [walkthrough](https://yanwu2014.github.io/swne/Examples/pbmc3k_swne_seurat.html) of 3k PBMC cells starting from a pre-computed Seurat object.
+2. A basic [walkthrough](https://yanwu2014.github.io/swne/Examples/pbmc3k_swne_pagoda2.html) of 3k PBMC cells starting from a pre-computed Pagoda2 object.
+3. A [walkthrough](https://yanwu2014.github.io/swne/Examples/multiple_pancreas_alignment_swne.html) using SWNE to visualize four pancreas datasets that have undergone batch alignment with Seurat's [manifold alignment](https://www.nature.com/articles/nbt.4096). The script used to generate the object can be found [here](https://yanwu2014.github.io/swne/Examples/multiple_pancreas_workflow.R) and the raw datasets can be found [here](http://bit.ly/IAexpmat).
+4. A [walkthrough](https://yanwu2014.github.io/swne/Examples/dentate_gyrus_swne_velocyto.html) integrating [RNA velocity](https://www.biorxiv.org/content/early/2017/10/19/206052) with SWNE for a developmental mouse dentate gyrus dataset.
 
 ## Recreating Figures
 To recreate the figures from our preprint, see the Scripts/ directory. 
