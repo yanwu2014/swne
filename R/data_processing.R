@@ -292,3 +292,41 @@ ExtractDebatchedSeurat <- function(se.obj) {
 
   return(gene.expr)
 }
+
+
+#' Extracts scaled counts from Seurat or Pagoda2 objects
+#'
+#' @param obj Seurat or Pagoda2 object
+#' @param obj.type Must be either "seurat" or "pagoda2"
+#' @param rescale Rescale data with plain pagoda2 model
+#' @param rescale.method Rescale method, either "log", or "ft"
+#' @param batch If rescaling and multiple batches, specify batch
+#' @return Normalized gene expression matrix
+#'
+#' @export
+#'
+ExtractNormCounts <- function(obj, obj.type = "seurat", rescale = T, rescale.method = "log",
+                              batch = NULL) {
+  if (!obj.type %in% c("seurat", "pagoda2")) {
+    stop("obj.type must be either 'seurat' or 'pagoda2'")
+  }
+
+  if (!rescale.method %in% c("log", "ft")) {
+    stop("rescale.method must be either 'log', or 'ft'")
+  }
+
+  if (obj.type == "seurat") {
+    if (rescale) {
+      counts <- obj@raw.data[,obj@cell.names]
+      norm.counts <- ScaleCounts(counts, batch = batch, method = rescale.method)
+    } else {
+      norm.counts <- obj@scale.data
+      norm.counts <- t(apply(norm.counts, 1, function(x) (x - min(x))/(max(x) - min(x))))
+    }
+  } else if (obj.type == "pagoda2") {
+    counts <- obj$misc$rawCounts[,colnames(obj$counts)]
+    norm.counts <- ScaleCounts(counts, batch = batch, method = rescale.method)
+  }
+
+  return(norm.counts)
+}
