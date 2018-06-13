@@ -1,5 +1,4 @@
 #### Run SWNE ####
-
 library(swne)
 
 ## Set directory
@@ -230,24 +229,31 @@ knn.simil <- sapply(embeddings.knn, function(knn.emb) {
 })
 print(knn.simil)
 
-pdf("splatter_trajectory_neighborhood_score.pdf", width = 3.5, height = 4)
-ggBarplot(knn.simil, fill.color = "skyblue")
-dev.off()
-
-
 ## Calculate pairwise distances between trajectory sections
-path.step.5 <- GetPathStep(metadata, step.size = 5, make.factor = T)
-traj.dist <- CalcPairwiseDist(norm.counts[var.genes,], path.step.5, use.median = F)
+path.step.10 <- GetPathStep(metadata, step.size = 10, make.factor = T)
+traj.dist <- CalcPairwiseDist(norm.counts[var.genes,], path.step.10, use.median = F)
 
 embeddings.cor <- sapply(embeddings, function(emb) {
-  emb.dist <- CalcPairwiseDist(emb, path.step.5, use.median = F)
+  emb.dist <- CalcPairwiseDist(emb, path.step.10, use.median = F)
   cor(traj.dist, emb.dist)
 })
 print(embeddings.cor)
 
-pdf("splatter_trajectory_path_dist_cor.pdf", width = 3.5, height = 4)
-ggBarplot(embeddings.cor, fill.color = "skyblue")
+
+## Plot local and global evaluations together
+library(ggplot2)
+library(ggrepel)
+scatter.df <- data.frame(x = knn.simil, y = embeddings.cor, name = names(embeddings))
+
+pdf("splatter_trajectory_quant_eval.pdf", width = 4.5, height = 4)
+ggplot(scatter.df, aes(x, y)) + geom_point(size = 2, alpha = 1) +
+  theme_classic() + theme(legend.position = "none", text = element_text(size = 14)) +
+  xlab("Neighborhood Score") + ylab("Path-Time Distance Correlation") + 
+  geom_text_repel(aes(x, y, label = name), size = 4.5) + 
+  xlim(0, max(knn.simil)) + ylim(0, max(embeddings.cor))
 dev.off()
+
+write.table(scatter.df, file = "splatter_trajectory_quant_eval.tsv", sep = "\t")
 
 save.image("splatter_trajectory_analysis.RData")
 
@@ -258,18 +264,18 @@ load("splatter_trajectory_analysis.RData")
 library(swne)
 library(FNN)
 
-k.range <- c(3, 6, 10, 20)
+k.range <- c(3, 6, 12, 20)
 k.range.embeddings <- lapply(k.range, function(k) {
   nmf.res <- RunNMF(norm.counts[var.genes,], k = k, alpha = 0, init = "random", 
-                    n.cores = n.cores, loss = loss, n.rand.init = 5)
+                    n.cores = n.cores, loss = loss, n.rand.init = 10)
   swne.embedding <- EmbedSWNE(nmf.res$H, SNN = snn, alpha.exp = 2.5, snn.exp = 0.1, n_pull = 4,
                               pca.red = T, snn.factor.proj = T, dist.use = "cosine")
   swne.embedding$H.coords$name <- ""
   
-  pdf(paste("splatter_trajectory_swne_k", k, ".pdf", sep = ""), width = 3.5, height = 3.5)
-  print(PlotSWNE(swne.embedding, alpha.plot = 0.4, sample.groups = clusters, do.label = T, label.size = 4.5, 
-                 pt.size = 1.5, seed = color.seed, show.legend = F))
-  dev.off()
+  # pdf(paste("splatter_trajectory_swne_k", k, ".pdf", sep = ""), width = 3.5, height = 3.5)
+  # print(PlotSWNE(swne.embedding, alpha.plot = 0.4, sample.groups = clusters, do.label = T, label.size = 4.5, 
+  #                pt.size = 1.5, seed = color.seed, show.legend = F))
+  # dev.off()
   
   return(t(as.matrix(swne.embedding$sample.coords)))
 })
@@ -281,14 +287,17 @@ k.range.knn.simil <- sapply(k.range.embeddings.knn, function(knn.emb) {
 })
 print(k.range.knn.simil)
 
+
 pdf("k_range_trajectory_neighborhood_score.pdf", width = 2.75, height = 4)
 ggBarplot(k.range.knn.simil, fill.color = "skyblue")
 dev.off()
 
 
 ## Calculate pairwise distances between trajectory sections
+traj.dist <- CalcPairwiseDist(norm.counts[var.genes,], path.step.10, use.median = F)
+path.step.10 <- GetPathStep(metadata, step.size = 10, make.factor = T)
 k.range.embeddings.cor <- sapply(k.range.embeddings, function(emb) {
-  emb.dist <- CalcPairwiseDist(emb, path.step.5, use.median = F)
+  emb.dist <- CalcPairwiseDist(emb, path.step.10, use.median = F)
   cor(traj.dist, emb.dist)
 })
 print(k.range.embeddings.cor)

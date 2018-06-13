@@ -151,10 +151,6 @@ embeddings.cor <- sapply(embeddings, function(emb) {
 })
 print(embeddings.cor)
 
-pdf("splatter_discrete_cl_dist_cor.pdf", width = 3.5, height = 4)
-ggBarplot(embeddings.cor, fill.color = "skyblue")
-dev.off()
-
 
 ## Calculate silhouette scores for embeddings
 si.avg.scores <- sapply(embeddings, function(emb) {
@@ -163,9 +159,21 @@ si.avg.scores <- sapply(embeddings, function(emb) {
 })
 print(si.avg.scores)
 
-pdf("splatter_discrete_cl_silhouette.pdf", width = 3.5, height = 4)
-ggBarplot(si.avg.scores, fill.color = "skyblue")
+
+## Plot local and global evaluations together
+library(ggplot2)
+library(ggrepel)
+scatter.df <- data.frame(x = si.avg.scores, y = embeddings.cor, name = names(embeddings))
+
+pdf("splatter_discrete_quant_eval.pdf", width = 4.5, height = 4)
+ggplot(scatter.df, aes(x, y)) + geom_point(size = 2, alpha = 1) +
+  theme_classic() + theme(legend.position = "none", text = element_text(size = 14)) +
+  xlab("Silhouette Score") + ylab("Cluster Distance Correlation") + 
+  geom_text_repel(aes(x, y, label = name), size = 4.5) + 
+  xlim(0, max(si.avg.scores)) + ylim(0, max(embeddings.cor))
 dev.off()
+
+write.table(scatter.df, file = "splatter_discrete_quant_eval.tsv", sep = "\t")
 
 save.image("splatter_discrete_analysis.RData")
 
