@@ -314,92 +314,6 @@ MutualInf <-  function(x, y, n.grid = 25) {
 
 #### Genotype/group handling functions ####
 
-#' Convert groups list to design matrix
-#'
-#' @param groups.list Named list of cell vectors for each genotype
-#' @param max.groups Maximum number of genotypes per cell
-#' @param min.cells Minumum number of cells per genotype
-#' @param drop.cells Drop cells in genotypes that are filtered out
-#'
-#' @return Sparse binary matrix where rows are cells, and columns are genotypes. 1 means the cell received the genotype.
-#'
-#' @import Matrix
-#' @import hash
-#' @export
-#'
-DesignMatrix <- function(groups.list, max.groups = 2, min.cells = 5, drop.cells = T) {
-  if (!requireNamespace("hash", quietly = TRUE)) {
-    stop("Package \"hash\" needed for this function to work. Please install it.",
-         call. = FALSE)
-  }
-
-  require(hash)
-  cell.names <- unique(unlist(groups.list, F, F))
-  single.groups <- names(groups.list)
-
-  single.mat <- Matrix::Matrix(0, length(cell.names), length(single.groups), dimnames = list(cell.names, single.groups))
-  for (i in 1:ncol(single.mat)) {
-    single.mat[groups.list[[i]], i] <- 1
-  }
-  if (drop.cells) single.mat <- single.mat[Matrix::rowSums(single.mat) <= max.groups, ]
-  n_cells_single <- Matrix::colSums(single.mat)
-  single.mat <- single.mat[ ,names(n_cells_single[n_cells_single >= min.cells])]
-  single.mat <- single.mat[Matrix::rowSums(single.mat) > 0, ]
-
-  combo.rows <- single.mat[Matrix::rowSums(single.mat) > 1,]
-  combo.groups <- unique(apply(combo.rows, 1, function(x) paste(names(x[x == 1]), collapse = ":", sep = "")))
-  if (max.groups > 1 && length(combo.groups) > 0) {
-    combo.groups.list <- hash::hash(keys = combo.groups)
-    for (i in 1:nrow(combo.rows)) {
-      mat.row <- combo.rows[i,]
-      genotype <- paste(names(mat.row[mat.row == 1]), collapse = ":", sep = "")
-      cell <- rownames(combo.rows)[[i]]
-      combo.groups.list[[genotype]] <- c(combo.groups.list[[genotype]], cell)
-    }
-    combo.groups.list <- as.list(combo.groups.list)
-    combo.groups.list[['keys']] <- NULL
-    combo.groups.list <- combo.groups.list[combo.groups]
-
-    combo.mat <- Matrix(0, nrow(single.mat), length(combo.groups), dimnames = list(rownames(single.mat), combo.groups))
-    for (i in 1:ncol(combo.mat)) {
-      combo.mat[combo.groups.list[[i]],i] <- 1
-    }
-
-    # Filter out combos that have too few cells
-    n_cells_combo <- Matrix::colSums(combo.mat)
-    combos_keep <- names(n_cells_combo[n_cells_combo >= min.cells])
-
-    # Remove filtered combo cells from design matrix
-    if (length(combos_keep) > 0) {
-      combo.mat <- combo.mat[ ,combos_keep]
-      design.mat <- cbind(single.mat, combo.mat)
-      filtered.cells <- (Matrix::rowSums(single.mat) > 1) & (Matrix::rowSums(combo.mat) == 0)
-
-    } else {
-      design.mat <- single.mat
-      filtered.cells <- (Matrix::rowSums(single.mat) > 1)
-
-    }
-    if (drop.cells) design.mat <- design.mat[!filtered.cells,]
-  } else {
-    design.mat <- single.mat
-  }
-  return(design.mat)
-}
-
-#' Helper function for filtering out cells belonging to more than one group
-#'
-#' @import Matrix
-#'
-single_groups <- function(groups.list, min.cells = 1) {
-  groups.matrix <- DesignMatrix(groups.list, max.groups = 1, min.cells = min.cells)
-  groups.list <- lapply(colnames(groups.matrix), function(g) {
-    rownames(groups.matrix)[which(groups.matrix[,g] == 1)]
-  })
-  names(groups.list) <- colnames(groups.matrix)
-  return(groups.list)
-}
-
 
 #' Convert list of sample groups into a flat vector.
 #' Removes all samples belonging to multiple groups
@@ -414,14 +328,15 @@ FlattenGroups <- function(groups.list) {
   cell.names <- unlist(groups.list, F, F)
   if (length(cell.names) > length(unique(cell.names))) {
     print("Warning: removing all samples belonging to multiple groups")
-    groups.list <- single_groups(groups.list)
-    cell.names <- unlist(groups.list, F, F)
+    cell.tbl <- table(cell.names)
+    cells.keep <- names(cell.tbl[cell.tbl == 1])
   }
 
-  groups <- rep(NA, length(cell.names))
-  names(groups) <- cell.names
+  groups <- rep(NA, length(cells.keep))
+  names(groups) <- cells.keep
   for (g in names(groups.list)) {
-    groups[groups.list[[g]]] <- g
+    g.cells <- intersect(groups.list[[g]], cells.keep)
+    groups[g.cells] <- g
   }
 
   if (any(is.na(groups))) { stop("Some unassigned cells"); }

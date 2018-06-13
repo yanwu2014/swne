@@ -23,7 +23,7 @@ library(swne)
 
 Let's load the Seurat object
 ```{r}
-se.obj <- readRDS("pancreas_integrated_seurat.Robj")
+se.obj <- readRDS("~/swne/Data/pancreas_integrated_seurat.Robj")
 ```
 
 
@@ -49,7 +49,7 @@ swne.embedding <- EmbedSWNE(nmf.res$H, se.obj@snn, alpha.exp = 2, snn.exp = 0.1,
 
 We project the full gene expression matrix to get gene loadings for the full set of genes
 ```{r message=FALSE,warning=FALSE}
-norm.counts <- ScaleCounts(se.obj@raw.data[,se.obj@cell.names], method = "log")
+norm.counts <- ExtractNormCounts(se.obj, rescale = T, rescale.method = "log", batch = NULL)
 nmf.res$W <- ProjectFeatures(norm.counts, nmf.res$H, loss = loss, n.cores = n.cores)
 ```
 

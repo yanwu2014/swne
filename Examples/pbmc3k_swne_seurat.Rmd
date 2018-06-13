@@ -22,28 +22,23 @@ library(swne)
 
 Next let's load the Seurat object
 ```{r}
-se.obj <- readRDS("pbmc3k_seurat.Robj")
+se.obj <- readRDS("~/swne/Data/pbmc3k_seurat.Robj")
 ```
 
 
-Pull out the raw counts, filter cells and genes, and trim each gene to reduce outliers
+Pull out the counts, scale and adjust gene variance, while keeping the scaled matrix nonnegative.
 ```{r}
-counts <- as(se.obj@raw.data, "dgCMatrix")[,se.obj@cell.names]
-counts <- FilterData(counts, min.samples.frac = 0.0025, min.nonzero.features = 200, trim = 0.001)
-dim(counts)
-```
-
-
-We need to scale the data and adjust gene variance, while keeping the scaled matrix nonnegative.
-```{r}
-norm.counts <- ScaleCounts(counts, batch = NULL, method = "log", adj.var = T)
+se.obj@raw.data <- FilterData(as(se.obj@raw.data, "dgCMatrix"), min.samples.frac = 0.0025, 
+                              min.nonzero.features = 200, trim = 0.0025)
+norm.counts <- ExtractNormCounts(se.obj, obj.type = "seurat", rescale = T, rescale.method = "log", batch = NULL)
+dim(norm.counts)
 ```
 
 
 Most scRNA-seq pipelines only use a subset of highly overdispersed genes for analysis. We'll pull out those variable genes here, as well as the cluster labels.
 ```{r}
 ## Pull out overdispersed genes as defined by Seurat
-var.genes <- intersect(se.obj@var.genes, rownames(counts));
+var.genes <- intersect(se.obj@var.genes, rownames(norm.counts));
 length(var.genes)
 
 ## Pull out cell clusters as defined by Seurat
@@ -69,7 +64,7 @@ k.res$k
 
 We then run the NMF decomposition. We can initialize the NMF using either Independent Component Analysis (ica), Nonnegative SVD (nnsvd), or a completely random initialization. The output of `RunNMF` is a list of the gene loadings (W) and NMF embedding (H).
 ```{r}
-k <- 6
+k <- 10
 nmf.res <- RunNMF(norm.counts[var.genes,], k = k, alpha = 0, init = "ica", n.cores = n.cores, loss = loss)
 nmf.scores <- nmf.res$H
 ```

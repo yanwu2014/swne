@@ -20,13 +20,13 @@ library(swne)
 
 Next let's load the pre-computed Pagoda2 and Veloctyo objects
 ```{r}
-load("~/swne/Examples/dentate_gyrus.p2.velocyto.RData.gz")
+load("~/swne/Data/dentate_gyrus.p2.velocyto.RData.gz")
 ```
 
 
 Pull out counts matrix and overdispersed genes from the Pagoda2 object, and scale/normalize the counts
 ```{r}
-norm.counts <- ScaleCounts(t(r$misc$rawCounts), batch = NULL, method = "log", adj.var = T)
+norm.counts <- ExtractNormCounts(r, obj.type = "pagoda2", rescale = T, rescale.method = "log", batch = NULL)
 od.genes <- rownames(r$misc$PCA$v)
 ```
 

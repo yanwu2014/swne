@@ -29,7 +29,7 @@ p2 <- readRDS("/media/Home_Raid1/yan/swne/Data/pbmc3k_pagoda2.Robj")
 
 Pull out the counts, log-scale and adjust the variance of each gene
 ```{r}
-norm.counts <- ScaleCounts(t(p2$misc$rawCounts[ ,colnames(p2$counts)]), method = "log", adj.var = T)
+norm.counts <- ExtractNormCounts(p2, obj.type = "pagoda2", rescale = T, rescale.method = "log", batch = NULL)
 dim(norm.counts)
 ```
 

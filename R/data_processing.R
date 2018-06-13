@@ -324,7 +324,11 @@ ExtractNormCounts <- function(obj, obj.type = "seurat", rescale = T, rescale.met
       norm.counts <- t(apply(norm.counts, 1, function(x) (x - min(x))/(max(x) - min(x))))
     }
   } else if (obj.type == "pagoda2") {
-    counts <- obj$misc$rawCounts[,colnames(obj$counts)]
+    if (!is.null(obj$counts)) {
+      counts <- Matrix::t(obj$misc$rawCounts[rownames(obj$counts),])
+    } else {
+      counts <- Matrix::t(obj$misc$rawCounts)
+    }
     norm.counts <- ScaleCounts(counts, batch = batch, method = rescale.method)
   }
 
