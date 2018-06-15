@@ -102,7 +102,7 @@ get_sample_coords <- function(H, H.coords, alpha = 1, n_pull = NULL) {
 #'
 EmbedSWNE <- function(H, SNN = NULL, alpha.exp = 1, snn.exp = 1.0, n_pull = NULL, proj.method = "sammon",
                       pca.red = F, dist.use = "cosine", snn.factor.proj = T, min.snn = 0.0) {
-  if (is.null(SNN) && (colnames(H) != rownames(SNN) || colnames(H) != colnames(SNN))) {
+  if (!is.null(SNN) && (colnames(H) != rownames(SNN) || colnames(H) != colnames(SNN))) {
     stop("Column names of H must match row and column names of the SNN matrix")
   }
 
