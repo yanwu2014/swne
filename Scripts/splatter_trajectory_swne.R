@@ -27,20 +27,20 @@ norm.counts <- ScaleCounts(Matrix::t(r$misc$rawCounts), batch = NULL, method = "
 snn <- CalcSNN(t(pc.scores), k = 30, k.scale = 10, prune.SNN = 0.05)
 
 ## Run SWNE
-nmf.res <- RunNMF(norm.counts[var.genes,], k = 10, alpha = 0, init = "random", 
-                  n.cores = n.cores, loss = loss, n.rand.init = 5)
+nmf.res <- RunNMF(norm.counts[var.genes,], k = 8, init = "ica", 
+                  n.cores = n.cores, loss = loss)
 H <- nmf.res$H
 
 nmf.res$W <- ProjectFeatures(norm.counts, nmf.res$H, loss = loss, n.cores = n.cores)
 top.genes.df <- SummarizeAssocFeatures(nmf.res$W, features.return = 2)
 
-swne.embedding <- EmbedSWNE(H, SNN = snn, alpha.exp = 2.5, snn.exp = 0.1, n_pull = 4, snn.factor.proj = T, 
-                            pca.red = T, dist.use = "cosine")
-swne.embedding <- EmbedFeatures(swne.embedding, nmf.res$W, c("Gene418", "Gene6053"), n_pull = 4)
+swne.embedding <- EmbedSWNE(H, SNN = snn, alpha.exp = 3, snn.exp = 0.1, n_pull = 4, snn.factor.proj = T, 
+                            dist.use = "cosine")
+swne.embedding <- EmbedFeatures(swne.embedding, nmf.res$W, c("Gene4435", "Gene418"), n_pull = 4)
 swne.embedding$H.coords$name <- ""
 
-swne.embedding.no.snn <- EmbedSWNE(H, SNN = NULL, alpha.exp = 2.5, snn.exp = 0.1, n_pull = 4,
-                                   pca.red = T, dist.use = "cosine")
+swne.embedding.no.snn <- EmbedSWNE(H, SNN = NULL, alpha.exp = 3, snn.exp = 0.1, n_pull = 4, snn.factor.proj = T,
+                                   dist.use = "cosine")
 swne.embedding.no.snn <- EmbedFeatures(swne.embedding.no.snn, nmf.res$W, c("Gene418", "Gene6053"), n_pull = 4)
 swne.embedding.no.snn$H.coords$name <- ""
 
@@ -257,41 +257,37 @@ write.table(scatter.df, file = "splatter_trajectory_quant_eval.tsv", sep = "\t")
 
 save.image("splatter_trajectory_analysis.RData")
 
+
 #### Evaluate how SWNE visualization changes with k ####
 
 setwd("/media/Scratch_SSD/Yan/R_Analysis/swne-dev/simulations")
 load("splatter_trajectory_analysis.RData")
+source("splatter_helper_functions.R")
 library(swne)
 library(FNN)
 
-k.range <- c(3, 6, 12, 20)
+k.range <- c(3, 6, 8, 10, 14, 18)
 k.range.embeddings <- lapply(k.range, function(k) {
-  nmf.res <- RunNMF(norm.counts[var.genes,], k = k, alpha = 0, init = "random", 
+  nmf.res <- RunNMF(norm.counts[var.genes,], k = k, alpha = 0, init = "ica", 
                     n.cores = n.cores, loss = loss, n.rand.init = 10)
-  swne.embedding <- EmbedSWNE(nmf.res$H, SNN = snn, alpha.exp = 2.5, snn.exp = 0.1, n_pull = 4,
-                              pca.red = T, snn.factor.proj = T, dist.use = "cosine")
+  swne.embedding <- EmbedSWNE(nmf.res$H, SNN = snn, alpha.exp = 3, snn.exp = 0.1, n_pull = 4,
+                              snn.factor.proj = T, dist.use = "cosine")
   swne.embedding$H.coords$name <- ""
   
-  # pdf(paste("splatter_trajectory_swne_k", k, ".pdf", sep = ""), width = 3.5, height = 3.5)
-  # print(PlotSWNE(swne.embedding, alpha.plot = 0.4, sample.groups = clusters, do.label = T, label.size = 4.5, 
-  #                pt.size = 1.5, seed = color.seed, show.legend = F))
-  # dev.off()
+  pdf(paste("splatter_trajectory_swne_k", k, ".pdf", sep = ""), width = 3.5, height = 3.5)
+  print(PlotSWNE(swne.embedding, alpha.plot = 0.4, sample.groups = clusters, do.label = T, label.size = 4.5,
+                 pt.size = 1.5, seed = color.seed, show.legend = F))
+  dev.off()
   
   return(t(as.matrix(swne.embedding$sample.coords)))
 })
-names(k.range.embeddings) <- k.range
+names(k.range.embeddings) <- paste0("k = ", k.range)
 
 k.range.embeddings.knn <- lapply(k.range.embeddings, ComputeKNN, k = k.use)
 k.range.knn.simil <- sapply(k.range.embeddings.knn, function(knn.emb) {
   mean(sapply(1:ncol(knn.emb), function(i) CalcJaccard(knn.emb[,i], traj.nn[,i])))
 })
 print(k.range.knn.simil)
-
-
-pdf("k_range_trajectory_neighborhood_score.pdf", width = 2.75, height = 4)
-ggBarplot(k.range.knn.simil, fill.color = "skyblue")
-dev.off()
-
 
 ## Calculate pairwise distances between trajectory sections
 traj.dist <- CalcPairwiseDist(norm.counts[var.genes,], path.step.10, use.median = F)
@@ -302,8 +298,13 @@ k.range.embeddings.cor <- sapply(k.range.embeddings, function(emb) {
 })
 print(k.range.embeddings.cor)
 
-pdf("k_range_trajectory_path_dist_cor.pdf", width = 2.75, height = 4)
-ggBarplot(k.range.embeddings.cor, fill.color = "skyblue")
+
+pdf("k_range_trajectory_neighborhood_score.pdf", width = 3, height = 2.5)
+ggLinePlot(k.range.knn.simil)
+dev.off()
+
+pdf("k_range_trajectory_path_dist_cor.pdf", width = 3, height = 2.5)
+ggLinePlot(k.range.embeddings.cor)
 dev.off()
 
 save.image("splatter_trajectory_analysis.RData")

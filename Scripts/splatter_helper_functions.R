@@ -51,6 +51,25 @@ CalcJaccard <- function(x,y) {
 }; CalcJaccard <- compiler::cmpfun(CalcJaccard);
 
 
+## Make lineplot from vector
+ggLinePlot <- function(x, y.lim = NULL) {
+  require(ggplot2)
+  barplot.df <- data.frame(Y = x, X = factor(names(x), levels = names(x)))
+  
+  ggobj <- ggplot(data = barplot.df, aes(x = X, y = Y)) + 
+    geom_line(aes(group = 1)) + 
+    geom_point(size = 2.0) +
+    theme_classic() + 
+    theme(axis.title.x = element_blank(), axis.title.y = element_blank(), 
+          axis.text.x = element_text(hjust = 1, size = 14, angle = 90, color = "black"), 
+          axis.text.y = element_text(size = 12, color = "black"))
+  if(is.null(y.lim)) {
+    y.lim <- c(0, max(x))
+  }
+  ggobj + coord_cartesian(ylim = y.lim)
+}
+
+
 ## Make barplot from vector
 ggBarplot <- function(x, y.lim = NULL, fill.color = "tomato") {
   require(ggplot2)
