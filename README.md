@@ -29,11 +29,11 @@ To generate the simulated discrete and trajectory datasets, use `splatter_genera
 
 To generate the visualizations and embedding evaluations, run `splatter_discrete_swne.R` and `splatter_trajectory_swne.R` for the discrete and trajectory simulations, respectively. To benchmark SWNE runtimes, use `splatter_runtime_analysis.R`.
 
-The data needed to run `hemato_swne.R` can be found [here](ftp://genome-miner.ucsd.edu/swne_files/hemato_data.tar.gz).
+The data needed to run `hemato_swne.R` can be found [here](https://bit.ly/2MFiByO).
 
 The raw data for the hematopoietic cells can be found, courtesy of the monocle2 developers, [here](http://www.gs.washington.edu/~xqiu/proj2/RGE_analysis_data.tar.gz).
 
-The data needed to run `snDropSeq_swne.R` on the cerebellar and visual cortex data can be found [here](ftp://genome-miner.ucsd.edu/swne_files/neuronal_data.tar.gz).
+The data needed to run `snDropSeq_swne.R` on the cerebellar and visual cortex data can be found [here](https://bit.ly/2I6R5XL).
 
 The raw data can be found at the GEO accession GSE97930.
 
