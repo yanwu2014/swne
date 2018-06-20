@@ -24,24 +24,23 @@ n.cores <- 32
 norm.counts <- ScaleCounts(Matrix::t(r$misc$rawCounts), batch = NULL, method = "log", adj.var = T)
 
 ## Make SNN
-snn <- CalcSNN(t(pc.scores), k = 30, k.scale = 10, prune.SNN = 0.05)
+snn <- CalcSNN(t(pc.scores), k = 40, prune.SNN = 0.1)
 
 ## Run SWNE
-nmf.res <- RunNMF(norm.counts[var.genes,], k = 8, init = "ica", 
-                  n.cores = n.cores, loss = loss)
+nmf.res <- RunNMF(norm.counts[var.genes,], k = 8, init = "ica", n.cores = n.cores, loss = loss)
 H <- nmf.res$H
 
 nmf.res$W <- ProjectFeatures(norm.counts, nmf.res$H, loss = loss, n.cores = n.cores)
 top.genes.df <- SummarizeAssocFeatures(nmf.res$W, features.return = 2)
 
-swne.embedding <- EmbedSWNE(H, SNN = snn, alpha.exp = 3, snn.exp = 0.1, n_pull = 4, snn.factor.proj = T, 
+swne.embedding <- EmbedSWNE(H, SNN = snn, alpha.exp = 2.5, snn.exp = 0.05, n_pull = 3, snn.factor.proj = T, 
                             dist.use = "cosine")
-swne.embedding <- EmbedFeatures(swne.embedding, nmf.res$W, c("Gene4435", "Gene418"), n_pull = 4)
+swne.embedding <- EmbedFeatures(swne.embedding, nmf.res$W, c("Gene4435", "Gene1778"), n_pull = 3)
 swne.embedding$H.coords$name <- ""
 
-swne.embedding.no.snn <- EmbedSWNE(H, SNN = NULL, alpha.exp = 3, snn.exp = 0.1, n_pull = 4, snn.factor.proj = T,
+swne.embedding.no.snn <- EmbedSWNE(H, SNN = NULL, alpha.exp = 2.5, n_pull = 4, snn.factor.proj = T,
                                    dist.use = "cosine")
-swne.embedding.no.snn <- EmbedFeatures(swne.embedding.no.snn, nmf.res$W, c("Gene418", "Gene6053"), n_pull = 4)
+swne.embedding.no.snn <- EmbedFeatures(swne.embedding.no.snn, nmf.res$W, c("Gene4435", "Gene1778"), n_pull = 3)
 swne.embedding.no.snn$H.coords$name <- ""
 
 #### Generate plots ####
