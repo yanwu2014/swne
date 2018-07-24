@@ -253,12 +253,11 @@ PlotSWNE <- function(swne.embedding, alpha.plot = 0.25, sample.groups = NULL, do
   H.coords.plot <- subset(H.coords, name != "")
   sample.coords <- swne.embedding$sample.coords
   feature.coords <- swne.embedding$feature.coords
-
-  sample.groups <- factor(sample.groups[rownames(sample.coords)])
   sample.coords$pt.size <- pt.size
 
   set.seed(seed)
   if (!is.null(sample.groups)) {
+    sample.groups <- factor(sample.groups[rownames(sample.coords)])
     sample.groups <- factor(sample.groups, levels = sample(levels(sample.groups)))
     sample.coords$sample.groups <- sample.groups[rownames(sample.coords)]
   } else {
