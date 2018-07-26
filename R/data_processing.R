@@ -260,12 +260,13 @@ ScaleCounts <- function(counts, batch = NULL, method = "log", adj.var = T, plot.
 #' @param gam.k Number of additive models to use for variance modeling
 #'
 #' @import Matrix
+#' @export
 #'
-SelectFeatures <- function(counts, n.features = 3e3, gam.k = 10) {
+SelectFeatures <- function(counts, batch = NULL, n.features = 3e3, gam.k = 10) {
   scale.factor <- median(Matrix::colSums(counts))
   norm.counts <- NormalizeCounts(counts, batch = batch, depthScale = scale.factor)
 
-  varinfo <- AdjustVariance(norm.counts, plot = plot.var.adj, gam.k = gam.k)
+  varinfo <- AdjustVariance(norm.counts, plot = F, gam.k = gam.k)
   varinfo <- varinfo[order(varinfo$lp),]
 
   return(rownames(varinfo[1:n.features,]))

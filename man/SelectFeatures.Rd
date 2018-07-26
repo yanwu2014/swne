@@ -4,7 +4,7 @@
 \alias{SelectFeatures}
 \title{Select overdispersed features}
 \usage{
-SelectFeatures(counts, n.features = 3000, gam.k = 10)
+SelectFeatures(counts, batch = NULL, n.features = 3000, gam.k = 10)
 }
 \arguments{
 \item{counts}{Input data matrix}
