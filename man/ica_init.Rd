@@ -5,7 +5,7 @@
 \title{Independent component analysis initialization.
 Negative values are set to a small, random number.}
 \usage{
-ica_init(A, k)
+ica_init(A, k, ica.fast = F)
 }
 \description{
 Independent component analysis initialization.

@@ -84,7 +84,7 @@ get_sample_coords <- function(H, H.coords, alpha = 1, n_pull = NULL) {
 
 
 
-#' Projects NMF factors and samples in a 2D
+#' Embeds NMF factors and samples in 2 dimensions
 #'
 #' @param H NMF factors (factors x samples)
 #' @param SNN Shared nearest neighbors matrix (or other similarity matrix)

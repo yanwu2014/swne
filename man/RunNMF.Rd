@@ -5,7 +5,7 @@
 \title{Runs NMF decomposition on a data matrix: A = WH.}
 \usage{
 RunNMF(A, k, alpha = 0, init = "ica", n.cores = 1, loss = "mse",
-  n.rand.init = 3, init.zeros = "random")
+  init.zeros = "random", max.iter = 500, ica.fast = F)
 }
 \arguments{
 \item{A}{Input data matrix}
@@ -20,9 +20,13 @@ RunNMF(A, k, alpha = 0, init = "ica", n.cores = 1, loss = "mse",
 
 \item{loss}{Type of loss function to use}
 
-\item{n.rand.init}{If random initialization is used, number of random restarts}
-
 \item{init.zeros}{What to do with zeros in the initialization}
+
+\item{max.iter}{Maximum number of iterations}
+
+\item{ica.fast}{If using default ICA initialization, run PCA first to speed up ICA}
+
+\item{n.rand.init}{If random initialization is used, number of random restarts}
 }
 \value{
 List of W (features x factors) and H (factors x samples)

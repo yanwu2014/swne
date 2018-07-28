@@ -5,8 +5,8 @@
 \title{Determines the optimal number of NMF factors to use via reconstruction error}
 \usage{
 FindNumFactors(A, k.range = seq(2, 12, 2), alpha = 0, n.cores = 1,
-  do.plot = T, seed = NULL, na.frac = 0.3, loss = "mse",
-  max.iter = 1000)
+  do.plot = T, seed = NULL, na.frac = 0.2, loss = "mse",
+  max.iter = 250)
 }
 \arguments{
 \item{A}{Input data matrix}
