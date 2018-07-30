@@ -361,7 +361,7 @@ FeaturePlotSWNE <- function(swne.embedding, feature.scores, feature.name = NULL,
     theme_classic() + theme(axis.title = element_blank(), axis.ticks = element_blank(),
                             axis.line = element_blank(), axis.text = element_blank()) +
     scale_color_distiller(palette = color.palette, direction = 1, guide =
-                            guide_colorbar(title = feature.name, ticks = F, label = F))
+                            guide_colorbar(title = feature.name, ticks = T, label = T))
 
   if (!is.null(feature.coords)) {
     ggobj <- ggobj + geom_point(data = feature.coords, aes(x, y), size = 2.5, color = "darkred")
