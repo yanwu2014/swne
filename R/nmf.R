@@ -56,7 +56,7 @@ ica_init <- function(A, k, ica.fast = F) {
   if (ica.fast) {
     pc.res <- irlba::irlba(t(A), nv = 100, maxit = 250, center = T)
     ica.res <- ica::icafast(pc.res$u, nc = k, maxit = 25, tol = 1e-4)
-    return(list(W = NULL, H = t(ica.res.h$S)))
+    return(list(W = NULL, H = t(ica.res$S)))
   } else {
     ica.res <- ica::icafast(t(A), nc = k, maxit = 25, tol = 1e-4)
     return(list(W = ica.res$M, H = t(ica.res$S)))
