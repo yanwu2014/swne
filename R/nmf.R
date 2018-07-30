@@ -54,9 +54,12 @@ nnsvd_init <- function(A, k, LINPACK) {
 #'
 ica_init <- function(A, k, ica.fast = F) {
   if (ica.fast) {
-    pc.res <- irlba::irlba(t(A), nv = 100, maxit = 250, center = T)
-    ica.res <- ica::icafast(pc.res$u, nc = k, maxit = 25, tol = 1e-4)
-    return(list(W = NULL, H = t(ica.res$S)))
+    pc.res.h <- irlba::irlba(t(A), nv = 100, maxit = 250, center = T)
+    ica.res.h <- ica::icafast(pc.res.h$u, nc = k, maxit = 25, tol = 1e-4)
+
+    pc.res.w <- irlba::irlba(A, nv = 100, maxit = 250, center = T)
+    ica.res.w <- ica::icafast(pc.res.w$u, nc = k, maxit = 25, tol = 1e-4)
+    return(list(W = ica.res.w$S, H = t(ica.res.h$S)))
   } else {
     ica.res <- ica::icafast(t(A), nc = k, maxit = 25, tol = 1e-4)
     return(list(W = ica.res$M, H = t(ica.res$S)))
