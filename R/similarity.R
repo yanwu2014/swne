@@ -37,8 +37,8 @@ CalcSNN <- function(data.use, k = 10, k.scale = 10, prune.SNN = 1/15, print.outp
 #' Calculates shared nearest neighbors between samples (columns) in a test matrix and samples in a training matrix
 #' Adapted from Seurat
 #'
-#' @param test.matrix Test data
-#' @param train.matrix Training data
+#' @param test.data Test data
+#' @param train.data Training data
 #' @param k Number of nearest neighbors
 #' @param k.scale k*k.scale is the number of nearest neighbors to calculate shared nearest neighbors for
 #' @param prune.SNN Minimum fraction of shared nearest neighbors
@@ -50,19 +50,19 @@ CalcSNN <- function(data.use, k = 10, k.scale = 10, prune.SNN = 1/15, print.outp
 #' @importFrom Matrix sparseMatrix
 #' @export
 #'
-ProjectSNN <- function(test.matrix, train.matrix, k = 20, k.scale = 10, prune.SNN = 1/15, print.output = T) {
-  n.train.cells <- ncol(train.matrix)
-  n.test.cells <- ncol(test.matrix)
+ProjectSNN <- function(test.data, train.data, k = 20, k.scale = 10, prune.SNN = 1/15, print.output = T) {
+  n.train.cells <- ncol(train.data)
+  n.test.cells <- ncol(test.data)
   stopifnot(k*k.scale < n.train.cells - 1)
 
-  train.knn <- FNN::get.knn(data = t(train.matrix), k = k.scale * k)
+  train.knn <- FNN::get.knn(data = t(train.data), k = k.scale * k)
   train.nn.ranked <- cbind(1:n.train.cells, train.knn$nn.index[, 1:(k - 1)])
 
-  test.knn <- FNN::get.knnx(data = t(train.matrix), query = t(test.matrix), k = k * k.scale)
+  test.knn <- FNN::get.knnx(data = t(train.data), query = t(test.data), k = k * k.scale)
   test.nn.ranked <- cbind(1:n.test.cells, test.knn$nn.index[, 1:(k - 1)])
   test.nn.large <- test.knn$nn.index
 
-  w <- compute_projected_snn(colnames(train.matrix), k, train.nn.ranked, colnames(test.matrix),
+  w <- compute_projected_snn(colnames(train.data), k, train.nn.ranked, colnames(test.data),
                              test.nn.large, test.nn.ranked, prune.SNN, print.output)
   return(w)
 }

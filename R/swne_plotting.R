@@ -240,6 +240,7 @@ RenameFactors <- function(swne.embedding, name.mapping, set.empty = T) {
 #' @param samples.plot Vector of samples to plot. Default is NULL, which plots all samples.
 #' @param show.legend If sample groups defined, show legend
 #' @param seed Seed for sample groups color reproducibility
+#' @param colors.use Vector of hex colors for each sample group. Vector names must align with sample.groups
 #'
 #' @return ggplot2 object with swne plot
 #'
@@ -248,7 +249,7 @@ RenameFactors <- function(swne.embedding, name.mapping, set.empty = T) {
 #'
 PlotSWNE <- function(swne.embedding, alpha.plot = 0.25, sample.groups = NULL, do.label = F,
                      label.size = 4.5, pt.size = 1, samples.plot = NULL, show.legend = T,
-                     seed = NULL) {
+                     seed = NULL, colors.use = NULL) {
   H.coords <- swne.embedding$H.coords
   H.coords.plot <- subset(H.coords, name != "")
   sample.coords <- swne.embedding$sample.coords
@@ -310,6 +311,13 @@ PlotSWNE <- function(swne.embedding, alpha.plot = 0.25, sample.groups = NULL, do
     ggobj <- ggobj + theme(legend.position = "none")
   }
 
+  if (!is.null(colors.use)) {
+    if(!all(levels(sample.groups) %in% names(colors.use))) {
+      stop("Must specify colors for each group")
+    }
+    ggobj <- ggobj + scale_color_manual(values = colors.use)
+  }
+
   return(ggobj)
 }
 
@@ -359,7 +367,8 @@ FeaturePlotSWNE <- function(swne.embedding, feature.scores, feature.name = NULL,
     geom_point(data = sample.coords, aes(x, y, colour = feature),
                alpha = alpha.plot, size = pt.size) +
     theme_classic() + theme(axis.title = element_blank(), axis.ticks = element_blank(),
-                            axis.line = element_blank(), axis.text = element_blank()) +
+                            axis.line = element_blank(), axis.text = element_blank(),
+                            legend.text = element_text(size = 12)) +
     scale_color_distiller(palette = color.palette, direction = 1, guide =
                             guide_colorbar(title = feature.name, ticks = T, label = T))
 
@@ -397,6 +406,7 @@ FeaturePlotSWNE <- function(swne.embedding, feature.scores, feature.name = NULL,
 #' @param show.legend If sample groups defined, show legend
 #' @param show.axes Plot x and y axes
 #' @param seed Seed for sample group color reproducibility
+#' @param colors.use Vector of hex colors for each sample group. Vector names must align with sample.groups
 #'
 #' @return ggplot2 object with 2d plot
 #'
@@ -405,7 +415,7 @@ FeaturePlotSWNE <- function(swne.embedding, feature.scores, feature.name = NULL,
 #'
 PlotDims <- function(dim.scores, sample.groups = NULL, x.lab = "tsne1", y.lab = "tsne2",
                      main.title = NULL, pt.size = 1.0, font.size = 12, alpha.plot = 1.0, do.label = T,
-                     label.size = 4, show.legend = T, show.axes = T, seed = NULL) {
+                     label.size = 4, show.legend = T, show.axes = T, seed = NULL, colors.use = NULL) {
 
   set.seed(seed)
   if (!is.null(sample.groups)) {
@@ -435,6 +445,12 @@ PlotDims <- function(dim.scores, sample.groups = NULL, x.lab = "tsne1", y.lab = 
   }
 
   if (!show.legend) { ggobj <- ggobj + theme(legend.position = "none") }
+  if (!is.null(colors.use)) {
+    if(!all(levels(sample.groups) %in% names(colors.use))) {
+      stop("Must specify colors for each group")
+    }
+    ggobj <- ggobj + scale_color_manual(values = colors.use)
+  }
 
   ggobj
 }
@@ -481,7 +497,7 @@ FeaturePlotDims <- function(dim.scores, feature.scores, feature.name = NULL, x.l
                alpha = alpha.plot, size = pt.size) +
     xlab(x.lab) + ylab(y.lab) +
     scale_color_distiller(palette = color.palette, direction = 1, guide =
-                            guide_colorbar(title = feature.name, ticks = F, label = F))
+                            guide_colorbar(title = feature.name, ticks = F, label = T))
 
   if (!show.axes) {
     ggobj <- ggobj + theme_void()
@@ -489,13 +505,13 @@ FeaturePlotDims <- function(dim.scores, feature.scores, feature.name = NULL, x.l
     ggobj <- ggobj + theme_classic()
   }
 
-  ggobj <- ggobj + theme(text = element_text(size = font.size))
+  ggobj <- ggobj + theme(text = element_text(size = font.size), legend.text = element_text(size = 12))
 
   ggobj
 }
 
 
-#' Plots a heatmap using ggplot2. Adapted from [site]
+#' Plots a heatmap using ggplot2
 #'
 #' @param m Matrix to plot heatmap for
 #' @param rescaling Scale by row or columns
