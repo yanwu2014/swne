@@ -472,6 +472,8 @@ PlotDims <- function(dim.scores, sample.groups = NULL, x.lab = "tsne1", y.lab = 
 #'
 #' @return ggplot2 object with dim plot with feature overlayed
 #'
+#' @import ggplot2
+#' @import ggrepel
 #' @export
 #'
 FeaturePlotDims <- function(dim.scores, feature.scores, feature.name = NULL, x.lab = "tsne1", y.lab = "tsne2",
@@ -592,6 +594,70 @@ ggHeat <- function(m, rescaling = 'none', clustering = 'none', labCol = T, labRo
   ## finally add the fill colour ramp of your choice (default is blue to red)-- and return
   return(g2 + scale_fill_gradient2(low = heatscale[1], mid = heatscale[2], high = heatscale[3], guide = guide_colorbar(title = legend.title)))
 }
+
+
+
+#' Validates gene embeddings by plotting cluster logFC vs gene factor loading logFC
+#' Warns users if embedded genes fall below minimum logFC threshold
+#'
+#' @param W Gene loadings matrix
+#' @param norm.counts Normalized gene expression matrix
+#' @param genes.embed Genes to embed onto SWNE plot
+#' @param sample.groups Sample groupings
+#' @param n.bins Number of bins for the hexbin plot
+#' @param min.logfc Minimum logFC for an embedded gene
+#' @param font.size Axis label font size
+#' @param label.size Gene label size
+#' @param eps Pseudocount to add to fold-change calculations
+#'
+#' @return ggplot2 object
+#'
+#' @export
+#'
+CheckGeneEmbedding <- function(W, norm.counts, genes.embed, sample.groups, n.bins = 50, min.logfc = 2,
+                               font.size = 12, label.size = 5, eps = 1e-4) {
+  if(!all(rownames(W) == rownames(norm.counts))) {
+    stop("Rownames of W must match rownames of norm.counts")
+  }
+
+  gene.factor.logfc <- log2(apply(W, 1, function(x) {
+    max.i <- which.max(x)
+    (x[[max.i]] + eps)/(mean(x[-1*max.i]) + eps)
+  }))
+
+  gene.cell.logfc <- log2(apply(norm.counts, 1, function(x) {
+    cl.avg <- tapply(x, sample.groups, mean)
+    cl.max <- names(cl.avg[which.max(cl.avg)])
+    (mean(x[sample.groups == cl.max]) + eps)/(mean(x[sample.groups != cl.max]) + eps)
+  }))
+
+  gene.logfc.df <- data.frame(cluster = gene.cell.logfc, factor = gene.factor.logfc)
+  gene.logfc.df$embedded <- factor(rownames(gene.logfc.df) %in% genes.embed)
+  gene.logfc.df <- gene.logfc.df[order(gene.logfc.df$embedded),]
+
+  gg.obj <- ggplot() +
+    geom_hex(data = gene.logfc.df, mapping = aes(factor, cluster), bins = n.bins, alpha = 1) +
+    theme_classic() + theme(text = element_text(size = 12)) +
+    xlab("Max factor logFC") + ylab("Max cluster logFC") +
+    scale_fill_gradient(low = "skyblue", high = "tomato3")
+
+  gene.logfc.label <- subset(gene.logfc.df, embedded == "TRUE")
+  gene.logfc.label$name <- rownames(gene.logfc.label)
+
+  warning.genes <- rownames(subset(gene.logfc.label, cluster < min.logfc | factor < min.logfc))
+  if(length(warning.genes) > 0) {
+    print("Warning, the following genes may not be good candidates for embedding:")
+    print(warning.genes)
+  }
+
+  gg.obj <- gg.obj +
+    geom_point(data = gene.logfc.label, mapping = aes(factor, cluster), size = 2, alpha = 1, color = "darkred") +
+    ggrepel::geom_text_repel(data = gene.logfc.label, mapping = aes(factor, cluster, label = name), size = label.size) +
+    geom_vline(xintercept = min.logfc, linetype = "dotted", color = "darkgrey") +
+    geom_hline(yintercept = min.logfc, linetype = "dotted", color = "darkgrey")
+  gg.obj
+}
+
 
 
 #' Extracts the exact colors used to plot each cluster (the hex codes) for a given color seed

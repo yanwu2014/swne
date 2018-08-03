@@ -5,13 +5,13 @@
 \title{Calculates shared nearest neighbors between samples (columns) in a test matrix and samples in a training matrix
 Adapted from Seurat}
 \usage{
-ProjectSNN(test.matrix, train.matrix, k = 20, k.scale = 10,
-  prune.SNN = 1/15, print.output = T)
+ProjectSNN(test.data, train.data, k = 20, k.scale = 10, prune.SNN = 1/15,
+  print.output = T)
 }
 \arguments{
-\item{test.matrix}{Test data}
+\item{test.data}{Test data}
 
-\item{train.matrix}{Training data}
+\item{train.data}{Training data}
 
 \item{k}{Number of nearest neighbors}
 

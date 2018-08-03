@@ -7,7 +7,7 @@
 PlotDims(dim.scores, sample.groups = NULL, x.lab = "tsne1",
   y.lab = "tsne2", main.title = NULL, pt.size = 1, font.size = 12,
   alpha.plot = 1, do.label = T, label.size = 4, show.legend = T,
-  show.axes = T, seed = NULL)
+  show.axes = T, seed = NULL, colors.use = NULL)
 }
 \arguments{
 \item{dim.scores}{2D embedding coordinates. Must be N x 2 samples}
@@ -35,6 +35,8 @@ PlotDims(dim.scores, sample.groups = NULL, x.lab = "tsne1",
 \item{show.axes}{Plot x and y axes}
 
 \item{seed}{Seed for sample group color reproducibility}
+
+\item{colors.use}{Vector of hex colors for each sample group. Vector names must align with sample.groups}
 }
 \value{
 ggplot2 object with 2d plot

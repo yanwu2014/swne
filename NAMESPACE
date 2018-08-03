@@ -3,6 +3,7 @@
 export(AdjustVariance)
 export(CalcGenesetLoadings)
 export(CalcSNN)
+export(CheckGeneEmbedding)
 export(EmbedFeatures)
 export(EmbedSWNE)
 export(ExtractDebatchedSeurat)
