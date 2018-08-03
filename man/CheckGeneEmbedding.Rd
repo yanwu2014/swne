@@ -6,7 +6,8 @@
 Warns users if embedded genes fall below minimum logFC threshold}
 \usage{
 CheckGeneEmbedding(W, norm.counts, genes.embed, sample.groups, n.bins = 50,
-  min.logfc = 2, font.size = 12, label.size = 5, eps = 1e-04)
+  min.cluster.logfc = 1.5, min.factor.logfc = 1.5, font.size = 12,
+  label.size = 5, eps = 1e-04)
 }
 \arguments{
 \item{W}{Gene loadings matrix}
@@ -19,7 +20,9 @@ CheckGeneEmbedding(W, norm.counts, genes.embed, sample.groups, n.bins = 50,
 
 \item{n.bins}{Number of bins for the hexbin plot}
 
-\item{min.logfc}{Minimum logFC for an embedded gene}
+\item{min.cluster.logfc}{Minimum cluster logFC for an embedded gene}
+
+\item{min.factor.logfc}{Minimum factor logFC for an embedded gene}
 
 \item{font.size}{Axis label font size}
 
@@ -28,7 +31,7 @@ CheckGeneEmbedding(W, norm.counts, genes.embed, sample.groups, n.bins = 50,
 \item{eps}{Pseudocount to add to fold-change calculations}
 }
 \value{
-ggplot2 object
+Dataframe with cluster logFC and factor logFC. Generates scatterplot as a side effect.
 }
 \description{
 Validates gene embeddings by plotting cluster logFC vs gene factor loading logFC
