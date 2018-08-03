@@ -73,62 +73,6 @@ kl_div <- function(x, y, pseudocount = 1e-12) {
 }
 
 
-#' Determines the optimal number of NMF factors to use via reconstruction error
-#'
-#' @param A Input data matrix
-#' @param k.range Range of NMF factors to fit over
-#' @param alpha Regularization parameter
-#' @param n.cores Number of threads
-#' @param do.plot Whether to plot the reconstruction error
-#' @param seed Random seed for selecting missing data
-#' @param na.frac Fraction of data to set as missing
-#' @param loss Loss function to use for NMF
-#' @param max.iter Maximum iterations for NMF run
-#'
-#' @return Reconstruction error at each number of NMF factors specified in k.range
-#'
-#' @import NNLM
-#' @export
-#'
-FindNumFactors <- function(A, k.range = seq(2,12,2), alpha = 0, n.cores = 1, do.plot = T,
-                           seed = NULL, na.frac = 0.2, loss = "mse", max.iter = 250) {
-  if (!is.null(seed)) { set.seed(seed) }
-  if (!loss %in% c("mse", "mkl")) { stop("Invalid loss function") }
-  if (ncol(A) > 15000) print("Warning: This function can be slow for very large datasets")
-
-  A <- as.matrix(A)
-  nzero <- which(A > 0)
-  # ind <- sample(nzero, na.frac*length(nzero));
-  ind <- sample(length(A), na.frac*length(A))
-  A2 <- A;
-  A2[ind] <- NA;
-
-  A.ind <- as.numeric(A[ind])
-  err <- sapply(k.range, function(k) {
-    z <- NNLM::nnmf(A2, k, alpha = c(alpha, alpha, 0), n.threads = n.cores, verbose = 0, loss = loss)
-    A.hat <- with(z, W %*% H)
-    A.hat.ind <- as.numeric(A.hat[ind])
-
-    mse  <- mean((A.ind - A.hat.ind)^2)
-    mkl <- mean(kl_div(A.ind, A.hat.ind))
-
-    return(c(mse, mkl))
-  })
-  rownames(err) <- c("mse", "mkl")
-  min.idx <- which.max(err[loss,])
-
-  if (do.plot) {
-    plot(k.range, err[loss,], col = "blue", type = 'b', main = "Model selection",
-         xlab = "Number of factors", ylab = loss)
-  }
-
-  res <- list()
-  res$err <- err
-  res$k <- k.range[[min.idx]]
-
-  return(res)
-}
-
 
 #' Runs NMF decomposition on a data matrix: A = WH.
 #'
@@ -201,6 +145,63 @@ RunNMF <- function(A, k, alpha = 0, init = "ica", n.cores = 1, loss = "mse",
   colnames(nmf.res$W) <- rownames(nmf.res$H) <- sapply(1:ncol(nmf.res$W), function(i) paste("factor", i, sep = "_"))
   return(nmf.res)
 }
+
+
+#' Determines the optimal number of NMF factors to use by comparing the reduction in
+#' reconstruction error vs the reduction in reconstruction error for a randomized
+#' matrix. The optimal number of factors is where the decrease in reconstruction
+#' errors intersect
+#'
+#' Adapted from Frigyesi et al, 2008. https://www.ncbi.nlm.nih.gov/pmc/articles/PMC2623306/
+#'
+#' @param A Input data matrix
+#' @param k.range Range of NMF factors to fit over
+#' @param n.cores Number of threads
+#' @param do.plot Whether to plot the reconstruction error
+#' @param seed Random seed for randomizing matrix
+#' @param loss Loss function to use for NMF
+#' @param max.iter Maximum iterations for NMF run
+#'
+#' @return Reconstruction error at each number of NMF factors specified in k.range
+#'
+#' @import NNLM
+#' @export
+#'
+FindNumFactors <- function(A, k.range = seq(2,12,2), n.cores = 1, do.plot = T,
+                           seed = NULL, loss = "mse", max.iter = 250) {
+  if (!loss %in% c("mse", "mkl")) { stop("Invalid loss function") }
+  if (ncol(A) > 15000) print("Warning: This function can be slow for very large datasets")
+  if (!is.null(seed)) { set.seed(seed) }
+  A <- as.matrix(A)
+  A.rand <- matrix(sample(A), nrow(A), ncol(A))
+  k.err <- sapply(k.range, function(k) {
+    z <- NNLM::nnmf(A, k, n.threads = n.cores, verbose = 0, max.iter = max.iter)
+    z.rand <- NNLM::nnmf(A.rand, k, n.threads = n.cores, verbose = 0, max.iter = max.iter)
+
+    A.hat <- with(z, W %*% H)
+    A.hat.rand <- with(z.rand, W %*% H)
+
+    if (loss == "mse") {
+      err  <- mean((A.hat - A)^2)
+      err.rand <- mean((A.hat.rand - A.rand)^2)
+    } else if (loss == "mkl") {
+      err <- mean(kl_div(A.hat, A))
+      err.rand <- mean(kl_div(A.hat.rand, A.rand))
+    }
+
+    return(c(err, err.rand))
+  })
+  rownames(k.err) <- c("err", "err.rand")
+  colnames(k.err) <- k.range
+
+
+  if (do.plot) {
+    print(PlotFactorSelection(k.err, font.size = 14))
+  }
+
+  return(k.err)
+}
+
 
 
 #' Projects new features onto existing factor decomposition

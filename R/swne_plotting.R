@@ -357,6 +357,7 @@ FeaturePlotSWNE <- function(swne.embedding, feature.scores, feature.name = NULL,
 
   sample.coords$pt.size <- pt.size
   sample.coords$feature <- feature.scores
+  sample.coords <- sample.coords[order(sample.coords$feature),]
 
   if (!is.null(samples.plot)) {
     sample.coords <- sample.coords[samples.plot,]
@@ -493,6 +494,8 @@ FeaturePlotDims <- function(dim.scores, feature.scores, feature.name = NULL, x.l
 
   sample.coords$pt.size <- pt.size
   sample.coords$feature <- feature.scores
+  sample.coords <- sample.coords[order(sample.coords$feature),]
+
 
   ## Plot sample coordinates
   ggobj <- ggplot() +
@@ -659,13 +662,42 @@ CheckGeneEmbedding <- function(W, norm.counts, genes.embed, sample.groups, n.bin
     geom_point(data = gene.logfc.label, mapping = aes(factor, cluster), size = 2, alpha = 1, color = "darkred") +
     ggrepel::geom_text_repel(data = gene.logfc.label, mapping = aes(factor, cluster, label = name),
                              size = label.size, box.padding = 0.15) +
-    geom_vline(xintercept = min.factor.logfc, linetype = "dotted", color = "darkgrey") +
-    geom_hline(yintercept = min.cluster.logfc, linetype = "dotted", color = "darkgrey")
+    geom_vline(xintercept = min.factor.logfc, linetype = "dotted", size = 1.25, color = "black") +
+    geom_hline(yintercept = min.cluster.logfc, linetype = "dotted", size = 1.25, color = "black")
   print(gg.obj)
 
   return(gene.logfc.df)
 }
 
+
+
+#' Plot decrease in reconstruction error versus random noise.
+#' The point where the change in reconstruction error matches the change in reconstruction
+#' error for the randomized matrix is the optimal number of factors to use.
+#'
+#' @param k.err Reconstruction error output by FindNumFactors
+#' @param font.size Font size to use for plotting
+#'
+#' @import ggplot2
+#' @export
+#'
+PlotFactorSelection <- function(k.err, font.size = 12) {
+  err.del <- sapply(1:(ncol(k.err) - 1), function(i) k.err[,i] - k.err[,i + 1])
+  colnames(err.del) <- colnames(k.err)[2:length(colnames(k.err))]
+
+  err.del.combined <- c(err.del[1,], err.del[2,])
+  err.del.df <- data.frame(y = err.del.combined, x = factor(names(err.del.combined), levels = colnames(err.del)),
+                           type = factor(c(rep("Original", ncol(err.del)), rep("Randomized", ncol(err.del)))))
+
+  ggplot(data = err.del.df, aes(x, y, colour = type)) +
+    geom_line(aes(group = type)) + geom_point(size = 2.0) +
+    theme_classic() + xlab("Number of factors") + ylab("Decrease in error") +
+    theme(axis.text.x = element_text(hjust = 1, size = font.size, angle = 90, color = "black"),
+          axis.text = element_text(size = font.size, color = "black"),
+          axis.title = element_text(size = font.size, color = "black"),
+          legend.text = element_text(size = font.size),
+          legend.title = element_text(size = font.size))
+}
 
 
 #' Extracts the exact colors used to plot each cluster (the hex codes) for a given color seed
