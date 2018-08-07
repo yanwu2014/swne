@@ -685,19 +685,21 @@ PlotFactorSelection <- function(k.err, font.size = 12) {
   err.del <- sapply(1:(ncol(k.err) - 1), function(i) k.err[,i] - k.err[,i + 1])
   colnames(err.del) <- colnames(k.err)[2:length(colnames(k.err))]
 
-  err.del.combined <- c(err.del[1,], err.del[2,])
-  err.del.df <- data.frame(y = err.del.combined, x = factor(names(err.del.combined), levels = colnames(err.del)),
-                           type = factor(c(rep("Original", ncol(err.del)), rep("Randomized", ncol(err.del)))))
+  err.del.diff <- err.del[1,] - err.del[2,]
+  err.del.df <- data.frame(y = err.del.diff, x = factor(names(err.del.diff), levels = colnames(err.del)))
 
-  ggplot(data = err.del.df, aes(x, y, colour = type)) +
-    geom_line(aes(group = type)) + geom_point(size = 2.0) +
-    theme_classic() + xlab("Number of factors") + ylab("Decrease in error") +
+  ggplot(data = err.del.df, aes(x, y)) +
+    geom_line(aes(group = 1)) + geom_point(size = 2.0) +
+    theme_classic() + xlab("Number of factors") + ylab("Error reduction above noise") +
     theme(axis.text.x = element_text(hjust = 1, size = font.size, angle = 90, color = "black"),
           axis.text = element_text(size = font.size, color = "black"),
           axis.title = element_text(size = font.size, color = "black"),
+          legend.position = c(0.8,0.8),
           legend.text = element_text(size = font.size),
-          legend.title = element_text(size = font.size))
+          legend.title = element_text(size = font.size)) +
+    geom_hline(yintercept = 0.0, linetype = "dashed", color = "darkred")
 }
+
 
 
 #' Extracts the exact colors used to plot each cluster (the hex codes) for a given color seed
