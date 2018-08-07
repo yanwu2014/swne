@@ -88,6 +88,8 @@ winsorize_matrix <- function(mat, trim) {
 #' @export
 #'
 FilterData <- function(x, min.samples.frac, trim, min.nonzero.features = 500, max.sample.sum = 50000) {
+  x <- as("dgCMatrix", x)
+
   min.cells <- round(ncol(x)*min.samples.frac)
   x <- x[ , Matrix::colSums(x) < max.sample.sum]
   x <- x[ , Matrix::colSums(x > 0) > min.nonzero.features]
@@ -112,6 +114,8 @@ FilterData <- function(x, min.samples.frac, trim, min.nonzero.features = 500, ma
 #' @export
 #'
 NormalizeCounts <- function(counts, depthScale = 1e3, batch = NULL) {
+  counts <- as("dgCMatrix", counts)
+
   if(!is.null(batch)) {
     if(!all(colnames(counts) %in% names(batch))) {
       stop("the supplied batch vector doesn't contain all the cells in its names attribute")
@@ -159,6 +163,7 @@ NormalizeCounts <- function(counts, depthScale = 1e3, batch = NULL) {
 #'
 AdjustVariance <- function(counts, gam.k = 10, plot = F, max.adjusted.variance = 1e3, min.adjusted.variance = 1e-3,
                            verbose = T, q.val = 0.05) {
+  counts <- as("dgCMatrix", counts)
   counts <- Matrix::t(counts)
 
   if(verbose) cat("calculating variance fit ...")
