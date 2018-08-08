@@ -88,7 +88,9 @@ winsorize_matrix <- function(mat, trim) {
 #' @export
 #'
 FilterData <- function(x, min.samples.frac, trim, min.nonzero.features = 500, max.sample.sum = 50000) {
-  x <- as("dgCMatrix", x)
+  if (is.data.frame(x) | is.matrix(x)) {
+    x <- as("dgCMatrix", as.matrix(x))
+  }
 
   min.cells <- round(ncol(x)*min.samples.frac)
   x <- x[ , Matrix::colSums(x) < max.sample.sum]
@@ -114,7 +116,9 @@ FilterData <- function(x, min.samples.frac, trim, min.nonzero.features = 500, ma
 #' @export
 #'
 NormalizeCounts <- function(counts, depthScale = 1e3, batch = NULL) {
-  counts <- as("dgCMatrix", counts)
+  if (is.data.frame(counts) | is.matrix(counts)) {
+    counts <- as("dgCMatrix", as.matrix(counts))
+  }
 
   if(!is.null(batch)) {
     if(!all(colnames(counts) %in% names(batch))) {
@@ -163,7 +167,9 @@ NormalizeCounts <- function(counts, depthScale = 1e3, batch = NULL) {
 #'
 AdjustVariance <- function(counts, gam.k = 10, plot = F, max.adjusted.variance = 1e3, min.adjusted.variance = 1e-3,
                            verbose = T, q.val = 0.05) {
-  counts <- as("dgCMatrix", counts)
+  if (is.data.frame(counts) | is.matrix(counts)) {
+    counts <- as("dgCMatrix", as.matrix(counts))
+  }
   counts <- Matrix::t(counts)
 
   if(verbose) cat("calculating variance fit ...")
