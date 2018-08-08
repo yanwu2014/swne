@@ -89,7 +89,7 @@ winsorize_matrix <- function(mat, trim) {
 #'
 FilterData <- function(x, min.samples.frac, trim, min.nonzero.features = 500, max.sample.sum = 50000) {
   if (is.data.frame(x) | is.matrix(x)) {
-    x <- as("dgCMatrix", as.matrix(x))
+    x <- as(as.matrix(x), "dgCMatrix")
   }
 
   min.cells <- round(ncol(x)*min.samples.frac)
@@ -117,7 +117,7 @@ FilterData <- function(x, min.samples.frac, trim, min.nonzero.features = 500, ma
 #'
 NormalizeCounts <- function(counts, depthScale = 1e3, batch = NULL) {
   if (is.data.frame(counts) | is.matrix(counts)) {
-    counts <- as("dgCMatrix", as.matrix(counts))
+    counts <- as(as.matrix(counts), "dgCMatrix")
   }
 
   if(!is.null(batch)) {
@@ -168,7 +168,7 @@ NormalizeCounts <- function(counts, depthScale = 1e3, batch = NULL) {
 AdjustVariance <- function(counts, gam.k = 10, plot = F, max.adjusted.variance = 1e3, min.adjusted.variance = 1e-3,
                            verbose = T, q.val = 0.05) {
   if (is.data.frame(counts) | is.matrix(counts)) {
-    counts <- as("dgCMatrix", as.matrix(counts))
+    counts <- as(as.matrix(counts), "dgCMatrix")
   }
   counts <- Matrix::t(counts)
 
