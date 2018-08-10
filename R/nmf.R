@@ -227,6 +227,7 @@ ProjectFeatures <- function(newdata, H, alpha = rep(0,3), loss = "mse", n.cores 
 #'
 #' @param newdata New data matrix
 #' @param W Existing feature loadings
+#' @param features.use Subset of features to use (default is all features)
 #' @param alpha Regularization parameter
 #' @param loss Loss function to use
 #' @param n.cores Number of cores to use
@@ -236,8 +237,12 @@ ProjectFeatures <- function(newdata, H, alpha = rep(0,3), loss = "mse", n.cores 
 #' @import NNLM
 #' @export
 #'
-ProjectSamples <- function(newdata, W, alpha = rep(0,3), loss = "mse", n.cores = 1) {
-  lm.out <- NNLM::nnlm(W, newdata, alpha = alpha, loss = loss, n.threads = n.cores)
+ProjectSamples <- function(newdata, W, features.use = NULL, alpha = rep(0,3), loss = "mse", n.cores = 1) {
+  if (is.null(features.use)) {
+    features.use <- intersect(rownames(newdata), rownames(W))
+  }
+
+  lm.out <- NNLM::nnlm(W[features.use,], newdata[features.use,], alpha = alpha, loss = loss, n.threads = n.cores)
   return(lm.out$coefficients)
 }
 

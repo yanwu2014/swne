@@ -4,12 +4,15 @@
 \alias{ProjectSamples}
 \title{Projects new samples onto existing factor decomposition}
 \usage{
-ProjectSamples(newdata, W, alpha = rep(0, 3), loss = "mse", n.cores = 1)
+ProjectSamples(newdata, W, features.use = NULL, alpha = rep(0, 3),
+  loss = "mse", n.cores = 1)
 }
 \arguments{
 \item{newdata}{New data matrix}
 
 \item{W}{Existing feature loadings}
+
+\item{features.use}{Subset of features to use (default is all features)}
 
 \item{alpha}{Regularization parameter}
 

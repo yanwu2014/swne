@@ -5,13 +5,15 @@
 \title{Calculates shared nearest neighbors between samples (columns) in a test matrix and samples in a training matrix
 Adapted from Seurat}
 \usage{
-ProjectSNN(test.data, train.data, k = 20, k.scale = 10, prune.SNN = 1/15,
-  print.output = T)
+ProjectSNN(test.data, train.data, n.pcs = NULL, features.use = NULL,
+  k = 30, k.scale = 10, prune.SNN = 1/15, print.output = T)
 }
 \arguments{
 \item{test.data}{Test data}
 
 \item{train.data}{Training data}
+
+\item{features.use}{Subset of features to use (default is all features)}
 
 \item{k}{Number of nearest neighbors}
 
@@ -20,6 +22,8 @@ ProjectSNN(test.data, train.data, k = 20, k.scale = 10, prune.SNN = 1/15,
 \item{prune.SNN}{Minimum fraction of shared nearest neighbors}
 
 \item{print.output}{Prints progress bar if true}
+
+\item{pcs.use}{If not null, run PCA on training data and project test data before computing SNN}
 }
 \value{
 A n.test x n.train matrix with the shared nearest neighbors between test and training data

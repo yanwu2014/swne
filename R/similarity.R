@@ -39,6 +39,8 @@ CalcSNN <- function(data.use, k = 10, k.scale = 10, prune.SNN = 1/15, print.outp
 #'
 #' @param test.data Test data
 #' @param train.data Training data
+#' @param pcs.use If not null, run PCA on training data and project test data before computing SNN
+#' @param features.use Subset of features to use (default is all features)
 #' @param k Number of nearest neighbors
 #' @param k.scale k*k.scale is the number of nearest neighbors to calculate shared nearest neighbors for
 #' @param prune.SNN Minimum fraction of shared nearest neighbors
@@ -48,21 +50,42 @@ CalcSNN <- function(data.use, k = 10, k.scale = 10, prune.SNN = 1/15, print.outp
 #'
 #' @importFrom FNN get.knn
 #' @importFrom Matrix sparseMatrix
+#' @import irlba
 #' @export
 #'
-ProjectSNN <- function(test.data, train.data, k = 20, k.scale = 10, prune.SNN = 1/15, print.output = T) {
+ProjectSNN <- function(test.data, train.data, n.pcs = NULL, features.use = NULL, k = 30, k.scale = 10,
+                       prune.SNN = 1/15, print.output = T) {
   n.train.cells <- ncol(train.data)
   n.test.cells <- ncol(test.data)
   stopifnot(k*k.scale < n.train.cells - 1)
 
-  train.knn <- FNN::get.knn(data = t(train.data), k = k.scale * k)
+  if (is.null(features.use)) {
+    features.use <- intersect(rownames(test.data), rownames(train.data))
+  }
+
+  if (!is.null(n.pcs)) {
+    print("Running PCA and test data projection")
+    train.cm <- Matrix::rowMeans(train.data[features.use,])
+    train.pca <- irlba::irlba(t(train.data[features.use,] - train.cm), nv = n.pcs)
+    train.loadings <- train.pca$v; rownames(train.loadings) <- features.use;
+
+    test.cm <- Matrix::rowMeans(test.data[features.use,])
+    test.data.use <- t(t(test.data[features.use,] - test.cm) %*% train.loadings)
+    train.data.use <- t(train.pca$u); colnames(train.data.use) <- colnames(train.data);
+  } else {
+    test.data.use <- test.data[features.use,]
+    train.data.use <- train.data[features.use,]
+  }
+
+
+  train.knn <- FNN::get.knn(data = t(train.data.use), k = k.scale * k)
   train.nn.ranked <- cbind(1:n.train.cells, train.knn$nn.index[, 1:(k - 1)])
 
-  test.knn <- FNN::get.knnx(data = t(train.data), query = t(test.data), k = k * k.scale)
+  test.knn <- FNN::get.knnx(data = t(train.data.use), query = t(test.data.use), k = k * k.scale)
   test.nn.ranked <- cbind(1:n.test.cells, test.knn$nn.index[, 1:(k - 1)])
   test.nn.large <- test.knn$nn.index
 
-  w <- compute_projected_snn(colnames(train.data), k, train.nn.ranked, colnames(test.data),
+  w <- compute_projected_snn(colnames(train.data.use), k, train.nn.ranked, colnames(test.data),
                              test.nn.large, test.nn.ranked, prune.SNN, print.output)
   return(w)
 }
@@ -72,10 +95,11 @@ ProjectSNN <- function(test.data, train.data, k = 20, k.scale = 10, prune.SNN = 
 #' Adapted from Seurat
 #'
 #' @import compiler
+#'
 compute_projected_snn <- function(train.cell.names, k, train.nn.ranked, test.cell.names,
                                   test.nn.large, test.nn.ranked, prune.SNN = 1/15,
                                   print.output = T) {
-  print("Computing test data SNN projected onto training data")
+  print("Computing SNN of test data projected onto training data")
 
   n.train.cells <- length(train.cell.names)
   n.test.cells <- length(test.cell.names)
