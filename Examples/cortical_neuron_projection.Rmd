@@ -99,7 +99,8 @@ test.nmf.scores <- ProjectSamples(test.norm.counts, train.nmf.res$W, features.us
 
 Project the test data onto the training SNN
 ```{r}
-test.snn <- ProjectSNN(test.norm.counts, train.norm.counts, n.pcs = 30, features.use = genes.project, k = 20)
+test.snn <- ProjectSNN(test.norm.counts, train.norm.counts, n.pcs = 30, features.use = genes.project, k = 20,
+                       print.output = F)
 test.embedding <- ProjectSWNE(train.embedding, test.nmf.scores, SNN = test.snn, 
                               alpha.exp = 1.25, snn.exp = 0.25, n_pull = 3)
 ```
