@@ -99,8 +99,6 @@ ProjectSNN <- function(test.data, train.data, n.pcs = NULL, features.use = NULL,
 compute_projected_snn <- function(train.cell.names, k, train.nn.ranked, test.cell.names,
                                   test.nn.large, test.nn.ranked, prune.SNN = 1/15,
                                   print.output = T) {
-  print("Computing SNN of test data projected onto training data")
-
   n.train.cells <- length(train.cell.names)
   n.test.cells <- length(test.cell.names)
 
