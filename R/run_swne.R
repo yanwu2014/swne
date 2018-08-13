@@ -1,8 +1,24 @@
-#Wrapper for the "swne" package
-## object (seurat object)
-## dist.metric distance to pass to EmbedSWNE
-## n.cores number of cores to use for FindNumFactors
-#object seurat-class object
+#' Wrapper for the running SWNE analysis functions
+#'
+#' @param object A seurat-class object (normalised)
+#' @param dist.use Similarity function to use for calculating factor positions (passed to EmbedSWNE). Options include pearson, IC, cosine, euclidean.
+#' @param n.cores Number of cores to use (passed to FindNumFactors)
+#'
+#' @param alpha.plot Data point transparency
+#' @param sample.groups Factor defining sample groups
+#' @param arrow.lwd Arrow width
+#' @param arrow.alpha Arrow transparency
+#' @param head.size Arrowhead size
+#' @param do.label Label the sample groups
+#' @param label.size Label font size
+#' @param pt.size Sample point size
+#' @param samples.plot Vector of samples to plot. Default is NULL, which plots all samples.
+#' @param show.legend If sample groups defined, show legend
+#' @param seed Seed for sample groups color reproducibility
+#'
+#' @return A list of factor (H.coords) and sample coordinates (sample.coords) in 2D
+#'
+#' @export
 RunSWNE <- function(object, dist.metric = "euclidean", n.cores = 3){
   #Run SWNE with correlation matrix
   object_norm <- ExtractNormCounts(object, obj.type = "seurat", rescale = F, rescale.method = "log", batch = NULL)
