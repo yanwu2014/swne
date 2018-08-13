@@ -31,6 +31,8 @@ RunSWNE <- function(object, dist.metric = "euclidean", n.cores = 3, k){
   # pc.scores <- t(GetCellEmbeddings(test, reduction.type = "pca", dims.use = 1:k))
   # snn <- CalcSNN(pc.scores)
   snn <- object@snn
+  #correct for aggregrated cell barcodes
+  colnames(nmf.scores) <- colnames(snn)
   alpha.exp <- 1.25 # Increase this > 1.0 to move the cells closer to the factors. Values > 2 start to distort the data.
   snn.exp <- 1.0 # Lower this < 1.0 to move similar cells closer to each other
   n_pull <- max(k.res$k, 4) # The number of factors pulling on each cell. Must be at least 3.
