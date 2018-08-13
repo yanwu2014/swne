@@ -4,16 +4,16 @@
 \alias{RunSWNE}
 \title{Wrapper for the running SWNE analysis functions}
 \usage{
-RunSWNE(object, dist.metric = "euclidean", n.cores = 3)
+RunSWNE(object, dist.metric = "euclidean", n.cores = 3, k)
 }
 \arguments{
 \item{object}{A seurat-class object (normalised)}
 
 \item{n.cores}{Number of cores to use (passed to FindNumFactors)}
 
-\item{dist.use}{Similarity function to use for calculating factor positions (passed to EmbedSWNE). Options include pearson, IC, cosine, euclidean.}
-
 \item{k}{Number of NMF factors (passed to RunNMF). If none given, will be derived from FindNumFactors.}
+
+\item{dist.use}{Similarity function to use for calculating factor positions (passed to EmbedSWNE). Options include pearson, IC, cosine, euclidean.}
 }
 \value{
 A list of factor (H.coords) and sample coordinates (sample.coords) in 2D

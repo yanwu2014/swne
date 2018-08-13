@@ -8,7 +8,7 @@
 #' @return A list of factor (H.coords) and sample coordinates (sample.coords) in 2D
 #'
 #' @export
-RunSWNE <- function(object, dist.metric = "euclidean", n.cores = 3){
+RunSWNE <- function(object, dist.metric = "euclidean", n.cores = 3, k){
   #Run SWNE with correlation matrix
   object_norm <- ExtractNormCounts(object, obj.type = "seurat", rescale = F, rescale.method = "log", batch = NULL)
   var_genes <- intersect(object@var.genes, rownames(object_norm));
