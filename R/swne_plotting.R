@@ -32,7 +32,7 @@ normalize_vector <- function(x, method = "scale", n_ranks = 10000) {
 get_factor_coords <- function(H, method = "sammon", pca.red = F, distance = "cosine") {
   H <- t(H)
   if (!distance %in% c("pearson", "IC", "cosine", "euclidean")) {
-    stop(paste("Distance must be one of:", c("pearson", "IC", "cosine", "euclidean")))
+    stop(paste(c("Distance must be one of:", paste(c("pearson", "IC", "cosine", "euclidean"), collapse = ", ")), collapse = " "))
   }
 
   if (pca.red) {
