@@ -22,9 +22,10 @@ RunSWNE <- function(object, dist.metric = "euclidean", n.cores = 3){
     k.range <- seq(2,10,2) ## Range of factors to iterate over
     k.res <- FindNumFactors(object_norm[var_genes,], k.range = k.range, n.cores = n.cores, do.plot = F, loss = loss)
     print(k.res$k, "factors")
+    k <- k.res$k
   }
   if(k < 3) warning("k must be an integer of 3 or higher")
-  k <- max(k.res$k, 3)
+  k <- max(k, 3)
   nmf.res <- RunNMF(object_norm[var_genes,], k = k, alpha = 0, init = "ica", n.cores = n.cores, loss = loss)
   nmf.scores <- nmf.res$H
   # pc.scores <- t(GetCellEmbeddings(test, reduction.type = "pca", dims.use = 1:k))
