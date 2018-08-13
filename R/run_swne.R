@@ -21,7 +21,7 @@ RunSWNE <- function(object, dist.metric = "euclidean", n.cores = 3, k){
     n.cores <- n.cores ## Number of cores to use
     k.range <- seq(2,10,2) ## Range of factors to iterate over
     k.res <- FindNumFactors(object_norm[var_genes,], k.range = k.range, n.cores = n.cores, do.plot = F, loss = loss)
-    print(k.res$k, "factors")
+    print(paste(k.res$k, "factors"))
     k <- k.res$k
   }
   if(k < 3) warning("k must be an integer of 3 or higher")
