@@ -3,18 +3,7 @@
 #' @param object A seurat-class object (normalised)
 #' @param dist.use Similarity function to use for calculating factor positions (passed to EmbedSWNE). Options include pearson, IC, cosine, euclidean.
 #' @param n.cores Number of cores to use (passed to FindNumFactors)
-#'
-#' @param alpha.plot Data point transparency
-#' @param sample.groups Factor defining sample groups
-#' @param arrow.lwd Arrow width
-#' @param arrow.alpha Arrow transparency
-#' @param head.size Arrowhead size
-#' @param do.label Label the sample groups
-#' @param label.size Label font size
-#' @param pt.size Sample point size
-#' @param samples.plot Vector of samples to plot. Default is NULL, which plots all samples.
-#' @param show.legend If sample groups defined, show legend
-#' @param seed Seed for sample groups color reproducibility
+#' @param k Number of NMF factors (passed to RunNMF). If none given, will be derived from FindNumFactors.
 #'
 #' @return A list of factor (H.coords) and sample coordinates (sample.coords) in 2D
 #'
@@ -28,10 +17,13 @@ RunSWNE <- function(object, dist.metric = "euclidean", n.cores = 3){
   names(cell_clusters) <- object@cell.names
   levels(cell_clusters)
   loss <- "mse" ## Loss function
-  n.cores <- n.cores ## Number of cores to use
-  k.range <- seq(2,10,2) ## Range of factors to iterate over
-  k.res <- FindNumFactors(object_norm[var_genes,], k.range = k.range, n.cores = n.cores, do.plot = T, loss = loss)
-  print(k.res$k, "factors")
+  if(missing(k)){
+    n.cores <- n.cores ## Number of cores to use
+    k.range <- seq(2,10,2) ## Range of factors to iterate over
+    k.res <- FindNumFactors(object_norm[var_genes,], k.range = k.range, n.cores = n.cores, do.plot = T, loss = loss)
+    print(k.res$k, "factors")
+  }
+  if(k < 3) warning("k must be an integer of 3 or higher")
   k <- max(k.res$k, 3)
   nmf.res <- RunNMF(object_norm[var_genes,], k = k, alpha = 0, init = "ica", n.cores = n.cores, loss = loss)
   nmf.scores <- nmf.res$H
