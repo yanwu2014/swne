@@ -39,8 +39,7 @@ n.cores <- 32 ## Number of cores to use
 Identify the optimal number of factors to use using `FindNumFactors`. We set a range of `k` to iterate over, and the `FindNumFactors` identifies the `k` that minimizes reconstruction error.
 ```{r}
 k.range <- seq(4,16,2) ## Range of factors to iterate over
-n.comp.res <- FindNumFactors(norm.counts[od.genes,], k.range = k.range, n.cores = n.cores, do.plot = T, loss = loss)
-n.comp.res$k
+k.err <- FindNumFactors(norm.counts[od.genes,], k.range = k.range, n.cores = n.cores, do.plot = T, loss = loss)
 ```
 
 We then run the NMF decomposition. We can initialize the NMF using either Independent Component Analysis (ica), Nonnegative SVD (nnsvd), or a completely random initialization. The output of `RunNMF` is a list of the gene loadings (W) and NMF embedding (H).

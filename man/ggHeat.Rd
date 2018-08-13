@@ -2,7 +2,7 @@
 % Please edit documentation in R/swne_plotting.R
 \name{ggHeat}
 \alias{ggHeat}
-\title{Plots a heatmap using ggplot2. Adapted from [site]}
+\title{Plots a heatmap using ggplot2}
 \usage{
 ggHeat(m, rescaling = "none", clustering = "none", labCol = T,
   labRow = T, border = F, heatscale = c(low = "skyblue", mid = "white",
@@ -33,5 +33,5 @@ ggHeat(m, rescaling = "none", clustering = "none", labCol = T,
 ggplot2 heatmap
 }
 \description{
-Plots a heatmap using ggplot2. Adapted from [site]
+Plots a heatmap using ggplot2
 }

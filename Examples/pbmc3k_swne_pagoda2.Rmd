@@ -57,9 +57,8 @@ n.cores <- p2$n.cores ## Number of cores to use
 
 We use the `FindNumFactors` function to identify the optimal number of factors to use. This function can be slow for large datasets, since it iterates over different values of `k`, so a simple "hack" is to just set `k` equal to the number of significant principal components.
 ```{r}
-k.range <- seq(2,14,2) ## Range of factors to iterate over
-k.res <- FindNumFactors(norm.counts[od.genes,], k.range = k.range, n.cores = n.cores, do.plot = T, loss = loss)
-k.res$k
+k.range <- seq(2,16,2) ## Range of factors to iterate over
+k.err <- FindNumFactors(norm.counts[od.genes,], k.range = k.range, n.cores = n.cores, do.plot = T, loss = loss)
 ```
 
 

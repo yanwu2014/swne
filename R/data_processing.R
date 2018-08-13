@@ -88,6 +88,10 @@ winsorize_matrix <- function(mat, trim) {
 #' @export
 #'
 FilterData <- function(x, min.samples.frac, trim, min.nonzero.features = 500, max.sample.sum = 50000) {
+  if (is.data.frame(x) | is.matrix(x)) {
+    x <- as(as.matrix(x), "dgCMatrix")
+  }
+
   min.cells <- round(ncol(x)*min.samples.frac)
   x <- x[ , Matrix::colSums(x) < max.sample.sum]
   x <- x[ , Matrix::colSums(x > 0) > min.nonzero.features]
@@ -112,6 +116,10 @@ FilterData <- function(x, min.samples.frac, trim, min.nonzero.features = 500, ma
 #' @export
 #'
 NormalizeCounts <- function(counts, depthScale = 1e3, batch = NULL) {
+  if (is.data.frame(counts) | is.matrix(counts)) {
+    counts <- as(as.matrix(counts), "dgCMatrix")
+  }
+
   if(!is.null(batch)) {
     if(!all(colnames(counts) %in% names(batch))) {
       stop("the supplied batch vector doesn't contain all the cells in its names attribute")
@@ -159,6 +167,9 @@ NormalizeCounts <- function(counts, depthScale = 1e3, batch = NULL) {
 #'
 AdjustVariance <- function(counts, gam.k = 10, plot = F, max.adjusted.variance = 1e3, min.adjusted.variance = 1e-3,
                            verbose = T, q.val = 0.05) {
+  if (is.data.frame(counts) | is.matrix(counts)) {
+    counts <- as(as.matrix(counts), "dgCMatrix")
+  }
   counts <- Matrix::t(counts)
 
   if(verbose) cat("calculating variance fit ...")
@@ -260,12 +271,13 @@ ScaleCounts <- function(counts, batch = NULL, method = "log", adj.var = T, plot.
 #' @param gam.k Number of additive models to use for variance modeling
 #'
 #' @import Matrix
+#' @export
 #'
-SelectFeatures <- function(counts, n.features = 3e3, gam.k = 10) {
+SelectFeatures <- function(counts, batch = NULL, n.features = 3e3, gam.k = 10) {
   scale.factor <- median(Matrix::colSums(counts))
   norm.counts <- NormalizeCounts(counts, batch = batch, depthScale = scale.factor)
 
-  varinfo <- AdjustVariance(norm.counts, plot = plot.var.adj, gam.k = gam.k)
+  varinfo <- AdjustVariance(norm.counts, plot = F, gam.k = gam.k)
   varinfo <- varinfo[order(varinfo$lp),]
 
   return(rownames(varinfo[1:n.features,]))

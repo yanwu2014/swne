@@ -1,0 +1,120 @@
+---
+title: "Projecting cortical neurons across technologies with SWNE"
+author: "Yan Wu"
+date: "8/10/2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+This is a quick walkthrough demonstrating how to project new scRNA-seq data onto an existing SWNE embedding. We'll be using a human cortical neuron dataset generated using the snDropSeq technology as our training dataset. The pre-computed snDropSeq Seurat object can be found [here](ftp://genome-miner.ucsd.edu/swne_files/snDropSeq_cortical_neurons.Robj). We'll be projecting data generated using a much older technology, the C1 microfluidic platform. The C1 data contains the same cortical neuron cell types, but from a different patient (and obviously a different scRNA-seq technology). The pre-computed C1 Seurat object can be found [here](ftp://genome-miner.ucsd.edu/swne_files/C1_cortical_neurons.Robj) 
+
+
+Load the required libraries
+```{r message=FALSE,warning=FALSE}
+library(Seurat)
+library(swne)
+```
+
+First, we'll be constructing an SWNE embedding for the snDropSeq training data
+
+Load the snDropSeq training data, normalize the counts matrix, and extract the overdispersed genes
+```{r}
+train.obj <- readRDS("~/swne/Data/snDropSeq_cortical_neurons.Robj")
+train.norm.counts <- ExtractNormCounts(train.obj, obj.type = "seurat", rescale = T)
+var.genes <- train.obj@var.genes
+```
+
+Extract training data cell types
+```{r}
+train.clusters <- train.obj@ident
+names(train.clusters) <- train.obj@cell.names
+```
+
+Find the optimal number of factors
+```{r}
+k.range <- seq(2,20,2)
+n.cores <- 24
+
+k.err <- FindNumFactors(train.norm.counts[var.genes,], k.range = k.range, n.cores = n.cores, do.plot = T,
+                        seed = 223464)
+```
+
+Run NMF using the optimal number of factors and project features
+```{r message=FALSE,warning=FALSE}
+k <- 16
+train.nmf.res <- RunNMF(train.norm.counts[var.genes,], k = k, init = "ica", n.cores = n.cores, ica.fast = T)
+train.nmf.res$W <- ProjectFeatures(train.norm.counts, train.nmf.res$H, n.cores = n.cores)
+train.nmf.scores <- train.nmf.res$H
+```
+
+Run SWNE embedding and hide the factors
+```{r message=FALSE,warning=FALSE}
+train.embedding <- EmbedSWNE(train.nmf.scores, train.obj@snn, alpha.exp = 1.25, snn.exp = 0.25, 
+                             n_pull = 3, dist.use = "cosine")
+train.embedding$H.coords$name <- "" ## Hide factors
+```
+
+Embed key neuronal markers
+```{r}
+genes.embed <- c("CBLN2", "NRGN", "GRIK1", "NTNG1", "DAB1", "DCC", "POSTN")
+train.embedding <- EmbedFeatures(train.embedding, train.nmf.res$W, genes.embed, n_pull = 3, scale.cols = F)
+```
+
+Make SWNE plot of training data
+```{r}
+plot.seed <- 124532
+PlotSWNE(train.embedding, alpha.plot = 0.3, sample.groups = train.clusters, do.label = T, 
+         label.size = 3.5, pt.size = 0.75, show.legend = F, seed = plot.seed)
+```
+
+Now we can project the C1 test datset. First let's load the Seurat object.
+```{r}
+test.obj <- readRDS("~/swne/Data/C1_cortical_neurons.Robj")
+test.norm.counts <- ExtractNormCounts(test.obj, obj.type = "seurat", rescale = T, rescale.method = "log")
+```
+
+Extract the test dataset cell types
+```{r}
+test.clusters <- test.obj@ident
+names(test.clusters) <- test.obj@cell.names; levels(test.clusters);
+```
+
+Match the test dataset cell types to the training dataset cell types
+```{r}
+test.clusters <- plyr::revalue(test.clusters, replace = 
+                                 c("Ex1" = "Ex_L2/3", "Ex2" = "Ex_L4", "Ex3" = "Ex_L4", 
+                                   "Ex4" = "Ex_L4/5", "Ex5" = "Ex_L5", "Ex6" = "Ex_L6", 
+                                   "Ex7" = "Ex_L6", "Ex8" = "Ex_L6b", 
+                                   "In7" = "In7/8", "In8" = "In7/8"))
+```
+
+Project the test gene expression matrix onto the training dataset NMFs
+```{r}
+genes.project <- intersect(var.genes, rownames(test.norm.counts))
+test.nmf.scores <- ProjectSamples(test.norm.counts, train.nmf.res$W, features.use = genes.project, n.cores = n.cores)
+```
+
+Project the test data onto the training SNN
+```{r}
+test.snn <- ProjectSNN(test.norm.counts, train.norm.counts, n.pcs = 30, features.use = genes.project, k = 20,
+                       print.output = F)
+test.embedding <- ProjectSWNE(train.embedding, test.nmf.scores, SNN = test.snn, 
+                              alpha.exp = 1.25, snn.exp = 0.25, n_pull = 3)
+```
+
+Make sure we're using the same cluster colors
+```{r}
+cluster.colors <- ExtractSWNEColors(train.embedding, train.clusters, seed = plot.seed)
+cluster.colors <- cluster.colors[grepl("Ex|In", names(cluster.colors))]
+cluster.colors[["In5"]] <- "#00BFFF"
+```
+
+Plot the test data projected onto the training SWNE embedding. Note how the test data cell types map onto the same spatial locations as the corresponding training data cell types
+```{r}
+PlotSWNE(test.embedding, alpha.plot = 0.5, sample.groups = test.clusters, do.label = T, 
+         pt.size = 1.5, show.legend = F, seed = plot.seed) +
+  scale_color_manual(values = cluster.colors)
+```

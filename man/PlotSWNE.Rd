@@ -6,7 +6,7 @@
 \usage{
 PlotSWNE(swne.embedding, alpha.plot = 0.25, sample.groups = NULL,
   do.label = F, label.size = 4.5, pt.size = 1, samples.plot = NULL,
-  show.legend = T, seed = NULL)
+  show.legend = T, seed = NULL, colors.use = NULL)
 }
 \arguments{
 \item{swne.embedding}{SWNE embedding (list of factor and sample coordinates) from EmbedSWNE}
@@ -26,6 +26,8 @@ PlotSWNE(swne.embedding, alpha.plot = 0.25, sample.groups = NULL,
 \item{show.legend}{If sample groups defined, show legend}
 
 \item{seed}{Seed for sample groups color reproducibility}
+
+\item{colors.use}{Vector of hex colors for each sample group. Vector names must align with sample.groups}
 }
 \value{
 ggplot2 object with swne plot

@@ -2,7 +2,7 @@
 % Please edit documentation in R/swne_plotting.R
 \name{EmbedSWNE}
 \alias{EmbedSWNE}
-\title{Projects NMF factors and samples in a 2D}
+\title{Embeds NMF factors and samples in 2 dimensions}
 \usage{
 EmbedSWNE(H, SNN = NULL, alpha.exp = 1, snn.exp = 1, n_pull = NULL,
   proj.method = "sammon", pca.red = F, dist.use = "cosine",
@@ -31,5 +31,5 @@ EmbedSWNE(H, SNN = NULL, alpha.exp = 1, snn.exp = 1, n_pull = NULL,
 A list of factor (H.coords) and sample coordinates (sample.coords) in 2D
 }
 \description{
-Projects NMF factors and samples in a 2D
+Embeds NMF factors and samples in 2 dimensions
 }

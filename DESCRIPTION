@@ -37,6 +37,8 @@ Imports:
   proxy,
   liger,
   hash
+Remotes:
+  JEFworks/liger
 Suggests:
   Seurat (>= 2.3.4),
   velocyto.R,

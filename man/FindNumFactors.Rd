@@ -2,26 +2,24 @@
 % Please edit documentation in R/nmf.R
 \name{FindNumFactors}
 \alias{FindNumFactors}
-\title{Determines the optimal number of NMF factors to use via reconstruction error}
+\title{Determines the optimal number of NMF factors to use by comparing the reduction in
+reconstruction error vs the reduction in reconstruction error for a randomized
+matrix. The optimal number of factors is where the decrease in reconstruction
+errors intersect}
 \usage{
-FindNumFactors(A, k.range = seq(2, 12, 2), alpha = 0, n.cores = 1,
-  do.plot = T, seed = NULL, na.frac = 0.3, loss = "mse",
-  max.iter = 1000)
+FindNumFactors(A, k.range = seq(2, 12, 2), n.cores = 1, do.plot = T,
+  seed = NULL, loss = "mse", max.iter = 250)
 }
 \arguments{
 \item{A}{Input data matrix}
 
 \item{k.range}{Range of NMF factors to fit over}
 
-\item{alpha}{Regularization parameter}
-
 \item{n.cores}{Number of threads}
 
 \item{do.plot}{Whether to plot the reconstruction error}
 
-\item{seed}{Random seed for selecting missing data}
-
-\item{na.frac}{Fraction of data to set as missing}
+\item{seed}{Random seed for randomizing matrix}
 
 \item{loss}{Loss function to use for NMF}
 
@@ -31,5 +29,5 @@ FindNumFactors(A, k.range = seq(2, 12, 2), alpha = 0, n.cores = 1,
 Reconstruction error at each number of NMF factors specified in k.range
 }
 \description{
-Determines the optimal number of NMF factors to use via reconstruction error
+Adapted from Frigyesi et al, 2008. https://www.ncbi.nlm.nih.gov/pmc/articles/PMC2623306/
 }

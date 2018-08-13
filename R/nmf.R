@@ -52,11 +52,17 @@ nnsvd_init <- function(A, k, LINPACK) {
 #'
 #' @importFrom ica icafast
 #'
-ica_init <- function(A, k) {
-  ica.res <- ica::icafast(t(A), nc = k, maxit = 25, tol = 1e-4)
-  return(list(W = ica.res$M, H = t(ica.res$S)))
+ica_init <- function(A, k, ica.fast = F) {
+  if (ica.fast) {
+    pc.res.h <- irlba::irlba(t(A), nv = 100, maxit = 250, center = T)
+    ica.res.h <- ica::icafast(pc.res.h$u, nc = k, maxit = 25, tol = 1e-4)
+    return(list(W = (A - Matrix::rowMeans(A)) %*% ica.res.h$S,
+                H = t(ica.res.h$S)))
+  } else {
+    ica.res <- ica::icafast(t(A), nc = k, maxit = 25, tol = 1e-4)
+    return(list(W = ica.res$M, H = t(ica.res$S)))
+  }
 }
-
 
 
 #' KL divergence. Pseudocounts added to avoid NAs
@@ -66,62 +72,6 @@ kl_div <- function(x, y, pseudocount = 1e-12) {
   return(x*log(x/y) - x + y)
 }
 
-
-#' Determines the optimal number of NMF factors to use via reconstruction error
-#'
-#' @param A Input data matrix
-#' @param k.range Range of NMF factors to fit over
-#' @param alpha Regularization parameter
-#' @param n.cores Number of threads
-#' @param do.plot Whether to plot the reconstruction error
-#' @param seed Random seed for selecting missing data
-#' @param na.frac Fraction of data to set as missing
-#' @param loss Loss function to use for NMF
-#' @param max.iter Maximum iterations for NMF run
-#'
-#' @return Reconstruction error at each number of NMF factors specified in k.range
-#'
-#' @import NNLM
-#' @export
-#'
-FindNumFactors <- function(A, k.range = seq(2,12,2), alpha = 0, n.cores = 1, do.plot = T,
-                           seed = NULL, na.frac = 0.3, loss = "mse", max.iter = 1000) {
-  if (!is.null(seed)) { set.seed(seed) }
-  if (!loss %in% c("mse", "mkl")) { stop("Invalid loss function") }
-  if (ncol(A) > 15000) print("Warning: This function can be slow for very large datasets")
-
-  A <- as.matrix(A)
-  nzero <- which(A > 0)
-  # ind <- sample(nzero, na.frac*length(nzero));
-  ind <- sample(length(A), na.frac*length(A))
-  A2 <- A;
-  A2[ind] <- NA;
-
-  A.ind <- as.numeric(A[ind])
-  err <- sapply(k.range, function(k) {
-    z <- NNLM::nnmf(A2, k, alpha = c(alpha, alpha, 0), n.threads = n.cores, verbose = 0, loss = loss)
-    A.hat <- with(z, W %*% H)
-    A.hat.ind <- as.numeric(A.hat[ind])
-
-    mse  <- mean((A.ind - A.hat.ind)^2)
-    mkl <- mean(kl_div(A.ind, A.hat.ind))
-
-    return(c(mse, mkl))
-  })
-  rownames(err) <- c("mse", "mkl")
-  min.idx <- which.max(err[loss,])
-
-  if (do.plot) {
-    plot(k.range, err[loss,], col = "blue", type = 'b', main = "Model selection",
-         xlab = "Number of factors", ylab = loss)
-  }
-
-  res <- list()
-  res$err <- err
-  res$k <- k.range[[min.idx]]
-
-  return(res)
-}
 
 
 #' Runs NMF decomposition on a data matrix: A = WH.
@@ -134,13 +84,16 @@ FindNumFactors <- function(A, k.range = seq(2,12,2), alpha = 0, n.cores = 1, do.
 #' @param loss Type of loss function to use
 #' @param n.rand.init If random initialization is used, number of random restarts
 #' @param init.zeros What to do with zeros in the initialization
+#' @param max.iter Maximum number of iterations
+#' @param ica.fast If using default ICA initialization, run PCA first to speed up ICA
+#'
 #' @return List of W (features x factors) and H (factors x samples)
 #'
 #' @import NNLM
 #' @export
 #'
-RunNMF <- function(A, k, alpha = 0, init = "ica", n.cores = 1, loss = "mse", n.rand.init = 3,
-                   init.zeros = "random") {
+RunNMF <- function(A, k, alpha = 0, init = "ica", n.cores = 1, loss = "mse",
+                   init.zeros = "random", max.iter = 500, ica.fast = F) {
   if (any(A < 0)) stop('The input matrix contains negative elements !')
   if (k < 3) stop("k must be greater than or equal to 3 to create a viable SWNE plot")
 
@@ -156,25 +109,26 @@ RunNMF <- function(A, k, alpha = 0, init = "ica", n.cores = 1, loss = "mse", n.r
   if (any(A < 0)) { stop("Input matrix has negative values") }
 
   if (init == "ica") {
-    nmf.init <- ica_init(A, k)
+    nmf.init <- ica_init(A, k, ica.fast = ica.fast)
   } else if (init == "nnsvd") {
     nmf.init <- nnsvd_init(A, k, LINPACK = T)
-  } else if (init == "graph.embed") {
-    stopifnot(ncol(snn) == ncol(A))
-    nmf.init <- graph_embedding_init(A, snn, k)
   } else {
     nmf.init <- NULL
   }
 
   if(is.null(nmf.init)) {
-    nmf.res.list <- lapply(1:n.rand.init, function(i) nnmf(A, k = k, alpha = alpha, init = nmf.init,
-                                                           n.threads = n.cores, loss = loss, verbose = F))
-    err <- sapply(nmf.res.list, function(x) tail(x[[loss]], n = 1))
-    nmf.res <- nmf.res.list[[which.min(err)]]
+    # nmf.res.list <- lapply(1:n.rand.init, function(i) nnmf(A, k = k, alpha = alpha, init = nmf.init,
+    #                                                        n.threads = n.cores, loss = loss,
+    #                                                        max.iter = max.iter, verbose = F))
+    # err <- sapply(nmf.res.list, function(x) tail(x[[loss]], n = 1))
+    # nmf.res <- nmf.res.list[[which.min(err)]]
+    nmf.res <- NNLM::nnmf(A, k = k, alpha = alpha, n.threads = n.cores, loss = loss, max.iter = max.iter)
 
   } else {
     ## Deal with zeros in the nmf initialization
-    A.mean <- mean(A); zero.eps <- 1e-6;
+    A.mean <- mean(A)
+    zero.eps <- 1e-6
+
     nmf.init$W[nmf.init$W < zero.eps] <- 0; nmf.init$H[nmf.init$H < zero.eps] <- 0;
     zero.idx.w <- which(nmf.init$W == 0); zero.idx.h <- which(nmf.init$H == 0);
 
@@ -182,15 +136,72 @@ RunNMF <- function(A, k, alpha = 0, init = "ica", n.cores = 1, loss = "mse", n.r
       nmf.init$W[zero.idx.w] <- runif(length(zero.idx.w), 0, A.mean/100)
       nmf.init$H[zero.idx.h] <- runif(length(zero.idx.h), 0, A.mean/100)
     } else if (init.zeros == "uniform") {
-      nmf.init$W[zero.idx.w] <- A.mean / 100
-      nmf.init$H[zero.idx.h] <- A.mean / 100
+      nmf.init$W[zero.idx.w] <- A.mean/100
+      nmf.init$H[zero.idx.h] <- A.mean/100
     }
-    nmf.res <- NNLM::nnmf(A, k = k, alpha = alpha, init = nmf.init, n.threads = n.cores, loss = loss)
+    nmf.res <- NNLM::nnmf(A, k = k, alpha = alpha, init = nmf.init, n.threads = n.cores, loss = loss, max.iter = max.iter)
   }
 
   colnames(nmf.res$W) <- rownames(nmf.res$H) <- sapply(1:ncol(nmf.res$W), function(i) paste("factor", i, sep = "_"))
   return(nmf.res)
 }
+
+
+#' Determines the optimal number of NMF factors to use by comparing the reduction in
+#' reconstruction error vs the reduction in reconstruction error for a randomized
+#' matrix. The optimal number of factors is where the decrease in reconstruction
+#' errors intersect
+#'
+#' Adapted from Frigyesi et al, 2008. https://www.ncbi.nlm.nih.gov/pmc/articles/PMC2623306/
+#'
+#' @param A Input data matrix
+#' @param k.range Range of NMF factors to fit over
+#' @param n.cores Number of threads
+#' @param do.plot Whether to plot the reconstruction error
+#' @param seed Random seed for randomizing matrix
+#' @param loss Loss function to use for NMF
+#' @param max.iter Maximum iterations for NMF run
+#'
+#' @return Reconstruction error at each number of NMF factors specified in k.range
+#'
+#' @import NNLM
+#' @export
+#'
+FindNumFactors <- function(A, k.range = seq(2,12,2), n.cores = 1, do.plot = T,
+                           seed = NULL, loss = "mse", max.iter = 250) {
+  if (!loss %in% c("mse", "mkl")) { stop("Invalid loss function") }
+  if (ncol(A) > 15000) print("Warning: This function can be slow for very large datasets")
+  if (!is.null(seed)) { set.seed(seed) }
+  A <- as.matrix(A)
+  A.rand <- matrix(sample(A), nrow(A), ncol(A))
+  k.err <- sapply(k.range, function(k) {
+    z <- NNLM::nnmf(A, k, n.threads = n.cores, verbose = 0, max.iter = max.iter)
+    z.rand <- NNLM::nnmf(A.rand, k, n.threads = n.cores, verbose = 0, max.iter = max.iter)
+
+    A.hat <- with(z, W %*% H)
+    A.hat.rand <- with(z.rand, W %*% H)
+
+    if (loss == "mse") {
+      err  <- mean((A.hat - A)^2)
+      err.rand <- mean((A.hat.rand - A.rand)^2)
+    } else if (loss == "mkl") {
+      err <- mean(kl_div(A.hat, A))
+      err.rand <- mean(kl_div(A.hat.rand, A.rand))
+    }
+
+    return(c(err, err.rand))
+  })
+  rownames(k.err) <- c("err", "err.rand")
+  colnames(k.err) <- k.range
+
+
+  if (do.plot) {
+    print(PlotFactorSelection(k.err, font.size = 14))
+  }
+
+  return(k.err)
+}
+
 
 
 #' Projects new features onto existing factor decomposition
@@ -216,6 +227,7 @@ ProjectFeatures <- function(newdata, H, alpha = rep(0,3), loss = "mse", n.cores 
 #'
 #' @param newdata New data matrix
 #' @param W Existing feature loadings
+#' @param features.use Subset of features to use (default is all features)
 #' @param alpha Regularization parameter
 #' @param loss Loss function to use
 #' @param n.cores Number of cores to use
@@ -225,8 +237,12 @@ ProjectFeatures <- function(newdata, H, alpha = rep(0,3), loss = "mse", n.cores 
 #' @import NNLM
 #' @export
 #'
-ProjectSamples <- function(newdata, W, alpha = rep(0,3), loss = "mse", n.cores = 1) {
-  lm.out <- NNLM::nnlm(W, newdata, alpha = alpha, loss = loss, n.threads = n.cores)
+ProjectSamples <- function(newdata, W, features.use = NULL, alpha = rep(0,3), loss = "mse", n.cores = 1) {
+  if (is.null(features.use)) {
+    features.use <- intersect(rownames(newdata), rownames(W))
+  }
+
+  lm.out <- NNLM::nnlm(W[features.use,], newdata[features.use,], alpha = alpha, loss = loss, n.threads = n.cores)
   return(lm.out$coefficients)
 }
 

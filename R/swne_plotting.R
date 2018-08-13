@@ -84,7 +84,7 @@ get_sample_coords <- function(H, H.coords, alpha = 1, n_pull = NULL) {
 
 
 
-#' Projects NMF factors and samples in a 2D
+#' Embeds NMF factors and samples in 2 dimensions
 #'
 #' @param H NMF factors (factors x samples)
 #' @param SNN Shared nearest neighbors matrix (or other similarity matrix)
@@ -240,6 +240,7 @@ RenameFactors <- function(swne.embedding, name.mapping, set.empty = T) {
 #' @param samples.plot Vector of samples to plot. Default is NULL, which plots all samples.
 #' @param show.legend If sample groups defined, show legend
 #' @param seed Seed for sample groups color reproducibility
+#' @param colors.use Vector of hex colors for each sample group. Vector names must align with sample.groups
 #'
 #' @return ggplot2 object with swne plot
 #'
@@ -248,17 +249,16 @@ RenameFactors <- function(swne.embedding, name.mapping, set.empty = T) {
 #'
 PlotSWNE <- function(swne.embedding, alpha.plot = 0.25, sample.groups = NULL, do.label = F,
                      label.size = 4.5, pt.size = 1, samples.plot = NULL, show.legend = T,
-                     seed = NULL) {
+                     seed = NULL, colors.use = NULL) {
   H.coords <- swne.embedding$H.coords
   H.coords.plot <- subset(H.coords, name != "")
   sample.coords <- swne.embedding$sample.coords
   feature.coords <- swne.embedding$feature.coords
-
-  sample.groups <- factor(sample.groups[rownames(sample.coords)])
   sample.coords$pt.size <- pt.size
 
   set.seed(seed)
   if (!is.null(sample.groups)) {
+    sample.groups <- factor(sample.groups[rownames(sample.coords)])
     sample.groups <- factor(sample.groups, levels = sample(levels(sample.groups)))
     sample.coords$sample.groups <- sample.groups[rownames(sample.coords)]
   } else {
@@ -311,6 +311,13 @@ PlotSWNE <- function(swne.embedding, alpha.plot = 0.25, sample.groups = NULL, do
     ggobj <- ggobj + theme(legend.position = "none")
   }
 
+  if (!is.null(colors.use)) {
+    if(!all(levels(sample.groups) %in% names(colors.use))) {
+      stop("Must specify colors for each group")
+    }
+    ggobj <- ggobj + scale_color_manual(values = colors.use)
+  }
+
   return(ggobj)
 }
 
@@ -329,6 +336,7 @@ PlotSWNE <- function(swne.embedding, alpha.plot = 0.25, sample.groups = NULL, do
 #'
 #' @return ggplot2 object with swne plot with feature overlayed
 #'
+#' @import ggrepel
 #' @export
 #'
 FeaturePlotSWNE <- function(swne.embedding, feature.scores, feature.name = NULL, alpha.plot = 0.5,
@@ -349,6 +357,7 @@ FeaturePlotSWNE <- function(swne.embedding, feature.scores, feature.name = NULL,
 
   sample.coords$pt.size <- pt.size
   sample.coords$feature <- feature.scores
+  sample.coords <- sample.coords[order(sample.coords$feature),]
 
   if (!is.null(samples.plot)) {
     sample.coords <- sample.coords[samples.plot,]
@@ -360,9 +369,10 @@ FeaturePlotSWNE <- function(swne.embedding, feature.scores, feature.name = NULL,
     geom_point(data = sample.coords, aes(x, y, colour = feature),
                alpha = alpha.plot, size = pt.size) +
     theme_classic() + theme(axis.title = element_blank(), axis.ticks = element_blank(),
-                            axis.line = element_blank(), axis.text = element_blank()) +
+                            axis.line = element_blank(), axis.text = element_blank(),
+                            legend.text = element_text(size = 12)) +
     scale_color_distiller(palette = color.palette, direction = 1, guide =
-                            guide_colorbar(title = feature.name, ticks = F, label = F))
+                            guide_colorbar(title = feature.name, ticks = T, label = T))
 
   if (!is.null(feature.coords)) {
     ggobj <- ggobj + geom_point(data = feature.coords, aes(x, y), size = 2.5, color = "darkred")
@@ -398,6 +408,7 @@ FeaturePlotSWNE <- function(swne.embedding, feature.scores, feature.name = NULL,
 #' @param show.legend If sample groups defined, show legend
 #' @param show.axes Plot x and y axes
 #' @param seed Seed for sample group color reproducibility
+#' @param colors.use Vector of hex colors for each sample group. Vector names must align with sample.groups
 #'
 #' @return ggplot2 object with 2d plot
 #'
@@ -406,7 +417,7 @@ FeaturePlotSWNE <- function(swne.embedding, feature.scores, feature.name = NULL,
 #'
 PlotDims <- function(dim.scores, sample.groups = NULL, x.lab = "tsne1", y.lab = "tsne2",
                      main.title = NULL, pt.size = 1.0, font.size = 12, alpha.plot = 1.0, do.label = T,
-                     label.size = 4, show.legend = T, show.axes = T, seed = NULL) {
+                     label.size = 4, show.legend = T, show.axes = T, seed = NULL, colors.use = NULL) {
 
   set.seed(seed)
   if (!is.null(sample.groups)) {
@@ -436,6 +447,12 @@ PlotDims <- function(dim.scores, sample.groups = NULL, x.lab = "tsne1", y.lab = 
   }
 
   if (!show.legend) { ggobj <- ggobj + theme(legend.position = "none") }
+  if (!is.null(colors.use)) {
+    if(!all(levels(sample.groups) %in% names(colors.use))) {
+      stop("Must specify colors for each group")
+    }
+    ggobj <- ggobj + scale_color_manual(values = colors.use)
+  }
 
   ggobj
 }
@@ -457,6 +474,8 @@ PlotDims <- function(dim.scores, sample.groups = NULL, x.lab = "tsne1", y.lab = 
 #'
 #' @return ggplot2 object with dim plot with feature overlayed
 #'
+#' @import ggplot2
+#' @import ggrepel
 #' @export
 #'
 FeaturePlotDims <- function(dim.scores, feature.scores, feature.name = NULL, x.lab = "tsne1", y.lab = "tsne2",
@@ -475,6 +494,8 @@ FeaturePlotDims <- function(dim.scores, feature.scores, feature.name = NULL, x.l
 
   sample.coords$pt.size <- pt.size
   sample.coords$feature <- feature.scores
+  sample.coords <- sample.coords[order(sample.coords$feature),]
+
 
   ## Plot sample coordinates
   ggobj <- ggplot() +
@@ -482,7 +503,7 @@ FeaturePlotDims <- function(dim.scores, feature.scores, feature.name = NULL, x.l
                alpha = alpha.plot, size = pt.size) +
     xlab(x.lab) + ylab(y.lab) +
     scale_color_distiller(palette = color.palette, direction = 1, guide =
-                            guide_colorbar(title = feature.name, ticks = F, label = F))
+                            guide_colorbar(title = feature.name, ticks = F, label = T))
 
   if (!show.axes) {
     ggobj <- ggobj + theme_void()
@@ -490,13 +511,13 @@ FeaturePlotDims <- function(dim.scores, feature.scores, feature.name = NULL, x.l
     ggobj <- ggobj + theme_classic()
   }
 
-  ggobj <- ggobj + theme(text = element_text(size = font.size))
+  ggobj <- ggobj + theme(text = element_text(size = font.size), legend.text = element_text(size = 12))
 
   ggobj
 }
 
 
-#' Plots a heatmap using ggplot2. Adapted from [site]
+#' Plots a heatmap using ggplot2
 #'
 #' @param m Matrix to plot heatmap for
 #' @param rescaling Scale by row or columns
@@ -577,6 +598,108 @@ ggHeat <- function(m, rescaling = 'none', clustering = 'none', labCol = T, labRo
   ## finally add the fill colour ramp of your choice (default is blue to red)-- and return
   return(g2 + scale_fill_gradient2(low = heatscale[1], mid = heatscale[2], high = heatscale[3], guide = guide_colorbar(title = legend.title)))
 }
+
+
+
+#' Validates gene embeddings by plotting cluster logFC vs gene factor loading logFC
+#' Warns users if embedded genes fall below minimum logFC threshold
+#'
+#' @param W Gene loadings matrix
+#' @param norm.counts Normalized gene expression matrix
+#' @param genes.embed Genes to embed onto SWNE plot
+#' @param sample.groups Sample groupings
+#' @param n.bins Number of bins for the hexbin plot
+#' @param min.cluster.logfc Minimum cluster logFC for an embedded gene
+#' @param min.factor.logfc Minimum factor logFC for an embedded gene
+#' @param font.size Axis label font size
+#' @param label.size Gene label size
+#' @param eps Pseudocount to add to fold-change calculations
+#'
+#' @return Dataframe with cluster logFC and factor logFC. Generates scatterplot as a side effect.
+#'
+#' @import ggrepel
+#' @export
+#'
+CheckGeneEmbedding <- function(W, norm.counts, genes.embed, sample.groups, n.bins = 50,
+                               min.cluster.logfc = 1.5, min.factor.logfc = 1.5,
+                               font.size = 12, label.size = 5, eps = 1e-4) {
+  if(!all(rownames(W) == rownames(norm.counts))) {
+    stop("Rownames of W must match rownames of norm.counts")
+  }
+  W <- W/colSums(W)
+
+  gene.factor.logfc <- log2(apply(W, 1, function(x) {
+    max.i <- which.max(x)
+    (x[[max.i]] + eps)/(mean(x[-1*max.i]) + eps)
+  }))
+
+  gene.cell.logfc <- log2(apply(norm.counts, 1, function(x) {
+    cl.avg <- tapply(x, sample.groups, mean)
+    cl.max <- names(cl.avg[which.max(cl.avg)])
+    (mean(x[sample.groups == cl.max]) + eps)/(mean(x[sample.groups != cl.max]) + eps)
+  }))
+
+  gene.logfc.df <- data.frame(cluster = gene.cell.logfc, factor = gene.factor.logfc)
+  gene.logfc.df$embedded <- factor(rownames(gene.logfc.df) %in% genes.embed)
+  gene.logfc.df <- gene.logfc.df[order(gene.logfc.df$embedded),]
+
+  gg.obj <- ggplot() +
+    geom_hex(data = gene.logfc.df, mapping = aes(factor, cluster), bins = n.bins, alpha = 1) +
+    theme_classic() + theme(text = element_text(size = font.size)) +
+    xlab("Max factor logFC") + ylab("Max cluster logFC") +
+    scale_fill_gradient(low = "skyblue", high = "tomato3")
+
+  gene.logfc.label <- subset(gene.logfc.df, embedded == "TRUE")
+  gene.logfc.label$name <- rownames(gene.logfc.label)
+
+  warning.genes <- rownames(subset(gene.logfc.label, cluster < min.cluster.logfc | factor < min.factor.logfc))
+  if(length(warning.genes) > 0) {
+    print("Warning, the following genes may not be good candidates for embedding:")
+    print(warning.genes)
+  }
+
+  gg.obj <- gg.obj +
+    geom_point(data = gene.logfc.label, mapping = aes(factor, cluster), size = 2, alpha = 1, color = "darkred") +
+    ggrepel::geom_text_repel(data = gene.logfc.label, mapping = aes(factor, cluster, label = name),
+                             size = label.size, box.padding = 0.15) +
+    geom_vline(xintercept = min.factor.logfc, linetype = "dotted", size = 1.25, color = "black") +
+    geom_hline(yintercept = min.cluster.logfc, linetype = "dotted", size = 1.25, color = "black")
+  print(gg.obj)
+
+  return(gene.logfc.df)
+}
+
+
+
+#' Plot decrease in reconstruction error versus random noise.
+#' The point where the change in reconstruction error matches the change in reconstruction
+#' error for the randomized matrix is the optimal number of factors to use.
+#'
+#' @param k.err Reconstruction error output by FindNumFactors
+#' @param font.size Font size to use for plotting
+#'
+#' @import ggplot2
+#' @export
+#'
+PlotFactorSelection <- function(k.err, font.size = 12) {
+  err.del <- sapply(1:(ncol(k.err) - 1), function(i) k.err[,i] - k.err[,i + 1])
+  colnames(err.del) <- colnames(k.err)[2:length(colnames(k.err))]
+
+  err.del.diff <- err.del[1,] - err.del[2,]
+  err.del.df <- data.frame(y = err.del.diff, x = factor(names(err.del.diff), levels = colnames(err.del)))
+
+  ggplot(data = err.del.df, aes(x, y)) +
+    geom_line(aes(group = 1)) + geom_point(size = 2.0) +
+    theme_classic() + xlab("Number of factors") + ylab("Error reduction above noise") +
+    theme(axis.text.x = element_text(hjust = 1, size = font.size, angle = 90, color = "black"),
+          axis.text = element_text(size = font.size, color = "black"),
+          axis.title = element_text(size = font.size, color = "black"),
+          legend.position = c(0.8,0.8),
+          legend.text = element_text(size = font.size),
+          legend.title = element_text(size = font.size)) +
+    geom_hline(yintercept = 0.0, linetype = "dashed", color = "darkred")
+}
+
 
 
 #' Extracts the exact colors used to plot each cluster (the hex codes) for a given color seed
