@@ -20,7 +20,7 @@ RunSWNE <- function(object, dist.metric = "euclidean", n.cores = 3){
   if(missing(k)){
     n.cores <- n.cores ## Number of cores to use
     k.range <- seq(2,10,2) ## Range of factors to iterate over
-    k.res <- FindNumFactors(object_norm[var_genes,], k.range = k.range, n.cores = n.cores, do.plot = T, loss = loss)
+    k.res <- FindNumFactors(object_norm[var_genes,], k.range = k.range, n.cores = n.cores, do.plot = F, loss = loss)
     print(k.res$k, "factors")
   }
   if(k < 3) warning("k must be an integer of 3 or higher")
@@ -35,4 +35,5 @@ RunSWNE <- function(object, dist.metric = "euclidean", n.cores = 3){
   n_pull <- max(k.res$k, 4) # The number of factors pulling on each cell. Must be at least 3.
   swne_embedding <- EmbedSWNE(nmf.scores, snn, alpha.exp = alpha.exp, snn.exp = snn.exp,
                               n_pull = n_pull, dist.use = dist.metric)
+  return(swne_embedding)
 }
