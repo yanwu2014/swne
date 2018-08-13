@@ -682,6 +682,7 @@ CheckGeneEmbedding <- function(W, norm.counts, genes.embed, sample.groups, n.bin
 #' @export
 #'
 PlotFactorSelection <- function(k.err, font.size = 12) {
+  k.err <- k.err$err
   err.del <- sapply(1:(ncol(k.err) - 1), function(i) k.err[,i] - k.err[,i + 1])
   colnames(err.del) <- colnames(k.err)[2:length(colnames(k.err))]
 
