@@ -1,7 +1,7 @@
 #' Wrapper for the running SWNE analysis functions
 #'
 #' @param object A seurat-class object (normalised)
-#' @param dist.use Similarity function to use for calculating factor positions (passed to EmbedSWNE). Options include pearson, IC, cosine, euclidean.
+#' @param dist.use Similarity function to use for calculating factor positions (passed to EmbedSWNE). Options include pearson (correlation), IC (mutual information), cosine, euclidean.
 #' @param n.cores Number of cores to use (passed to FindNumFactors)
 #' @param k Number of NMF factors (passed to RunNMF). If none given, will be derived from FindNumFactors.
 #'

@@ -23,7 +23,7 @@ EmbedSWNE(H, SNN = NULL, alpha.exp = 1, snn.exp = 1, n_pull = NULL,
 
 \item{pca.red}{Whether or not to run PCA on transposed H matrix before calculating factor distances}
 
-\item{dist.use}{Similarity function to use for calculating factor positions. Options include pearson, IC, cosine, euclidean.}
+\item{dist.use}{Similarity function to use for calculating factor positions. Options include pearson (correlation), IC (mutual information), cosine, euclidean.}
 
 \item{min.snn}{Minimum SNN value}
 }

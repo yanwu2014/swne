@@ -13,7 +13,7 @@ RunSWNE(object, dist.metric = "euclidean", n.cores = 3, k)
 
 \item{k}{Number of NMF factors (passed to RunNMF). If none given, will be derived from FindNumFactors.}
 
-\item{dist.use}{Similarity function to use for calculating factor positions (passed to EmbedSWNE). Options include pearson, IC, cosine, euclidean.}
+\item{dist.use}{Similarity function to use for calculating factor positions (passed to EmbedSWNE). Options include pearson (correlation), IC (mutual information), cosine, euclidean.}
 }
 \value{
 A list of factor (H.coords) and sample coordinates (sample.coords) in 2D
