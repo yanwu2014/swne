@@ -202,11 +202,11 @@ FindNumFactors <- function(A, k.range = seq(2,12,2), n.cores = 1, do.plot = T,
   min.idx <- min(which(err.del.diff < 0))
 
   res <- list()
-  res$err <- k.err
-  res$k <- k.range[[min.idx]]
+  res$err <- err.del.diff
+  res$k <- k.range[[min.idx + 1]]
 
   if (do.plot) {
-    print(PlotFactorSelection(k.err, font.size = 14))
+    print(PlotFactorSelection(err.del.diff, font.size = 14))
   }
 
   return(res)

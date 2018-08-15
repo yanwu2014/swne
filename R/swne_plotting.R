@@ -678,19 +678,17 @@ CheckGeneEmbedding <- function(W, norm.counts, genes.embed, sample.groups, n.bin
 #' The point where the change in reconstruction error matches the change in reconstruction
 #' error for the randomized matrix is the optimal number of factors to use.
 #'
-#' @param k.err Reconstruction error output by FindNumFactors
+#' @param k.err.diff Reduction in reconstruction error above noise output by FindNumFactors
 #' @param font.size Font size to use for plotting
 #'
 #' @import ggplot2
 #' @export
 #'
-PlotFactorSelection <- function(k.err, font.size = 12) {
-  if(is.list(k.err)) k.err <- k.err["err"][[1]]
-  err.del <- sapply(1:(ncol(k.err) - 1), function(i) k.err[,i] - k.err[,i + 1])
-  colnames(err.del) <- colnames(k.err)[2:length(colnames(k.err))]
-
-  err.del.diff <- err.del[1,] - err.del[2,]
-  err.del.df <- data.frame(y = err.del.diff, x = factor(names(err.del.diff), levels = colnames(err.del)))
+PlotFactorSelection <- function(k.err.diff, font.size = 12) {
+  if(is.list(k.err.diff)) {
+    k.err.diff <- k.err.diff[["err"]]
+  }
+  err.del.df <- data.frame(y = k.err.diff, x = factor(names(k.err.diff), levels = names(k.err.diff)))
 
   ggplot(data = err.del.df, aes(x, y)) +
     geom_line(aes(group = 1)) + geom_point(size = 2.0) +
