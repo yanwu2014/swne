@@ -196,15 +196,18 @@ FindNumFactors <- function(A, k.range = seq(2,12,2), n.cores = 1, do.plot = T,
   rownames(k.err) <- c("err", "err.rand")
   colnames(k.err) <- k.range
 
+  err.del <- sapply(1:(ncol(k.err) - 1), function(i) k.err[,i] - k.err[,i + 1])
+  colnames(err.del) <- colnames(k.err)[2:length(colnames(k.err))]
+  err.del.diff <- err.del[1,] - err.del[2,]
+  min.idx <- min(which(err.del.diff < 0))
+
+  res <- list()
+  res$err <- k.err
+  res$k <- k.range[[min.idx]]
 
   if (do.plot) {
     print(PlotFactorSelection(k.err, font.size = 14))
   }
-
-  min.idx <- which.max(k.err[match("err", rownames(k.err)), ])
-  res <- list()
-  res$err <- k.err
-  res$k <- k.range[[min.idx]]
 
   return(res)
 }
