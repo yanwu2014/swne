@@ -172,6 +172,8 @@ FindNumFactors <- function(A, k.range = seq(2,12,2), n.cores = 1, do.plot = T,
   if (!loss %in% c("mse", "mkl")) { stop("Invalid loss function") }
   if (ncol(A) > 15000) print("Warning: This function can be slow for very large datasets")
   if (!is.null(seed)) { set.seed(seed) }
+  if (length(k.range) < 3) { stop("k.range sequence must have at least 3 values") }
+
   A <- as.matrix(A)
   A.rand <- matrix(sample(A), nrow(A), ncol(A))
   k.err <- sapply(k.range, function(k) {
