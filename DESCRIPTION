@@ -40,6 +40,7 @@ Imports:
 Remotes:
   JEFworks/liger
 Suggests:
+  Seurat (>= 2.3.4),
   velocyto.R,
   snow
 RoxygenNote: 6.0.1

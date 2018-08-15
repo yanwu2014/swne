@@ -189,7 +189,7 @@ FindNumFactors <- function(A, k.range = seq(2,12,2), n.cores = 1, do.plot = T,
       err.rand <- mean(kl_div(A.hat.rand, A.rand))
     }
 
-    return(c(err, err.rand))
+    return(rbind(err, err.rand))
   })
   rownames(k.err) <- c("err", "err.rand")
   colnames(k.err) <- k.range
@@ -199,7 +199,12 @@ FindNumFactors <- function(A, k.range = seq(2,12,2), n.cores = 1, do.plot = T,
     print(PlotFactorSelection(k.err, font.size = 14))
   }
 
-  return(k.err)
+  min.idx <- which.max(k.err[match("err", rownames(k.err)), ])
+  res <- list()
+  res$err <- k.err
+  res$k <- k.range[[min.idx]]
+
+  return(res)
 }
 
 

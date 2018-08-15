@@ -31,8 +31,11 @@ normalize_vector <- function(x, method = "scale", n_ranks = 10000) {
 #'
 get_factor_coords <- function(H, method = "sammon", pca.red = F, distance = "cosine") {
   H <- t(H)
+  distance <- tolower(distance)
+  if(distance == "cor" || distance == "correlation") distance <- "pearson"
+  if(distance == "mutual" || distance == "information" || distance == "mutual information") distance <- "IC"
   if (!distance %in% c("pearson", "IC", "cosine", "euclidean")) {
-    stop("Distance must be one of: pearson, IC, cosine, euclidean")
+    stop(paste(c("Distance must be one of:", paste(c("pearson", "IC", "cosine", "euclidean"), collapse = ", ")), collapse = " "))
   }
 
   if (pca.red) {
@@ -93,7 +96,7 @@ get_sample_coords <- function(H, H.coords, alpha = 1, n_pull = NULL) {
 #' @param n_pull Number of factors pulling on each sample. Must be >= 3
 #' @param proj.method Method to use for projecting factors. Currently only supports "sammon"
 #' @param pca.red Whether or not to run PCA on transposed H matrix before calculating factor distances
-#' @param dist.use Similarity function to use for calculating factor positions. Options include pearson, IC, cosine, euclidean.
+#' @param dist.use Similarity function to use for calculating factor positions. Options include pearson (correlation), IC (mutual information), cosine, euclidean.
 #' @param min.snn Minimum SNN value
 #'
 #' @return A list of factor (H.coords) and sample coordinates (sample.coords) in 2D
@@ -682,6 +685,7 @@ CheckGeneEmbedding <- function(W, norm.counts, genes.embed, sample.groups, n.bin
 #' @export
 #'
 PlotFactorSelection <- function(k.err, font.size = 12) {
+  if(is.list(k.err)) k.err <- k.err["err"][[1]]
   err.del <- sapply(1:(ncol(k.err) - 1), function(i) k.err[,i] - k.err[,i + 1])
   colnames(err.del) <- colnames(k.err)[2:length(colnames(k.err))]
 
