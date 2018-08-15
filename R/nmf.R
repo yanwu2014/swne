@@ -203,7 +203,7 @@ FindNumFactors <- function(A, k.range = seq(2,12,2), n.cores = 1, do.plot = T,
 
   res <- list()
   res$err <- err.del.diff
-  res$k <- k.range[[min.idx + 1]]
+  res$k <- k.range[[min.idx]]
 
   if (do.plot) {
     print(PlotFactorSelection(err.del.diff, font.size = 14))
