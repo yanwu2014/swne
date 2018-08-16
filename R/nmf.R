@@ -199,7 +199,12 @@ FindNumFactors <- function(A, k.range = seq(2,12,2), n.cores = 1, do.plot = T,
   err.del <- sapply(1:(ncol(k.err) - 1), function(i) k.err[,i] - k.err[,i + 1])
   colnames(err.del) <- colnames(k.err)[2:length(colnames(k.err))]
   err.del.diff <- err.del[1,] - err.del[2,]
-  min.idx <- min(which(err.del.diff < 0))
+
+  if (sum(err.del.diff < 0) > 0) {
+    min.idx <- min(which(err.del.diff < 0))
+  } else {
+    min.idx <- which.min(err.del.diff) + 1
+  }
 
   res <- list()
   res$err <- err.del.diff
