@@ -33,7 +33,7 @@ get_factor_coords <- function(H, method = "sammon", pca.red = F, distance = "cos
   H <- t(H)
   distance <- tolower(distance)
   if(distance == "cor" || distance == "correlation") distance <- "pearson"
-  if(distance == "mutual" || distance == "information" || distance == "mutual information") distance <- "IC"
+  if(distance == "mutual" || distance == "information" || distance == "mutual information" || distance == "ic") distance <- "IC"
   if (!distance %in% c("pearson", "IC", "cosine", "euclidean")) {
     stop(paste(c("Distance must be one of:", paste(c("pearson", "IC", "cosine", "euclidean"), collapse = ", ")), collapse = " "))
   }
