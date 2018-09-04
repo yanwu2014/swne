@@ -10,11 +10,11 @@ FactorAssociation(feature.mat, nmf.scores, n.cores = 8, metric = "IC")
 \arguments{
 \item{feature.mat}{Feature matrix (features x samples)}
 
+\item{nmf.scores}{Factor scores (factors x samples)}
+
 \item{n.cores}{Number of cores to use}
 
 \item{metric}{Association metric: pearson, spearman, or IC (information coefficient)}
-
-\item{H}{Factor scores (factors x samples)}
 }
 \value{
 Features x factors matrix of associations or correlations

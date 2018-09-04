@@ -121,6 +121,7 @@ ProjectGenesets <- function(norm.counts, genesets, method = "lm", loss = "mse", 
     full.genesets.matrix <- genesets_indicator(genesets, inv = F, return.numeric = T)
     genesets.H <- ProjectSamples(norm.counts[rownames(full.genesets.matrix),], full.genesets.matrix,
                                   loss = loss, n.cores = n.cores)
+    nmf.res <- list(W = full.genesets.matrix, H = genesets.H)
   } else if (method == "mf") {
     genesets.mask <- genesets_indicator(genesets, inv = T)
     nmf.res <- NNLM::nnmf(as.matrix(norm.counts[rownames(genesets.mask),]), k = ncol(genesets.mask), loss = loss,
@@ -165,7 +166,7 @@ CalcGenesetLoadings <- function(W, W.genesets.project, top.genesets) {
 #' or mutual information
 #'
 #' @param feature.mat Feature matrix (features x samples)
-#' @param H Factor scores (factors x samples)
+#' @param nmf.scores Factor scores (factors x samples)
 #' @param n.cores Number of cores to use
 #' @param metric Association metric: pearson, spearman, or IC (information coefficient)
 #'
@@ -179,7 +180,6 @@ FactorAssociation <- function(feature.mat, nmf.scores, n.cores = 8, metric = "IC
     stop("Package \"snow\" needed for this function to work. Please install it.",
          call. = FALSE)
   }
-
   cl <- snow::makeCluster(n.cores, type = "SOCK")
   snow::clusterExport(cl, c("nmf.scores", "MutualInf"), envir = environment())
 
@@ -262,6 +262,28 @@ RunGSEA <- function(gene.factor.assoc, genesets, power = 1, n.rand = 1000, n.cor
 
   gsea.df <- do.call("rbind", gsea.list); rownames(gsea.df) <- NULL;
   gsea.df
+}
+
+#' Select genesets for embedding
+#'
+#' @param norm.counts Normalized input data
+#' @param nmf.scores NMF factors (factors x samples)
+#' @param genesets List of genesets to use
+#' @param method Method used to project data onto genesets. lm uses a simple linear model while mf
+#'               will use a masked version of nmf.
+#' @param n.cores Number of cores to use
+#' @param genesets.return Number of genesets to return for each factor
+#'
+#' @return dataframe of top genesets associated with each factor
+#'
+#' @export
+#'
+SelectGenesets <- function(norm.counts, nmf.scores, genesets, assoc.metric = "pearson", method = "lm",
+                           n.cores = 8, genesets.return = 5) {
+  geneset.proj <- ProjectGenesets(norm.counts, genesets, method = method, n.cores = n.cores)
+  geneset.assoc <- FactorAssociation(geneset.proj$H, nmf.scores, n.cores = n.cores,
+                                     metric = assoc.metric)
+  SummarizeAssocFeatures(geneset.assoc, features.return = genesets.return)
 }
 
 

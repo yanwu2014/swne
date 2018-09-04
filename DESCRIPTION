@@ -1,7 +1,7 @@
 Package: swne
 Type: Package
 Title: Similarity Weighted Nonnegative Embedding: A method for visualizing high dimensional datasets
-Version: 0.2.13
+Version: 0.2.14
 Author: Yan Wu
 Maintainer: Yan Wu <yauwning@gmail.com>
 Description: Uses NMF to reduce high dimenensional dataset into NMF components, embeds NMF components
@@ -43,4 +43,4 @@ Suggests:
   Seurat (>= 2.3.4),
   velocyto.R,
   snow
-RoxygenNote: 6.0.1
+RoxygenNote: 6.1.0

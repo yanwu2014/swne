@@ -6,10 +6,10 @@
 Adapted from velocyto.R}
 \usage{
 VelocytoArrows(emb, vel, pca.red = NULL, n = 200, scale = "sqrt",
-  corr.sigma = 0.05, show.grid.flow = T, grid.n = 30, grid.sd = NULL,
-  min.grid.cell.mass = 0.5, min.arrow.size = NULL, arrow.scale = 1,
-  max.grid.arrow.length = NULL, n.cores = 16, diffusion.steps = 10,
-  cc = NULL)
+  corr.sigma = 0.05, show.grid.flow = T, grid.n = 30,
+  grid.sd = NULL, min.grid.cell.mass = 0.5, min.arrow.size = NULL,
+  arrow.scale = 1, max.grid.arrow.length = NULL, n.cores = 16,
+  diffusion.steps = 10, cc = NULL)
 }
 \arguments{
 \item{emb}{2D embedding (SWNE, t-SNE, etc.) coordinates. Must be N x 2 samples}

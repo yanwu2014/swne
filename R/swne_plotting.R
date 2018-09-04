@@ -163,7 +163,49 @@ EmbedFeatures <- function(swne.embedding, feature.assoc, features.embed, alpha.e
   feature.coords <- data.frame(feature.coords)
   feature.coords$name <- rownames(feature.coords); rownames(feature.coords) <- NULL;
 
-  swne.embedding$feature.coords <- feature.coords
+  if (!is.null(swne.embedding$feature.coords)) {
+    swne.embedding$feature.coords <- rbind(swne.embedding$feature.coords, feature.coords)
+  } else {
+    swne.embedding$feature.coords <- feature.coords
+  }
+
+  return(swne.embedding)
+}
+
+
+#' Embeds genesets relative to factor coordinates
+#'
+#' @param swne.embedding Existing swne embedding from EmbedSWNE
+#' @param feature.assoc Feature loadings or correlations (features x factors)
+#' @param genesets.embed Genesets to embed (in the form of a named list of genes)
+#' @param alpha.exp Increasing alpha.exp increases how much the factors "pull" the features
+#' @param n_pull Number of factors pulling on each feature. Must be >= 3
+#' @param scale.cols Whether or not to scale the input columns to 0 - 1
+#' @return swne.embedding with updated feature coordinates (feature.coords)
+#'
+#' @export
+#'
+EmbedGenesets <- function(swne.embedding, feature.assoc, genesets.embed, alpha.exp = 1, n_pull = NULL,
+                          scale.cols = T) {
+  feature.assoc <- do.call(cbind, lapply(genesets.embed, function(genes) {
+    apply(feature.assoc[genes,], 2, mean)
+  }))
+  stopifnot(nrow(swne.embedding$H.coords) == nrow(feature.assoc))
+
+  if (scale.cols) {
+    feature.assoc <- apply(feature.assoc, 2, normalize_vector, method = "bounded")
+  }
+
+  feature.coords <- get_sample_coords(feature.assoc, swne.embedding$H.coords, alpha = alpha.exp, n_pull = n_pull)
+  feature.coords <- data.frame(feature.coords)
+  feature.coords$name <- rownames(feature.coords); rownames(feature.coords) <- NULL;
+
+  if (!is.null(swne.embedding$feature.coords)) {
+    swne.embedding$feature.coords <- rbind(swne.embedding$feature.coords, feature.coords)
+  } else {
+    swne.embedding$feature.coords <- feature.coords
+  }
+
   return(swne.embedding)
 }
 

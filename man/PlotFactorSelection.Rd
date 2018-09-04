@@ -6,10 +6,10 @@
 The point where the change in reconstruction error matches the change in reconstruction
 error for the randomized matrix is the optimal number of factors to use.}
 \usage{
-PlotFactorSelection(k.err, font.size = 12)
+PlotFactorSelection(k.err.diff, font.size = 12)
 }
 \arguments{
-\item{k.err}{Reconstruction error output by FindNumFactors}
+\item{k.err.diff}{Reduction in reconstruction error above noise output by FindNumFactors}
 
 \item{font.size}{Font size to use for plotting}
 }

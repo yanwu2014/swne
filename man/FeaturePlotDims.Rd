@@ -6,8 +6,8 @@
 \usage{
 FeaturePlotDims(dim.scores, feature.scores, feature.name = NULL,
   x.lab = "tsne1", y.lab = "tsne2", alpha.plot = 0.5,
-  quantiles = c(0.01, 0.99), show.axes = T, pt.size = 1, font.size = 12,
-  color.palette = "YlOrRd")
+  quantiles = c(0.01, 0.99), show.axes = T, pt.size = 1,
+  font.size = 12, color.palette = "YlOrRd")
 }
 \arguments{
 \item{dim.scores}{2D embedding coordinates. Must be N x 2 samples}

@@ -6,8 +6,9 @@
 \alias{RunSWNE.default}
 \title{Wrapper for the running SWNE analysis functions}
 \usage{
-\method{RunSWNE}{seurat}(object, dist.metric = "euclidean", n.cores = 3, k,
-  var.genes, loss = "mse", alpha.exp = 1.25, snn.exp = 1)
+\method{RunSWNE}{seurat}(object, dist.metric = "euclidean",
+  n.cores = 3, k, var.genes, loss = "mse", alpha.exp = 1.25,
+  snn.exp = 1)
 
 \method{RunSWNE}{default}(data.matrix, dist.metric = "euclidean",
   n.cores = 3, k, var.genes = rownames(data.matrix), loss = "mse",

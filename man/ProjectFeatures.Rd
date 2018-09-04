@@ -4,7 +4,8 @@
 \alias{ProjectFeatures}
 \title{Projects new features onto existing factor decomposition}
 \usage{
-ProjectFeatures(newdata, H, alpha = rep(0, 3), loss = "mse", n.cores = 1)
+ProjectFeatures(newdata, H, alpha = rep(0, 3), loss = "mse",
+  n.cores = 1)
 }
 \arguments{
 \item{newdata}{New data matrix}

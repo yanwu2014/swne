@@ -5,8 +5,9 @@
 \title{Plots a heatmap using ggplot2}
 \usage{
 ggHeat(m, rescaling = "none", clustering = "none", labCol = T,
-  labRow = T, border = F, heatscale = c(low = "skyblue", mid = "white",
-  high = "tomato"), legend.title = NULL, x.lab.size = 10, y.lab.size = 10)
+  labRow = T, border = F, heatscale = c(low = "skyblue", mid =
+  "white", high = "tomato"), legend.title = NULL, x.lab.size = 10,
+  y.lab.size = 10)
 }
 \arguments{
 \item{m}{Matrix to plot heatmap for}
