@@ -5,7 +5,7 @@
 \title{Embeds genesets relative to factor coordinates}
 \usage{
 EmbedGenesets(swne.embedding, feature.assoc, genesets.embed,
-  alpha.exp = 1, n_pull = NULL, scale.cols = T)
+  alpha.exp = 1, n_pull = NULL, scale.cols = T, overwrite = F)
 }
 \arguments{
 \item{swne.embedding}{Existing swne embedding from EmbedSWNE}
@@ -19,6 +19,8 @@ EmbedGenesets(swne.embedding, feature.assoc, genesets.embed,
 \item{n_pull}{Number of factors pulling on each feature. Must be >= 3}
 
 \item{scale.cols}{Whether or not to scale the input columns to 0 - 1}
+
+\item{overwrite}{Whether or not to overwrite any existing feature embedding}
 }
 \value{
 swne.embedding with updated feature coordinates (feature.coords)

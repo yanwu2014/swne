@@ -146,12 +146,14 @@ EmbedSWNE <- function(H, SNN = NULL, alpha.exp = 1, snn.exp = 1.0, n_pull = NULL
 #' @param alpha.exp Increasing alpha.exp increases how much the factors "pull" the features
 #' @param n_pull Number of factors pulling on each feature. Must be >= 3
 #' @param scale.cols Whether or not to scale the input columns to 0 - 1
+#' @param overwrite Whether or not to overwrite any existing feature embedding
+#'
 #' @return swne.embedding with feature coordinates (feature.coords)
 #'
 #' @export
 #'
 EmbedFeatures <- function(swne.embedding, feature.assoc, features.embed, alpha.exp = 1, n_pull = NULL,
-                          scale.cols = T) {
+                          scale.cols = T, overwrite = T) {
   feature.assoc <- t(feature.assoc[features.embed,])
   stopifnot(nrow(swne.embedding$H.coords) == nrow(feature.assoc))
 
@@ -163,10 +165,10 @@ EmbedFeatures <- function(swne.embedding, feature.assoc, features.embed, alpha.e
   feature.coords <- data.frame(feature.coords)
   feature.coords$name <- rownames(feature.coords); rownames(feature.coords) <- NULL;
 
-  if (!is.null(swne.embedding$feature.coords)) {
-    swne.embedding$feature.coords <- rbind(swne.embedding$feature.coords, feature.coords)
-  } else {
+  if (overwrite || is.null(swne.embedding$feature.coords)) {
     swne.embedding$feature.coords <- feature.coords
+  } else {
+    swne.embedding$feature.coords <- rbind(swne.embedding$feature.coords, feature.coords)
   }
 
   return(swne.embedding)
@@ -181,12 +183,14 @@ EmbedFeatures <- function(swne.embedding, feature.assoc, features.embed, alpha.e
 #' @param alpha.exp Increasing alpha.exp increases how much the factors "pull" the features
 #' @param n_pull Number of factors pulling on each feature. Must be >= 3
 #' @param scale.cols Whether or not to scale the input columns to 0 - 1
+#' @param overwrite Whether or not to overwrite any existing feature embedding
+#'
 #' @return swne.embedding with updated feature coordinates (feature.coords)
 #'
 #' @export
 #'
 EmbedGenesets <- function(swne.embedding, feature.assoc, genesets.embed, alpha.exp = 1, n_pull = NULL,
-                          scale.cols = T) {
+                          scale.cols = T, overwrite = F) {
   feature.assoc <- do.call(cbind, lapply(genesets.embed, function(genes) {
     apply(feature.assoc[genes,], 2, mean)
   }))
@@ -200,10 +204,10 @@ EmbedGenesets <- function(swne.embedding, feature.assoc, genesets.embed, alpha.e
   feature.coords <- data.frame(feature.coords)
   feature.coords$name <- rownames(feature.coords); rownames(feature.coords) <- NULL;
 
-  if (!is.null(swne.embedding$feature.coords)) {
-    swne.embedding$feature.coords <- rbind(swne.embedding$feature.coords, feature.coords)
-  } else {
+  if (overwrite || is.null(swne.embedding$feature.coords)) {
     swne.embedding$feature.coords <- feature.coords
+  } else {
+    swne.embedding$feature.coords <- rbind(swne.embedding$feature.coords, feature.coords)
   }
 
   return(swne.embedding)

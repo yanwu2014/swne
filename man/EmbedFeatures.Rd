@@ -5,7 +5,7 @@
 \title{Embeds features relative to factor coordinates}
 \usage{
 EmbedFeatures(swne.embedding, feature.assoc, features.embed,
-  alpha.exp = 1, n_pull = NULL, scale.cols = T)
+  alpha.exp = 1, n_pull = NULL, scale.cols = T, overwrite = T)
 }
 \arguments{
 \item{swne.embedding}{Existing swne embedding from EmbedSWNE}
@@ -19,6 +19,8 @@ EmbedFeatures(swne.embedding, feature.assoc, features.embed,
 \item{n_pull}{Number of factors pulling on each feature. Must be >= 3}
 
 \item{scale.cols}{Whether or not to scale the input columns to 0 - 1}
+
+\item{overwrite}{Whether or not to overwrite any existing feature embedding}
 }
 \value{
 swne.embedding with feature coordinates (feature.coords)
