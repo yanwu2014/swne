@@ -329,7 +329,7 @@ ExtractNormCounts <- function(obj, obj.type = "seurat", rescale = T, rescale.met
 
   if (obj.type == "seurat") {
     if (rescale) {
-      counts <- obj@raw.data[,obj@cell.names]
+      counts <- obj@raw.data[,intersect(obj@cell.names, colnames(obj@raw.data))]
       norm.counts <- ScaleCounts(counts, batch = batch, method = rescale.method)
     } else {
       norm.counts <- obj@scale.data
@@ -337,7 +337,7 @@ ExtractNormCounts <- function(obj, obj.type = "seurat", rescale = T, rescale.met
     }
   } else if (obj.type == "pagoda2") {
     if (!is.null(obj$counts)) {
-      counts <- Matrix::t(obj$misc$rawCounts[rownames(obj$counts),])
+      counts <- Matrix::t(obj$misc$rawCounts[intersect(rownames(obj$misc$rawCounts), rownames(obj$counts)),])
     } else {
       counts <- Matrix::t(obj$misc$rawCounts)
     }
