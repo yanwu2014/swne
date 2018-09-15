@@ -352,6 +352,8 @@ FlattenGroups <- function(groups.list) {
     print("Warning: removing all samples belonging to multiple groups")
     cell.tbl <- table(cell.names)
     cells.keep <- names(cell.tbl[cell.tbl == 1])
+  } else {
+    cells.keep <- cell.names
   }
 
   groups <- rep(NA, length(cells.keep))
