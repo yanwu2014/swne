@@ -244,7 +244,9 @@ ScaleCounts <- function(counts, batch = NULL, method = "log", adj.var = T, plot.
 
   if (adj.var) {
     varinfo.df <- AdjustVariance(norm.counts, plot = plot.var.adj, gam.k = gam.k)
-    norm.counts <- norm.counts[rownames(varinfo.df),] * varinfo.df$gsf
+    norm.counts <- t(norm.counts)
+    norm.counts@x <- norm.counts@x * rep(varinfo.df[colnames(norm.counts), "gsf"], diff(norm.counts@p))
+    norm.counts <- t(norm.counts)
   }
 
   if (method == "logrank") {
