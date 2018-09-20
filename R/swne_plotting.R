@@ -290,15 +290,17 @@ RenameFactors <- function(swne.embedding, name.mapping, set.empty = T) {
 #' @param show.legend If sample groups defined, show legend
 #' @param seed Seed for sample groups color reproducibility
 #' @param colors.use Vector of hex colors for each sample group. Vector names must align with sample.groups
+#' @param use.brewer.pal Use RColorBrewer 'Paired' palette instead of default ggplot2 color wheel
 #'
 #' @return ggplot2 object with swne plot
 #'
 #' @import ggrepel
+#' @import RColorBrewer
 #' @export
 #'
 PlotSWNE <- function(swne.embedding, alpha.plot = 0.25, sample.groups = NULL, do.label = F,
                      label.size = 4.5, pt.size = 1, samples.plot = NULL, show.legend = T,
-                     seed = NULL, colors.use = NULL) {
+                     seed = NULL, colors.use = NULL, use.brewer.pal = T) {
   H.coords <- swne.embedding$H.coords
   H.coords.plot <- subset(H.coords, name != "")
   sample.coords <- swne.embedding$sample.coords
@@ -358,6 +360,10 @@ PlotSWNE <- function(swne.embedding, alpha.plot = 0.25, sample.groups = NULL, do
 
   if (!show.legend) {
     ggobj <- ggobj + theme(legend.position = "none")
+  }
+
+  if (use.brewer.pal) {
+    ggobj <- ggobj + scale_color_manual(values = colorRampPalette(RColorBrewer::brewer.pal(12, "Paired"))(nlevels(sample.groups)))
   }
 
   if (!is.null(colors.use)) {
@@ -458,15 +464,18 @@ FeaturePlotSWNE <- function(swne.embedding, feature.scores, feature.name = NULL,
 #' @param show.axes Plot x and y axes
 #' @param seed Seed for sample group color reproducibility
 #' @param colors.use Vector of hex colors for each sample group. Vector names must align with sample.groups
+#' @param use.brewer.pal Use RColorBrewer 'Paired' palette instead of default ggplot2 color wheel
 #'
 #' @return ggplot2 object with 2d plot
 #'
 #' @import ggrepel
+#' @import RColorBrewer
 #' @export
 #'
 PlotDims <- function(dim.scores, sample.groups = NULL, x.lab = "tsne1", y.lab = "tsne2",
                      main.title = NULL, pt.size = 1.0, font.size = 12, alpha.plot = 1.0, do.label = T,
-                     label.size = 4, show.legend = T, show.axes = T, seed = NULL, colors.use = NULL) {
+                     label.size = 4, show.legend = T, show.axes = T, seed = NULL, colors.use = NULL,
+                     use.brewer.pal = T) {
 
   set.seed(seed)
   if (!is.null(sample.groups)) {
@@ -493,6 +502,10 @@ PlotDims <- function(dim.scores, sample.groups = NULL, x.lab = "tsne1", y.lab = 
 
     ggobj <- ggobj + ggrepel::geom_text_repel(data = group.pts, mapping = aes(label = ident), size = label.size,
                                               box.padding = 0.15)
+  }
+
+  if (use.brewer.pal) {
+    ggobj <- ggobj + scale_color_manual(values = colorRampPalette(RColorBrewer::brewer.pal(12, "Paired"))(nlevels(sample.groups)))
   }
 
   if (!show.legend) { ggobj <- ggobj + theme(legend.position = "none") }
