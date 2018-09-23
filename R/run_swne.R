@@ -23,10 +23,11 @@ RunSWNE <- function(x, ...) {
 #' @rdname RunSWNE
 #' @method RunSWNE seurat
 #' @export
+#'
 RunSWNE.seurat <- function(object, dist.metric = "euclidean", n.cores = 3, k, var.genes, loss = "mse",
-                                 alpha.exp = 1.25, # Increase this > 1.0 to move the cells closer to the factors. Values > 2 start to distort the data.
-                                 snn.exp = 1.0 # Lower this < 1.0 to move similar cells closer to each other
-                                 ){
+                           alpha.exp = 1.25, # Increase this > 1.0 to move the cells closer to the factors. Values > 2 start to distort the data.
+                           snn.exp = 1.0 # Lower this < 1.0 to move similar cells closer to each other
+){
   object_norm <- ExtractNormCounts(object, obj.type = "seurat", rescale = F, rescale.method = "log", batch = NULL)
   if(missing(var.genes)) var_genes <- intersect(object@var.genes, rownames(object_norm))
   print(paste(length(var_genes), "variable genes"))
@@ -63,7 +64,7 @@ RunSWNE.seurat <- function(object, dist.metric = "euclidean", n.cores = 3, k, va
 RunSWNE.default <- function(data.matrix, dist.metric = "euclidean", n.cores = 3, k, var.genes = rownames(data.matrix), loss = "mse",
                             alpha.exp = 1.25, # Increase this > 1.0 to move the cells closer to the factors. Values > 2 start to distort the data.
                             snn.exp = 1.0 # Lower this < 1.0 to move similar cells closer to each other
-                            ){
+){
   object_norm <- data.matrix
   var_genes <- intersect(var.genes, rownames(object_norm))
   print(paste(length(var_genes), "variable genes"))

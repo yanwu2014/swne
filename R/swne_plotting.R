@@ -214,6 +214,51 @@ EmbedGenesets <- function(swne.embedding, feature.assoc, genesets.embed, alpha.e
 }
 
 
+
+#' Embeds data for generating elliptical contours to mark areas where features are present
+#'
+#' @param swne.embedding Existing swne embedding from EmbedSWNE
+#' @param contour.feature Feature to draw confidence ellipse for, either a factor or numeric vector
+#' @param sample.coords Sample coordinates to use (default is the sample coordinates from the swne embedding)
+#' @param levels.plot If contour.feature is a factor, specify a subset of levels to generate contours for
+#' @param cutoff.use If contour.feature is numeric, the cutoff to use to binarize the vector for defining the contour
+#'
+#' @return swne.embedding with contour coordinates added
+#'
+#' @export
+#'
+EmbedContours <- function(swne.embedding, contour.feature, sample.coords = NULL, levels.use = NULL,
+                          cutoff.use = NULL) {
+  if (is.null(sample.coords)) {
+    sample.coords <- swne.embedding$sample.coords
+  }
+
+  if (!all(rownames(sample.coords) == names(contour.feature))) {
+    stop("contour.feature must have same rownames as sample.coords")
+  }
+
+  contour.data <- sample.coords
+  if (is.factor(contour.feature)) {
+    if (!all(levels.use %in% levels(contour.feature))) {
+      stop("Selected levels.plot do not exist in contour.feature")
+    }
+    contour.data <- contour.data[contour.feature %in% levels.use,]
+  } else if (is.numeric(contour.feature)) {
+    if (is.null(cutoff.use)) {
+      idx.use <- order(contour.feature, decreasing = T)[round(length(contour.feature)/3)]
+      cutoff.use <- contour.feature[[idx.use]]
+    }
+    contour.data <- contour.data[contour.feature > cutoff.use,]
+  } else {
+    stop("'contour.feature' must be either a factor or numeric")
+  }
+
+  swne.embedding$contour.data <- contour.data
+  return(swne.embedding)
+}
+
+
+
 #' Projects new data onto an existing swne embedding
 #'
 #' @param swne.embedding Existing swne embedding from EmbedSWNE
@@ -256,6 +301,7 @@ ProjectSWNE <- function(swne.embedding, H.test, SNN = NULL, alpha.exp = 1, snn.e
 }
 
 
+
 #' Function for renaming NMF factors to something more interpretable.
 #' If the NMF factor name is the empty string, "", then the NMF factor will not be plotted
 #'
@@ -278,6 +324,7 @@ RenameFactors <- function(swne.embedding, name.mapping, set.empty = T) {
 }
 
 
+
 #' Plots swne embedding
 #'
 #' @param swne.embedding SWNE embedding (list of factor and sample coordinates) from EmbedSWNE
@@ -286,11 +333,13 @@ RenameFactors <- function(swne.embedding, name.mapping, set.empty = T) {
 #' @param do.label Label the sample groups
 #' @param label.size Label font size
 #' @param pt.size Sample point size
-#' @param samples.plot Vector of samples to plot. Default is NULL, which plots all samples.
+#' @param samples.plot Vector of samples to plot. Default is NULL, which plots all samples
 #' @param show.legend If sample groups defined, show legend
 #' @param seed Seed for sample groups color reproducibility
 #' @param colors.use Vector of hex colors for each sample group. Vector names must align with sample.groups
 #' @param use.brewer.pal Use RColorBrewer 'Paired' palette instead of default ggplot2 color wheel
+#' @param contour.geom Plot contour as either a line or a filled in region
+#' @param contour.alpha Transparency of the contour line/region
 #'
 #' @return ggplot2 object with swne plot
 #'
@@ -299,10 +348,12 @@ RenameFactors <- function(swne.embedding, name.mapping, set.empty = T) {
 #' @export
 #'
 PlotSWNE <- function(swne.embedding, alpha.plot = 0.25, sample.groups = NULL, do.label = F,
-                     label.size = 4.5, pt.size = 1, samples.plot = NULL, show.legend = T,
-                     seed = NULL, colors.use = NULL, use.brewer.pal = T) {
+                     label.size = 4.5, pt.size = 1, samples.plot = NULL, show.legend = T, seed = NULL,
+                     colors.use = NULL, use.brewer.pal = T, contour.geom = "path",
+                     contour.alpha = 0.25) {
   H.coords <- swne.embedding$H.coords
   H.coords.plot <- subset(H.coords, name != "")
+
   sample.coords <- swne.embedding$sample.coords
   feature.coords <- swne.embedding$feature.coords
   sample.coords$pt.size <- pt.size
@@ -321,8 +372,21 @@ PlotSWNE <- function(swne.embedding, alpha.plot = 0.25, sample.groups = NULL, do
     sample.coords <- droplevels(sample.coords)
   }
 
+  ## Create ggplot2 object
+  ggobj <- ggplot()
+
+  ## Plot confidence ellipse
+  if (!is.null(swne.embedding$contour.data)) {
+    if(!contour.geom %in% c("path", "polygon")) stop("contour.geom must be one of: 'path', 'polygon'")
+    ggobj <- ggobj +
+      stat_ellipse(mapping = aes(x, y), data = swne.embedding$contour.data,
+                   geom = contour.geom, position = "identity", type = "t", level = 0.95,
+                   na.rm = T, inherit.aes = F, linetype = 2, alpha = contour.alpha,
+                   colour = "darkred")
+  }
+
   ## Plot sample coordinates
-  ggobj <- ggplot() +
+  ggobj <- ggobj +
     geom_point(data = sample.coords, aes(x, y, colour = sample.groups, fill = sample.groups),
                alpha = alpha.plot, size = pt.size) +
     theme_classic() + theme(axis.title.x = element_blank(), axis.title.y = element_blank(),

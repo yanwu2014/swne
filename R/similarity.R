@@ -34,6 +34,7 @@ CalcSNN <- function(data.use, k = 10, k.scale = 10, prune.SNN = 1/15, print.outp
 }
 
 
+
 #' Calculates shared nearest neighbors between samples (columns) in a test matrix and samples in a training matrix
 #' Adapted from Seurat
 #'

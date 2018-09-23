@@ -7,7 +7,7 @@
 PlotSWNE(swne.embedding, alpha.plot = 0.25, sample.groups = NULL,
   do.label = F, label.size = 4.5, pt.size = 1, samples.plot = NULL,
   show.legend = T, seed = NULL, colors.use = NULL,
-  use.brewer.pal = T)
+  use.brewer.pal = T, contour.geom = "path", contour.alpha = 0.25)
 }
 \arguments{
 \item{swne.embedding}{SWNE embedding (list of factor and sample coordinates) from EmbedSWNE}
@@ -22,7 +22,7 @@ PlotSWNE(swne.embedding, alpha.plot = 0.25, sample.groups = NULL,
 
 \item{pt.size}{Sample point size}
 
-\item{samples.plot}{Vector of samples to plot. Default is NULL, which plots all samples.}
+\item{samples.plot}{Vector of samples to plot. Default is NULL, which plots all samples}
 
 \item{show.legend}{If sample groups defined, show legend}
 
@@ -31,6 +31,10 @@ PlotSWNE(swne.embedding, alpha.plot = 0.25, sample.groups = NULL,
 \item{colors.use}{Vector of hex colors for each sample group. Vector names must align with sample.groups}
 
 \item{use.brewer.pal}{Use RColorBrewer 'Paired' palette instead of default ggplot2 color wheel}
+
+\item{contour.geom}{Plot contour as either a line or a filled in region}
+
+\item{contour.alpha}{Transparency of the contour line/region}
 }
 \value{
 ggplot2 object with swne plot
