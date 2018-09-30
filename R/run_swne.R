@@ -45,8 +45,15 @@ RunSWNE.seurat <- function(object, dist.metric = "euclidean", n.cores = 3, k, va
   k <- max(k, 3)
   nmf.res <- RunNMF(object_norm[var_genes,], k = k, alpha = 0, init = "ica", n.cores = n.cores, loss = loss)
   nmf.scores <- nmf.res$H
-  # pc.scores <- t(GetCellEmbeddings(object, reduction.type = "pca", dims.use = 1:k))
-  # snn <- CalcSNN(pc.scores)
+  if(sum(dim(object@snn)) < 2){
+    object <- RunPCA(object)
+    object <- FindClusters(object = object, reduction.type = "pca", dims.use = 1:10,
+                           resolution = 0.6, print.output = 0, save.SNN = TRUE)
+    if(sum(dim(object@snn)) < 2){
+      pc.scores <- t(GetCellEmbeddings(object, reduction.type = "pca", dims.use = 1:k))
+      object@snn <- CalcSNN(pc.scores)
+    }
+  }
   snn <- object@snn
   #correct for aggregrated cell barcodes
   colnames(nmf.scores) <- colnames(snn)
