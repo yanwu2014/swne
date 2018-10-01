@@ -361,6 +361,12 @@ PlotSWNE <- function(swne.embedding, alpha.plot = 0.25, sample.groups = NULL, do
   set.seed(seed)
   if (!is.null(sample.groups)) {
     sample.groups <- factor(sample.groups[rownames(sample.coords)])
+    if (sum(is.na(sample.groups)) > 0) {
+      sample.groups <- as.character(sample.groups)
+      sample.groups[is.na(sample.groups)] <- "NA"
+      sample.groups <- factor(sample.groups)
+      names(sample.groups) <- rownames(sample.coords)
+    }
     sample.groups <- factor(sample.groups, levels = sample(levels(sample.groups)))
     sample.coords$sample.groups <- sample.groups[rownames(sample.coords)]
   } else {
@@ -410,6 +416,7 @@ PlotSWNE <- function(swne.embedding, alpha.plot = 0.25, sample.groups = NULL, do
 
     group.pts <- data.frame(x = group.pts.x, y = group.pts.y, name = levels(sample.coords$sample.groups))
     label.pts <- rbind(H.coords.plot, group.pts, feature.coords)
+    label.pts <- subset(label.pts, name != "NA")
 
     ggobj <- ggobj + ggrepel::geom_text_repel(data = label.pts, mapping = aes(x, y, label = name),
                                               size = label.size, box.padding = 0.15)
@@ -427,10 +434,14 @@ PlotSWNE <- function(swne.embedding, alpha.plot = 0.25, sample.groups = NULL, do
   }
 
   if (use.brewer.pal) {
-    ggobj <- ggobj + scale_color_manual(values = colorRampPalette(RColorBrewer::brewer.pal(12, "Paired"))(nlevels(sample.groups)))
+    brewer.colors <- colorRampPalette(RColorBrewer::brewer.pal(12, "Paired"))(nlevels(sample.groups))
+    names(brewer.colors) <- levels(sample.groups)
+    if ("NA" %in% levels(sample.groups)) brewer.colors[["NA"]] <- "#D3D3D3"
+    ggobj <- ggobj + scale_color_manual(values = brewer.colors)
   }
 
   if (!is.null(colors.use)) {
+    colors.use[["NA"]] <- "#D3D3D3"
     if(!all(levels(sample.groups) %in% names(colors.use))) {
       stop("Must specify colors for each group")
     }
@@ -547,6 +558,13 @@ PlotDims <- function(dim.scores, sample.groups = NULL, x.lab = "tsne1", y.lab = 
 
   set.seed(seed)
   if (!is.null(sample.groups)) {
+    sample.groups <- factor(sample.groups[rownames(dim.scores)])
+    if (sum(is.na(sample.groups)) > 0) {
+      sample.groups <- as.character(sample.groups)
+      sample.groups[is.na(sample.groups)] <- "NA"
+      sample.groups <- factor(sample.groups)
+      names(sample.groups) <- rownames(sample.coords)
+    }
     sample.groups <- factor(sample.groups, levels = sample(levels(sample.groups)))
   }
 
@@ -567,17 +585,25 @@ PlotDims <- function(dim.scores, sample.groups = NULL, x.lab = "tsne1", y.lab = 
     group.pts.y <- tapply(gg.df$y, gg.df$sample.groups, function(v) median(v))
     group.pts <- data.frame(x = group.pts.x, y = group.pts.y)
     group.pts$ident <- levels(gg.df$sample.groups)
+    group.pts <- subset(group.pts, ident != "NA")
 
     ggobj <- ggobj + ggrepel::geom_text_repel(data = group.pts, mapping = aes(label = ident), size = label.size,
                                               box.padding = 0.15)
   }
 
-  if (use.brewer.pal) {
-    ggobj <- ggobj + scale_color_manual(values = colorRampPalette(RColorBrewer::brewer.pal(12, "Paired"))(nlevels(sample.groups)))
+  if (!show.legend) {
+    ggobj <- ggobj + theme(legend.position = "none")
   }
 
-  if (!show.legend) { ggobj <- ggobj + theme(legend.position = "none") }
+  if (use.brewer.pal) {
+    brewer.colors <- colorRampPalette(RColorBrewer::brewer.pal(12, "Paired"))(nlevels(sample.groups))
+    names(brewer.colors) <- levels(sample.groups)
+    if ("NA" %in% levels(sample.groups)) brewer.colors[["NA"]] <- "#D3D3D3"
+    ggobj <- ggobj + scale_color_manual(values = brewer.colors)
+  }
+
   if (!is.null(colors.use)) {
+    colors.use[["NA"]] <- "#D3D3D3"
     if(!all(levels(sample.groups) %in% names(colors.use))) {
       stop("Must specify colors for each group")
     }
