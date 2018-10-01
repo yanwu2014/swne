@@ -563,7 +563,7 @@ PlotDims <- function(dim.scores, sample.groups = NULL, x.lab = "tsne1", y.lab = 
       sample.groups <- as.character(sample.groups)
       sample.groups[is.na(sample.groups)] <- "NA"
       sample.groups <- factor(sample.groups)
-      names(sample.groups) <- rownames(sample.coords)
+      names(sample.groups) <- rownames(dim.scores)
     }
     sample.groups <- factor(sample.groups, levels = sample(levels(sample.groups)))
   }
