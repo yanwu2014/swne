@@ -3,12 +3,17 @@
 \name{RunSWNE}
 \alias{RunSWNE}
 \alias{RunSWNE.seurat}
+\alias{RunSWNE.matrix}
 \alias{RunSWNE.default}
 \title{Wrapper for the running SWNE analysis functions}
 \usage{
 \method{RunSWNE}{seurat}(object, dist.metric = "euclidean",
   n.cores = 3, k, var.genes, loss = "mse", alpha.exp = 1.25,
   snn.exp = 1)
+
+\method{RunSWNE}{matrix}(data.matrix, dist.metric = "euclidean",
+  n.cores = 3, k, var.genes = rownames(data.matrix), loss = "mse",
+  alpha.exp = 1.25, snn.exp = 1, var.exp = 0.05)
 
 \method{RunSWNE}{default}(data.matrix, dist.metric = "euclidean",
   n.cores = 3, k, var.genes = rownames(data.matrix), loss = "mse",
@@ -30,6 +35,8 @@
 \item{snn.exp}{Decreasing snn.exp increases the effect of the similarity matrix on the embedding (passed to EmbedSWNE)}
 
 \item{data.matrix}{a data matrix (genes x cells) which has been pre-normalised}
+
+\item{var.exp}{Proportion of genes selected from most variable}
 
 \item{dist.use}{Similarity function to use for calculating factor positions (passed to EmbedSWNE). Options include pearson (correlation), IC (mutual information), cosine, euclidean.}
 }

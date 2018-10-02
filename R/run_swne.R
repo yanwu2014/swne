@@ -9,6 +9,7 @@
 #' @param loss loss function to use (passed to RunNMF)
 #' @param alpha.exp Increasing alpha.exp increases how much the NMF factors "pull" the samples (passed to EmbedSWNE)
 #' @param snn.exp Decreasing snn.exp increases the effect of the similarity matrix on the embedding (passed to EmbedSWNE)
+#' @param var.exp Proportion of genes selected from most variable
 #'
 #' @return A list of factor (H.coords) and sample coordinates (sample.coords) in 2D
 #'
@@ -45,8 +46,15 @@ RunSWNE.seurat <- function(object, dist.metric = "euclidean", n.cores = 3, k, va
   k <- max(k, 3)
   nmf.res <- RunNMF(object_norm[var_genes,], k = k, alpha = 0, init = "ica", n.cores = n.cores, loss = loss)
   nmf.scores <- nmf.res$H
-  # pc.scores <- t(GetCellEmbeddings(object, reduction.type = "pca", dims.use = 1:k))
-  # snn <- CalcSNN(pc.scores)
+  if(sum(dim(object@snn)) < 2){
+    object <- RunPCA(object)
+    object <- FindClusters(object = object, reduction.type = "pca", dims.use = 1:10,
+                           resolution = 0.6, print.output = 0, save.SNN = TRUE)
+    if(sum(dim(object@snn)) < 2){
+      pc.scores <- t(GetCellEmbeddings(object, reduction.type = "pca", dims.use = 1:k))
+      object@snn <- CalcSNN(pc.scores)
+    }
+  }
   snn <- object@snn
   #correct for aggregrated cell barcodes
   colnames(nmf.scores) <- colnames(snn)
@@ -55,6 +63,39 @@ RunSWNE.seurat <- function(object, dist.metric = "euclidean", n.cores = 3, k, va
   n_pull <- k # The number of factors pulling on each cell. Must be at least 3.
   swne_embedding <- EmbedSWNE(nmf.scores, snn, alpha.exp = alpha.exp, snn.exp = snn.exp,
                               n_pull = n_pull, dist.use = dist.metric)
+  return(swne_embedding)
+}
+
+#' @rdname RunSWNE
+#' @method RunSWNE matrix
+#' @export
+RunSWNE.matrix <- function(data.matrix, dist.metric = "euclidean", n.cores = 3, k, var.genes = rownames(data.matrix), loss = "mse",
+                            alpha.exp = 1.25, # Increase this > 1.0 to move the cells closer to the factors. Values > 2 start to distort the data.
+                            snn.exp = 1.0, # Lower this < 1.0 to move similar cells closer to each other
+                            var.exp = 0.05 # Increase this to include more genes
+){
+  object_norm <- data.matrix - min(data.matrix)
+  vars <- apply(data.matrix, 1, var)
+  var_genes <- rownames(object_norm)[vars >= quantile(vars, 1 - var.exp)]
+  print(paste(length(var_genes), "variable genes"))
+  if(missing(k)){
+    n.cores <- n.cores ## Number of cores to use
+    k.range <- seq(2,10,2) ## Range of factors to iterate over
+    k.res <- FindNumFactors(object_norm[var_genes,], k.range = k.range, n.cores = n.cores, do.plot = F, loss = loss)
+    print(paste(k.res$k, "factors"))
+    k <- k.res$k
+  }
+  if(k < 3) warning("k must be an integer of 3 or higher")
+  k <- max(k, 3)
+  nmf.res <- RunNMF(object_norm[var_genes,], k = k, alpha = 0, init = "ica", n.cores = n.cores, loss = loss)
+  nmf.scores <- nmf.res$H
+  pc.scores <- prcomp(data.matrix, center = TRUE, scale = TRUE)$rotation[,1:k]
+  snn <- CalcSNN(t(pc.scores), k = k)
+  #correct for aggregrated cell barcodes
+  colnames(nmf.scores) <- rownames(snn) <- colnames(snn)
+  n_pull <- k # The number of factors pulling on each cell. Must be at least 3.
+  swne_embedding <- EmbedSWNE(nmf.scores, snn, alpha.exp = alpha.exp, snn.exp = snn.exp,
+                              n_pull = k, dist.use = dist.metric)
   return(swne_embedding)
 }
 
