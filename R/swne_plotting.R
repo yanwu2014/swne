@@ -233,9 +233,10 @@ EmbedContours <- function(swne.embedding, contour.feature, sample.coords = NULL,
     sample.coords <- swne.embedding$sample.coords
   }
 
-  if (!all(rownames(sample.coords) == names(contour.feature))) {
+  if (!all(names(contour.feature) %in% rownames(sample.coords))) {
     stop("contour.feature must have same rownames as sample.coords")
   }
+  contour.feature <- contour.feature[rownames(sample.coords)]
 
   contour.data <- sample.coords
   if (is.factor(contour.feature)) {

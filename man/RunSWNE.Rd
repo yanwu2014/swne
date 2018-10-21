@@ -4,7 +4,6 @@
 \alias{RunSWNE}
 \alias{RunSWNE.seurat}
 \alias{RunSWNE.matrix}
-\alias{RunSWNE.default}
 \title{Wrapper for the running SWNE analysis functions}
 \usage{
 \method{RunSWNE}{seurat}(object, dist.metric = "euclidean",
@@ -14,10 +13,6 @@
 \method{RunSWNE}{matrix}(data.matrix, dist.metric = "euclidean",
   n.cores = 3, k, var.genes = rownames(data.matrix), loss = "mse",
   alpha.exp = 1.25, snn.exp = 1, var.exp = 0.05)
-
-\method{RunSWNE}{default}(data.matrix, dist.metric = "euclidean",
-  n.cores = 3, k, var.genes = rownames(data.matrix), loss = "mse",
-  alpha.exp = 1.25, snn.exp = 1)
 }
 \arguments{
 \item{object}{A seurat-class object (normalised)}
