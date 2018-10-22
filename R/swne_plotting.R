@@ -464,6 +464,8 @@ PlotSWNE <- function(swne.embedding, alpha.plot = 0.25, sample.groups = NULL, do
 #' @param label.size Label font size
 #' @param pt.size Sample point size
 #' @param color.palette RColorbrewer palette to use
+#' @param contour.geom Plot contour as either a line or a filled in region
+#' @param contour.alpha Transparency of the contour line/region
 #'
 #' @return ggplot2 object with swne plot with feature overlayed
 #'
@@ -472,7 +474,8 @@ PlotSWNE <- function(swne.embedding, alpha.plot = 0.25, sample.groups = NULL, do
 #'
 FeaturePlotSWNE <- function(swne.embedding, feature.scores, feature.name = NULL, alpha.plot = 0.5,
                             quantiles = c(0.01, 0.99), samples.plot = NULL, label.size = 4.5,
-                            pt.size = 1, color.palette = "YlOrRd") {
+                            pt.size = 1, color.palette = "YlOrRd", contour.geom = "path",
+                            contour.alpha = 0.25) {
   H.coords <- swne.embedding$H.coords
   H.coords.plot <- subset(H.coords, name != "")
   sample.coords <- swne.embedding$sample.coords
@@ -511,6 +514,16 @@ FeaturePlotSWNE <- function(swne.embedding, feature.scores, feature.name = NULL,
 
   if (!is.null(feature.coords)) {
     ggobj <- ggobj + geom_point(data = feature.coords, aes(x, y), size = 2.5, color = "darkred")
+  }
+
+  ## Plot confidence ellipse
+  if (!is.null(swne.embedding$contour.data)) {
+    if(!contour.geom %in% c("path", "polygon")) stop("contour.geom must be one of: 'path', 'polygon'")
+    ggobj <- ggobj +
+      stat_ellipse(mapping = aes(x, y), data = swne.embedding$contour.data,
+                   geom = contour.geom, position = "identity", type = "t", level = 0.95,
+                   na.rm = T, inherit.aes = F, linetype = 2, alpha = contour.alpha,
+                   colour = "darkred")
   }
 
   ## Plot factors

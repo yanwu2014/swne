@@ -6,7 +6,8 @@
 \usage{
 FeaturePlotSWNE(swne.embedding, feature.scores, feature.name = NULL,
   alpha.plot = 0.5, quantiles = c(0.01, 0.99), samples.plot = NULL,
-  label.size = 4.5, pt.size = 1, color.palette = "YlOrRd")
+  label.size = 4.5, pt.size = 1, color.palette = "YlOrRd",
+  contour.geom = "path", contour.alpha = 0.25)
 }
 \arguments{
 \item{swne.embedding}{SWNE embedding (list of NMF and sample coordinates) from EmbedSWNE}
@@ -24,6 +25,10 @@ FeaturePlotSWNE(swne.embedding, feature.scores, feature.name = NULL,
 \item{pt.size}{Sample point size}
 
 \item{color.palette}{RColorbrewer palette to use}
+
+\item{contour.geom}{Plot contour as either a line or a filled in region}
+
+\item{contour.alpha}{Transparency of the contour line/region}
 
 \item{feature.score}{Feature vector to overlay}
 }
