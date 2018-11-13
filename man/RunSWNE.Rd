@@ -3,41 +3,74 @@
 \name{RunSWNE}
 \alias{RunSWNE}
 \alias{RunSWNE.seurat}
+\alias{RunSWNE.Pagoda2}
+\alias{RunSWNE.dgCMatrix}
 \alias{RunSWNE.matrix}
-\title{Wrapper for the running SWNE analysis functions}
+\alias{RunSWNE.dgTMatrix}
+\title{Wrapper for running SWNE analysis}
 \usage{
-\method{RunSWNE}{seurat}(object, dist.metric = "euclidean",
-  n.cores = 3, k, var.genes, loss = "mse", alpha.exp = 1.25,
-  snn.exp = 1)
+\method{RunSWNE}{seurat}(object, proj.method = "umap",
+  dist.metric = "cosine", n.cores = 8, k, k.range, var.genes,
+  loss = "mse", genes.embed, hide.factors = T, n_pull = 3,
+  alpha.exp = 1.25, snn.exp = 1)
 
-\method{RunSWNE}{matrix}(data.matrix, dist.metric = "euclidean",
-  n.cores = 3, k, var.genes = rownames(data.matrix), loss = "mse",
-  alpha.exp = 1.25, snn.exp = 1, var.exp = 0.05)
+\method{RunSWNE}{Pagoda2}(object, proj.method = "umap",
+  dist.metric = "cosine", n.cores = 8, k, k.range, var.genes,
+  loss = "mse", genes.embed, hide.factors = T, n_pull = 3,
+  n.var.genes = 3000, alpha.exp = 1.25, snn.exp = 1)
+
+\method{RunSWNE}{dgCMatrix}(data.matrix, proj.method = "umap",
+  dist.metric = "cosine", n.cores = 3, k, k.range,
+  var.genes = rownames(data.matrix), loss = "mse", genes.embed,
+  hide.factors = T, n_pull = 3, alpha.exp = 1.25, snn.exp = 1)
+
+\method{RunSWNE}{matrix}(data.matrix, proj.method = "umap",
+  dist.metric = "cosine", n.cores = 3, k, k.range,
+  var.genes = rownames(data.matrix), loss = "mse", genes.embed,
+  hide.factors = T, n_pull = 3, alpha.exp = 1.25, snn.exp = 1)
+
+\method{RunSWNE}{dgTMatrix}(data.matrix, proj.method = "umap",
+  dist.metric = "cosine", n.cores = 3, k, k.range,
+  var.genes = rownames(data.matrix), loss = "mse", genes.embed,
+  hide.factors = T, n_pull = 3, alpha.exp = 1.25, snn.exp = 1)
 }
 \arguments{
-\item{object}{A seurat-class object (normalised)}
+\item{object}{A Seurat or Pagoda2 object with normalized data}
+
+\item{proj.method}{Method to use to project factors in 2D. Either "sammon" or "umap"}
 
 \item{n.cores}{Number of cores to use (passed to FindNumFactors)}
 
 \item{k}{Number of NMF factors (passed to RunNMF). If none given, will be derived from FindNumFactors.}
 
-\item{var.genes}{vector to specify variable genes. Will infer from Suerat or use full dataset if not given.}
+\item{k.range}{Range of factors for FindNumFactors to iterate over if k is not given}
+
+\item{var.genes}{vector to specify variable genes. Will infer from Seurat or use full dataset if not given.}
 
 \item{loss}{loss function to use (passed to RunNMF)}
+
+\item{genes.embed}{Genes to add to the SWNE embedding}
+
+\item{hide.factors}{Hide factors when plotting SWNE embedding}
+
+\item{n_pull}{Maximum number of factors "pulling" on each sample}
 
 \item{alpha.exp}{Increasing alpha.exp increases how much the NMF factors "pull" the samples (passed to EmbedSWNE)}
 
 \item{snn.exp}{Decreasing snn.exp increases the effect of the similarity matrix on the embedding (passed to EmbedSWNE)}
 
-\item{data.matrix}{a data matrix (genes x cells) which has been pre-normalised}
+\item{n.var.genes}{Number of variable genes to use}
 
-\item{var.exp}{Proportion of genes selected from most variable}
+\item{data.matrix}{a data matrix (genes x cells) which has been pre-normalized}
 
-\item{dist.use}{Similarity function to use for calculating factor positions (passed to EmbedSWNE). Options include pearson (correlation), IC (mutual information), cosine, euclidean.}
+\item{batch}{Vector of batch effects to correct for}
+
+\item{dist.use}{Similarity function to use for calculating factor positions (passed to EmbedSWNE).
+Options include pearson (correlation), IC (mutual information), cosine, euclidean.}
 }
 \value{
 A list of factor (H.coords) and sample coordinates (sample.coords) in 2D
 }
 \description{
-Wrapper for the running SWNE analysis functions
+Wrapper for running SWNE analysis
 }

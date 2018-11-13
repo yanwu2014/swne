@@ -51,10 +51,11 @@ nnsvd_init <- function(A, k, LINPACK) {
 #' Negative values are set to a small, random number.
 #'
 #' @importFrom ica icafast
+#' @importFrom irlba irlba
 #'
 ica_init <- function(A, k, ica.fast = F) {
   if (ica.fast) {
-    pc.res.h <- irlba::irlba(t(A), nv = 100, maxit = 250, center = T)
+    pc.res.h <- irlba::irlba(t(A), nv = 50, maxit = 100, center = rowMeans(A))
     ica.res.h <- ica::icafast(pc.res.h$u, nc = k, maxit = 25, tol = 1e-4)
     return(list(W = (A - Matrix::rowMeans(A)) %*% ica.res.h$S,
                 H = t(ica.res.h$S)))
@@ -63,6 +64,7 @@ ica_init <- function(A, k, ica.fast = F) {
     return(list(W = ica.res$M, H = t(ica.res$S)))
   }
 }
+
 
 
 #' KL divergence. Pseudocounts added to avoid NAs
@@ -83,7 +85,6 @@ kl_div <- function(x, y, pseudocount = 1e-12) {
 #' @param n.cores Number of cores
 #' @param loss Type of loss function to use
 #' @param n.rand.init If random initialization is used, number of random restarts
-#' @param init.zeros What to do with zeros in the initialization
 #' @param max.iter Maximum number of iterations
 #' @param ica.fast If using default ICA initialization, run PCA first to speed up ICA
 #'
@@ -93,16 +94,12 @@ kl_div <- function(x, y, pseudocount = 1e-12) {
 #' @export
 #'
 RunNMF <- function(A, k, alpha = 0, init = "ica", n.cores = 1, loss = "mse",
-                   init.zeros = "random", max.iter = 500, ica.fast = F) {
+                   max.iter = 500, ica.fast = F) {
   if (any(A < 0)) stop('The input matrix contains negative elements !')
   if (k < 3) stop("k must be greater than or equal to 3 to create a viable SWNE plot")
 
   if (!init %in% c("ica", "nnsvd", "random")) {
     stop("Invalid initialization method")
-  }
-
-  if (!init.zeros %in% c("random", "uniform")) {
-    stop("init.zeros should be either 'random', or 'uniform'")
   }
 
   A <- as.matrix(A)
@@ -117,11 +114,6 @@ RunNMF <- function(A, k, alpha = 0, init = "ica", n.cores = 1, loss = "mse",
   }
 
   if(is.null(nmf.init)) {
-    # nmf.res.list <- lapply(1:n.rand.init, function(i) nnmf(A, k = k, alpha = alpha, init = nmf.init,
-    #                                                        n.threads = n.cores, loss = loss,
-    #                                                        max.iter = max.iter, verbose = F))
-    # err <- sapply(nmf.res.list, function(x) tail(x[[loss]], n = 1))
-    # nmf.res <- nmf.res.list[[which.min(err)]]
     nmf.res <- NNLM::nnmf(A, k = k, alpha = alpha, n.threads = n.cores, loss = loss, max.iter = max.iter)
 
   } else {
@@ -131,14 +123,9 @@ RunNMF <- function(A, k, alpha = 0, init = "ica", n.cores = 1, loss = "mse",
 
     nmf.init$W[nmf.init$W < zero.eps] <- 0; nmf.init$H[nmf.init$H < zero.eps] <- 0;
     zero.idx.w <- which(nmf.init$W == 0); zero.idx.h <- which(nmf.init$H == 0);
+    nmf.init$W[zero.idx.w] <- runif(length(zero.idx.w), 0, A.mean/100)
+    nmf.init$H[zero.idx.h] <- runif(length(zero.idx.h), 0, A.mean/100)
 
-    if (init.zeros == "random") {
-      nmf.init$W[zero.idx.w] <- runif(length(zero.idx.w), 0, A.mean/100)
-      nmf.init$H[zero.idx.h] <- runif(length(zero.idx.h), 0, A.mean/100)
-    } else if (init.zeros == "uniform") {
-      nmf.init$W[zero.idx.w] <- A.mean/100
-      nmf.init$H[zero.idx.h] <- A.mean/100
-    }
     nmf.res <- NNLM::nnmf(A, k = k, alpha = alpha, init = nmf.init, n.threads = n.cores, loss = loss, max.iter = max.iter)
   }
 
@@ -170,7 +157,7 @@ RunNMF <- function(A, k, alpha = 0, init = "ica", n.cores = 1, loss = "mse",
 FindNumFactors <- function(A, k.range = seq(2,12,2), n.cores = 1, do.plot = T,
                            seed = NULL, loss = "mse", max.iter = 250) {
   if (!loss %in% c("mse", "mkl")) { stop("Invalid loss function") }
-  if (ncol(A) > 15000) print("Warning: This function can be slow for very large datasets")
+  if (ncol(A) > 20000) print("Warning: This function can be slow for very large datasets")
   if (!is.null(seed)) { set.seed(seed) }
   if (length(k.range) < 3) { stop("k.range sequence must have at least 3 values") }
 

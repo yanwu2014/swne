@@ -28,8 +28,9 @@ normalize_vector <- function(x, method = "scale", n_ranks = 10000) {
 #' @importFrom usedist dist_make
 #' @importFrom proxy simil
 #' @importFrom proxy dist
+#' @import umap
 #'
-get_factor_coords <- function(H, method = "sammon", pca.red = F, distance = "cosine") {
+get_factor_coords <- function(H, method, pca.red, distance) {
   H <- t(H)
   distance <- tolower(distance)
   if(distance == "cor" || distance == "correlation") distance <- "pearson"
@@ -50,11 +51,21 @@ get_factor_coords <- function(H, method = "sammon", pca.red = F, distance = "cos
       H.dist <- sqrt(2*(1 - as.matrix(usedist::dist_make(t(H), distance_fcn = MutualInf, method = "IC"))))
     } else if (distance == "cosine") {
       H.dist <- sqrt(2*(1 - proxy::simil(H, method = "cosine", by_rows = F)))
-    } else {
+    } else if (distance == "euclidean") {
       H.dist <- proxy::dist(H, method = "Euclidean", by_rows = F)
     }
-
     H.coords <- MASS::sammon(H.dist, k = 2, niter = 250)$points
+
+  } else if (method == "umap") {
+    umap.cfg <- umap::umap.defaults; umap.cfg$n_neighbors <- 5; umap.cfg$min_dist <- 0.5; umap.cfg$random_state <- 42;
+    if (distance == "IC") {
+      stop("IC not supported for umap projection")
+    } else {
+      umap.cfg$metric <- distance
+    }
+
+    H.umap <- umap::umap(t(H), config = umap.cfg, method = "naive")
+    H.coords <- H.umap$layout
   } else {
     stop("Invalid factor projection method")
   }
@@ -69,7 +80,7 @@ get_factor_coords <- function(H, method = "sammon", pca.red = F, distance = "cos
 #' Calculate sample coordinates using the NMF scores and NMF factor coordinates
 #'
 #' @import compiler
-get_sample_coords <- function(H, H.coords, alpha = 1, n_pull = NULL) {
+get_sample_coords <- function(H, H.coords, alpha, n_pull) {
   if (n_pull < 3) { n_pull <- 3 }
   if (is.null(n_pull) || n_pull > nrow(H.coords)) { n_pull <- nrow(H.coords) }
 
@@ -103,7 +114,7 @@ get_sample_coords <- function(H, H.coords, alpha = 1, n_pull = NULL) {
 #'
 #' @export
 #'
-EmbedSWNE <- function(H, SNN = NULL, alpha.exp = 1, snn.exp = 1.0, n_pull = NULL, proj.method = "sammon",
+EmbedSWNE <- function(H, SNN = NULL, alpha.exp = 1, snn.exp = 1.0, n_pull = NULL, proj.method = "umap",
                       pca.red = F, dist.use = "cosine", snn.factor.proj = T, min.snn = 0.0) {
   if (!is.null(SNN) && (colnames(H) != rownames(SNN) || colnames(H) != colnames(SNN))) {
     stop("Column names of H must match row and column names of the SNN matrix")

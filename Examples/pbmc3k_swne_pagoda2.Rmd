@@ -27,53 +27,62 @@ p2 <- readRDS("/media/Home_Raid1/yan/swne/Data/pbmc3k_pagoda2.Robj")
 ```
 
 
-Pull out the counts, log-scale and adjust the variance of each gene
-```{r}
-norm.counts <- ExtractNormCounts(p2, obj.type = "pagoda2", rescale = T, rescale.method = "log", batch = NULL)
-dim(norm.counts)
-```
-
-
 Most scRNA-seq pipelines only use a subset of highly overdispersed genes for analysis. We'll pull out those variable genes here, as well as the cluster labels.
 ```{r}
 ## Pull out variable genes
-n.od.genes <- 3e3
+n.od.genes <- 1.5e3
 var.info <- p2$misc$varinfo; var.info <- var.info[order(var.info$lp, decreasing = F),];
 od.genes <- rownames(var.info[1:n.od.genes,])
 length(od.genes)
 
 ## Pull out clusters
-clusters <- p2$clusters$PCA$multilevel; clusters <- clusters[colnames(norm.counts)]
+clusters <- p2$clusters$PCA$multilevel
 levels(clusters)
 ```
 
 
-Set some key parameters. The loss function defines what type of error metric the NMF algorithm will use. We typically use the mean squared error (mse). Another metric is the mean KL divergence (mkl). Also defines the number of cores to use.
+The easiest way to generate an SWNE embedding is to use the wrapper function `RunSWNE`
 ```{r}
-loss <- "mse" ## Loss function
-n.cores <- p2$n.cores ## Number of cores to use
+## Run SWNE
+genes.embed <- c("MS4A1", "GNLY", "CD3E", "CD14",
+                 "FCER1A", "FCGR3A", "LYZ", "PPBP", "CD8A")
+swne.embedding <- RunSWNE(p2, k = 14, var.genes = od.genes, genes.embed = genes.embed)
+
+## Plot SWNE
+PlotSWNE(swne.embedding, alpha.plot = 0.4, sample.groups = clusters,
+         do.label = T, label.size = 3.5, pt.size = 1.5, show.legend = F,
+         seed = 42)
+```
+
+Now we'll go through the SWNE embedding process step by step
+
+First, let's pull out the counts, and log-scale and adjust the variance of each gene
+```{r}
+norm.counts <- ExtractNormCounts(p2, obj.type = "pagoda2", rescale = T, rescale.method = "log")
+dim(norm.counts)
 ```
 
 
 We use the `FindNumFactors` function to identify the optimal number of factors to use. This function can be slow for large datasets, since it iterates over different values of `k`, so a simple "hack" is to just set `k` equal to the number of significant principal components.
 ```{r}
 k.range <- seq(2,16,2) ## Range of factors to iterate over
-k.err <- FindNumFactors(norm.counts[od.genes,], k.range = k.range, n.cores = n.cores, do.plot = T, loss = loss)
+k.err <- FindNumFactors(norm.counts[od.genes,], k.range = k.range, n.cores = 8, do.plot = T)
 ```
 
 
-We then run the NMF decomposition. We can initialize the NMF using either Independent Component Analysis (ica), Nonnegative SVD (nnsvd), or a completely random initialization. The output of `RunNMF` is a list of the gene loadings (W) and NMF embedding (H).
+We then run the NMF decomposition. We can initialize the NMF using either Independent Component Analysis (ica), Nonnegative SVD (nnsvd), or a completely random initialization. ICA is the best option for most datasets. The output of `RunNMF` is a list of the gene loadings (W) and NMF embedding (H).
 ```{r}
-k <- 10
-nmf.res <- RunNMF(norm.counts[od.genes,], k = k, alpha = 0, init = "ica", n.cores = n.cores, loss = loss)
+k <- 14
+nmf.res <- RunNMF(norm.counts[od.genes,], k = k, init = "ica", n.cores = 8)
 nmf.scores <- nmf.res$H
 ```
 
 
 Compute the SNN matrix from the PCA embedding
 ```{r results=FALSE,message=FALSE,warning=FALSE}
+p2$calculatePcaReduction(nPcs = 20, odgenes = od.genes)
 pc.scores <- t(p2$reductions$PCA)
-snn <- CalcSNN(pc.scores, k = 30, k.scale = 10, prune.SNN = 1/15)
+snn <- CalcSNN(pc.scores, k = 20, prune.SNN = 1/20)
 ```
 
 
@@ -81,18 +90,11 @@ Runs the SWNE embedding. The three key parameters are `alpha.exp`, `snn.exp`, an
 ```{r message=FALSE,warning=FALSE}
 alpha.exp <- 1.25 # Increase this > 1.0 to move the cells closer to the factors. Values > 2 start to distort the data.
 snn.exp <- 1.0 # Lower this < 1.0 to move similar cells closer to each other
-n_pull <- 4 # The number of factors pulling on each cell. Must be at least 3.
+n_pull <- 3 # The number of factors pulling on each cell. Must be at least 3.
 swne.embedding <- EmbedSWNE(nmf.scores, snn, alpha.exp = alpha.exp, snn.exp = snn.exp,
-                            n_pull = n_pull, proj.method = "sammon", dist.use = "cosine")
+                            n_pull = n_pull, proj.method = "umap", dist.use = "cosine")
 ```
 
-
-We can make a "raw" SWNE plot with all the factors displayed. We set a seed for reproducible cluster colors, so that every plot will use the same colors to label the clusters.
-```{r fig.width=6,fig.height=5}
-color.seed <- 32566 ## Set seed for cluster colors
-PlotSWNE(swne.embedding, alpha.plot = 0.4, sample.groups = clusters, do.label = T,
-         label.size = 3.5, pt.size = 1.25, show.legend = T, seed = color.seed)
-```
 
 For now, let's hide the factors by setting their names to the empty string `""`. We'll interpret them later
 ```{r}
@@ -109,20 +111,20 @@ genes.embed <- c("MS4A1", "GNLY", "CD3E", "CD14",
 
 Since we only ran NMF on the overdispersed genes, we need to project the rest of the genes onto the NMF projection to get gene loadings for all genes.
 ```{r}
-nmf.res$W <- ProjectFeatures(norm.counts, nmf.scores, loss = loss, n.cores = n.cores)
+nmf.res$W <- ProjectFeatures(norm.counts, nmf.scores, n.cores = 8)
 ```
 
 
 Now we can embed the key PBMC genes onto the visualization and remake the plot
 ```{r}
-swne.embedding <- EmbedFeatures(swne.embedding, nmf.res$W, genes.embed, n_pull = 4)
+swne.embedding <- EmbedFeatures(swne.embedding, nmf.res$W, genes.embed, n_pull = 3)
 ```
 
 
-Let's make the SWNE plot with the key genes embedded. The closer a cell or a cluster is to a gene, the higher the expression level.
+Let's make the SWNE plot with the key genes embedded. The closer a cell or a cluster is to a gene, the higher the expression level. We set a seed for reproducible cluster colors, so that every plot will use the same colors to label the clusters.
 ```{r fig.width=5,fig.height=5}
 PlotSWNE(swne.embedding, alpha.plot = 0.4, sample.groups = clusters, do.label = T,
-         label.size = 3.5, pt.size = 1.25, show.legend = F, seed = color.seed)
+         label.size = 3.5, pt.size = 1.5, show.legend = F, seed = 42)
 ```
 
 
@@ -138,7 +140,7 @@ We can also make a t-SNE plot for comparison.
 ```{r fig.width=5,fig.height=5}
 tsne.scores <- p2$embeddings$PCA$tSNE
 PlotDims(tsne.scores, sample.groups = clusters, pt.size = 0.75, label.size = 3.5, alpha = 0.3,
-         show.legend = F, seed = color.seed, show.axes = F)
+         show.legend = F, seed = 42, show.axes = F)
 ```
 
 
@@ -158,6 +160,6 @@ ggHeat(gene.loadings.heat, clustering = "col")
 
 Extract cluster colors for compatibility with other plotting methods (i.e. Monocle)
 ```{r}
-color.mapping <- ExtractSWNEColors(swne.embedding, sample.groups = clusters, seed = color.seed)
+color.mapping <- ExtractSWNEColors(swne.embedding, sample.groups = clusters, seed = 42)
 color.mapping
 ```

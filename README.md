@@ -9,13 +9,41 @@ of the data.
 You can find our bioRxiv preprint [here](https://www.biorxiv.org/content/early/2018/06/22/276261).
 
 ## Installation
-
 Run the following code to install the package using devtools:
 
-    if(!require(devtools)){
-      install.packages("devtools") # If not already installed
-    }
-    devtools::install_github("yanwu2014/swne")
+```
+if(!require(devtools)){
+install.packages("devtools") # If not already installed
+}
+devtools::install_github("yanwu2014/swne")
+```
+
+## Quickstart
+Download the example [Seurat object](https://bit.ly/2B3Q3LN)
+
+```
+## Load data
+obj <- readRDS("pbmc3k_seurat.Robj")
+
+## Get clusters
+clusters <- obj@ident; names(clusters) <- obj@cell.names;
+
+## Build SNN
+obj <- BuildSNN(obj, dims.use = 1:20, k.param = 20, prune.SNN = 1/20)
+
+## Run SWNE
+genes.embed <- c("MS4A1", "GNLY", "CD3E", "CD14",
+                 "FCER1A", "FCGR3A", "LYZ", "PPBP", "CD8A")
+swne.embedding <- RunSWNE(obj, k = 10, genes.embed = genes.embed)
+
+## Plot SWNE
+PlotSWNE(swne.embedding, alpha.plot = 0.4, sample.groups = clusters,
+         do.label = T, label.size = 3.5, pt.size = 1.5, show.legend = F,
+         seed = 42)
+```
+
+![](Examples/seurat_quickstart_swne.png?raw=True "SWNE plot of 3k PBMCs")
+
 
 ## Walkthroughs and examples
 Since SWNE is primarily meant for visualization and interpretation of the data, we typically use either [Seurat](http://satijalab.org/seurat/) or [Pagoda2](https://github.com/hms-dbmi/pagoda2) as a primary scRNA-seq pipeline. All the R markdown files used to generate the walkthroughs can be found under the Examples/ directory.
@@ -25,6 +53,7 @@ Since SWNE is primarily meant for visualization and interpretation of the data, 
 3. A [walkthrough](https://yanwu2014.github.io/swne/Examples/multiple_pancreas_alignment_swne.html) using SWNE to visualize four pancreas datasets that have undergone batch alignment with Seurat's [manifold alignment](https://www.nature.com/articles/nbt.4096). The script used to generate the object can be found [here](https://yanwu2014.github.io/swne/Examples/multiple_pancreas_workflow.R) and the raw datasets can be found [here](http://bit.ly/IAexpmat).
 4. A [walkthrough](https://yanwu2014.github.io/swne/Examples/cortical_neuron_projection.html) using SWNE to project new data onto an existing SWNE embedding. In this case, we're projecting a neuronal dataset generated using the C1 system onto a neuronal dataset generated using snDropSeq.
 5. A [walkthrough](https://yanwu2014.github.io/swne/Examples/dentate_gyrus_swne_velocyto.html) integrating [RNA velocity](https://www.biorxiv.org/content/early/2017/10/19/206052) with SWNE for a developmental mouse dentate gyrus dataset.
+
 
 ## Recreating Figures
 To recreate the figures from our preprint, see the Scripts/ directory. 

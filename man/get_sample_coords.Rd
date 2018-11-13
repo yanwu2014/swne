@@ -4,7 +4,7 @@
 \alias{get_sample_coords}
 \title{Calculate sample coordinates using the NMF scores and NMF factor coordinates}
 \usage{
-get_sample_coords(H, H.coords, alpha = 1, n_pull = NULL)
+get_sample_coords(H, H.coords, alpha, n_pull)
 }
 \description{
 Calculate sample coordinates using the NMF scores and NMF factor coordinates

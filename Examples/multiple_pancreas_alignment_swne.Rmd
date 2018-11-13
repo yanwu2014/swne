@@ -35,22 +35,20 @@ cca.aligned.expr <- ExtractDebatchedSeurat(se.obj)
 
 Once we have the "reconstructed matrix", we can run NMF and embed the components
 ```{r message=FALSE,warning=FALSE}
-k <- 14
-loss <- "mse"
-n.cores <- 16
+k <- 20
+n.cores <- 8
 
-nmf.res <- RunNMF(cca.aligned.expr, k = k, alpha = 0, init = "ica", n.cores = n.cores,
-                  loss = loss, init.zeros = "random")
+nmf.res <- RunNMF(cca.aligned.expr, k = k, alpha = 0, init = "ica", n.cores = n.cores)
 
-swne.embedding <- EmbedSWNE(nmf.res$H, se.obj@snn, alpha.exp = 2, snn.exp = 0.1, 
-                            n_pull = 4, dist.use = "IC", min.snn = 0.0)
+swne.embedding <- EmbedSWNE(nmf.res$H, se.obj@snn, alpha.exp = 1.5, snn.exp = 1, 
+                            n_pull = 3, proj.method = "umap", dist.use = "cosine")
 ```
 
 
 We project the full gene expression matrix to get gene loadings for the full set of genes
 ```{r message=FALSE,warning=FALSE}
 norm.counts <- ExtractNormCounts(se.obj, rescale = T, rescale.method = "log", batch = NULL)
-nmf.res$W <- ProjectFeatures(norm.counts, nmf.res$H, loss = loss, n.cores = n.cores)
+nmf.res$W <- ProjectFeatures(norm.counts, nmf.res$H, n.cores = n.cores)
 ```
 
 
@@ -59,7 +57,7 @@ We use these gene loadings to identify key genes to embed, and we hide all the f
 gene.factor.df <- SummarizeAssocFeatures(nmf.res$W, features.return = 1)
 genes.embed <- unique(gene.factor.df$feature)
 
-swne.embedding <- EmbedFeatures(swne.embedding, nmf.res$W, genes.embed, n_pull = 4)
+swne.embedding <- EmbedFeatures(swne.embedding, nmf.res$W, genes.embed, n_pull = 3)
 swne.embedding$H.coords$name <- ""
 ```
 
@@ -74,19 +72,19 @@ batch <- factor(se.obj@meta.data$tech); names(batch) <- se.obj@cell.names
 We can then create the SWNE plot
 ```{r}
 PlotSWNE(swne.embedding, alpha.plot = 0.4, sample.groups = clusters, do.label = T, 
-         label.size = 3.5, pt.size = 1.25, show.legend = F, seed = 3252354)
+         label.size = 3.5, pt.size = 1.25, show.legend = F, seed = 42)
 ```
 
 
 We also can show that there are no batch effects
 ```{r}
 PlotSWNE(swne.embedding, alpha.plot = 0.4, sample.groups = batch, do.label = F, 
-         label.size = 3.5, pt.size = 1.25, show.legend = T, seed = 3252354)
+         label.size = 3.5, pt.size = 0.5, show.legend = T, seed = 42)
 ```
 
 
 t-SNE plot for comparison
 ```{r}
 tsne.emb <- GetCellEmbeddings(se.obj, "tsne")
-PlotDims(tsne.emb, sample.groups = clusters, show.legend = F, seed = 3252354)
+PlotDims(tsne.emb, sample.groups = clusters, show.legend = F, seed = 42)
 ```

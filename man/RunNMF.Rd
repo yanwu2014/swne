@@ -5,7 +5,7 @@
 \title{Runs NMF decomposition on a data matrix: A = WH.}
 \usage{
 RunNMF(A, k, alpha = 0, init = "ica", n.cores = 1, loss = "mse",
-  init.zeros = "random", max.iter = 500, ica.fast = F)
+  max.iter = 500, ica.fast = F)
 }
 \arguments{
 \item{A}{Input data matrix}
@@ -19,8 +19,6 @@ RunNMF(A, k, alpha = 0, init = "ica", n.cores = 1, loss = "mse",
 \item{n.cores}{Number of cores}
 
 \item{loss}{Type of loss function to use}
-
-\item{init.zeros}{What to do with zeros in the initialization}
 
 \item{max.iter}{Maximum number of iterations}
 

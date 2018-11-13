@@ -9,7 +9,7 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-This is a quick walkthrough demonstrating how to project new scRNA-seq data onto an existing SWNE embedding. We'll be using a human cortical neuron dataset generated using the snDropSeq technology as our training dataset. The pre-computed snDropSeq Seurat object can be found [here](ftp://genome-miner.ucsd.edu/swne_files/snDropSeq_cortical_neurons.Robj). We'll be projecting data generated using a much older technology, the C1 microfluidic platform. The C1 data contains the same cortical neuron cell types, but from a different patient (and obviously a different scRNA-seq technology). The pre-computed C1 Seurat object can be found [here](ftp://genome-miner.ucsd.edu/swne_files/C1_cortical_neurons.Robj) 
+This is a quick walkthrough demonstrating how to project new scRNA-seq data onto an existing SWNE embedding. We'll be using a human cortical neuron dataset generated using the snDropSeq technology as our training dataset. The pre-computed snDropSeq Seurat object can be found [here](ftp://genome-miner.ucsd.edu/swne_files/snDropSeq_cortical_neurons.Robj). We'll be projecting data generated using a much older technology, the C1 microfluidic platform. The C1 data contains the same cortical neuron cell types, but from a different patient (and a different scRNA-seq technology). The pre-computed C1 Seurat object can be found [here](ftp://genome-miner.ucsd.edu/swne_files/C1_cortical_neurons.Robj) 
 
 
 Load the required libraries
@@ -33,27 +33,27 @@ train.clusters <- train.obj@ident
 names(train.clusters) <- train.obj@cell.names
 ```
 
-Find the optimal number of factors
-```{r}
-k.range <- seq(2,20,2)
-n.cores <- 24
 
-k.err <- FindNumFactors(train.norm.counts[var.genes,], k.range = k.range, n.cores = n.cores, do.plot = T,
-                        seed = 223464)
-```
-
-Run NMF using the optimal number of factors and project features
+Run NMF and project features
 ```{r message=FALSE,warning=FALSE}
-k <- 16
+n.cores <- 12
+k <- 20
+
 train.nmf.res <- RunNMF(train.norm.counts[var.genes,], k = k, init = "ica", n.cores = n.cores, ica.fast = T)
 train.nmf.res$W <- ProjectFeatures(train.norm.counts, train.nmf.res$H, n.cores = n.cores)
 train.nmf.scores <- train.nmf.res$H
 ```
 
+Build the Shared Nearest Neighbors network (SNN)
+```{r message=FALSE,warning=FALSE}
+train.obj <- BuildSNN(train.obj, dims.use = 1:20, k.param = 20, prune.SNN = 1/20) 
+```
+
+
 Run SWNE embedding and hide the factors
 ```{r message=FALSE,warning=FALSE}
-train.embedding <- EmbedSWNE(train.nmf.scores, train.obj@snn, alpha.exp = 1.25, snn.exp = 0.25, 
-                             n_pull = 3, dist.use = "cosine")
+train.embedding <- EmbedSWNE(train.nmf.scores, train.obj@snn, alpha.exp = 1.25, snn.exp = 1, 
+                             n_pull = 3, proj.method = "umap", dist.use = "cosine")
 train.embedding$H.coords$name <- "" ## Hide factors
 ```
 
