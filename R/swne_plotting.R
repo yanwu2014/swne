@@ -30,7 +30,7 @@ normalize_vector <- function(x, method = "scale", n_ranks = 10000) {
 #' @importFrom proxy dist
 #' @import umap
 #'
-get_factor_coords <- function(H, method, pca.red, distance) {
+get_factor_coords <- function(H, method, pca.red, distance, n.neighbors, min.dist = 0.3) {
   H <- t(H)
   distance <- tolower(distance)
   if(distance == "cor" || distance == "correlation") distance <- "pearson"
@@ -57,7 +57,8 @@ get_factor_coords <- function(H, method, pca.red, distance) {
     H.coords <- MASS::sammon(H.dist, k = 2, niter = 250)$points
 
   } else if (method == "umap") {
-    umap.cfg <- umap::umap.defaults; umap.cfg$n_neighbors <- 5; umap.cfg$min_dist <- 0.5; umap.cfg$random_state <- 42;
+    umap.cfg <- umap::umap.defaults; umap.cfg$n_neighbors <- n.neighbors;
+    umap.cfg$min_dist <- min.dist; umap.cfg$random_state <- 42;
     if (distance == "IC") {
       stop("IC not supported for umap projection")
     } else {
@@ -108,32 +109,39 @@ get_sample_coords <- function(H, H.coords, alpha, n_pull) {
 #' @param proj.method Method to use for projecting factors. Currently only supports "sammon"
 #' @param pca.red Whether or not to run PCA on transposed H matrix before calculating factor distances
 #' @param dist.use Similarity function to use for calculating factor positions. Options include pearson (correlation), IC (mutual information), cosine, euclidean.
-#' @param min.snn Minimum SNN value
+#' @param n.neighbors Number of neighbors for UMAP factor projection
 #'
 #' @return A list of factor (H.coords) and sample coordinates (sample.coords) in 2D
 #'
 #' @export
 #'
-EmbedSWNE <- function(H, SNN = NULL, alpha.exp = 1, snn.exp = 1.0, n_pull = NULL, proj.method = "umap",
-                      pca.red = F, dist.use = "cosine", snn.factor.proj = T, min.snn = 0.0) {
+EmbedSWNE <- function(H, SNN = NULL, alpha.exp = 1, snn.exp = 1.0, n_pull = NULL,
+                      proj.method = "umap", pca.red = F, dist.use = "cosine",
+                      snn.factor.proj = T, n.neighbors = max(round(nrow(H)/3),4)) {
   if (!is.null(SNN) && (colnames(H) != rownames(SNN) || colnames(H) != colnames(SNN))) {
     stop("Column names of H must match row and column names of the SNN matrix")
+  }
+
+  if (nrow(H) < 4 && proj.method == "umap") {
+    warning("Need at least 4 factors to use UMAP projection, defaulting to Sammon mapping")
+    proj.method = "sammon"
   }
 
   H <- H[ ,colSums(H) > 0]
 
   if (!is.null(SNN)) {
     SNN <- SNN[colnames(H), colnames(H)]
-    SNN@x[SNN@x < min.snn] <- 0
     SNN@x <- SNN@x^snn.exp
     SNN <- SNN/Matrix::rowSums(SNN)
   }
 
   if (!is.null(SNN) && snn.factor.proj) {
     H.smooth <- t(as.matrix(SNN %*% t(H)))
-    H.coords <- get_factor_coords(H.smooth, method = proj.method, pca.red = pca.red, distance = dist.use)
+    H.coords <- get_factor_coords(H.smooth, method = proj.method, pca.red = pca.red,
+                                  distance = dist.use, n.neighbors = n.neighbors)
   } else {
-    H.coords <- get_factor_coords(H, method = proj.method, pca.red = pca.red, distance = dist.use)
+    H.coords <- get_factor_coords(H, method = proj.method, pca.red = pca.red,
+                                  distance = dist.use, n.neighbors = n.neighbors)
   }
 
   H.coords <- data.frame(H.coords)

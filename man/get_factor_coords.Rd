@@ -4,7 +4,8 @@
 \alias{get_factor_coords}
 \title{Calculates the coordinates of the NMF factors via Sammon mapping}
 \usage{
-get_factor_coords(H, method, pca.red, distance)
+get_factor_coords(H, method, pca.red, distance, n.neighbors,
+  min.dist = 0.3)
 }
 \description{
 Calculates the coordinates of the NMF factors via Sammon mapping
