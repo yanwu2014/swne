@@ -1,7 +1,7 @@
 ---
 title: "Using Seurat's manifold aligment with SWNE"
 author: "Yan Wu"
-date: "5/21/2018"
+date: "11/12/2018"
 output: html_document
 ---
 

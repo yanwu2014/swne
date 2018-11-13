@@ -1,7 +1,7 @@
 ---
 title: "Projecting cortical neurons across technologies with SWNE"
 author: "Yan Wu"
-date: "8/10/2018"
+date: "11/12/2018"
 output: html_document
 ---
 
