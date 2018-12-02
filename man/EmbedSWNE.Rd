@@ -6,7 +6,8 @@
 \usage{
 EmbedSWNE(H, SNN = NULL, alpha.exp = 1, snn.exp = 1, n_pull = NULL,
   proj.method = "umap", pca.red = F, dist.use = "cosine",
-  snn.factor.proj = T, n.neighbors = max(round(nrow(H)/3), 4))
+  snn.factor.proj = T, n.neighbors = max(round(nrow(H)/3), 4),
+  min.dist = 0.5)
 }
 \arguments{
 \item{H}{NMF factors (factors x samples)}
@@ -26,6 +27,8 @@ EmbedSWNE(H, SNN = NULL, alpha.exp = 1, snn.exp = 1, n_pull = NULL,
 \item{dist.use}{Similarity function to use for calculating factor positions. Options include pearson (correlation), IC (mutual information), cosine, euclidean.}
 
 \item{n.neighbors}{Number of neighbors for UMAP factor projection}
+
+\item{min.dist}{Minimum distance for UMAP factor projection}
 }
 \value{
 A list of factor (H.coords) and sample coordinates (sample.coords) in 2D

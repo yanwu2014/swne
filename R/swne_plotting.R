@@ -30,7 +30,7 @@ normalize_vector <- function(x, method = "scale", n_ranks = 10000) {
 #' @importFrom proxy dist
 #' @import umap
 #'
-get_factor_coords <- function(H, method, pca.red, distance, n.neighbors, min.dist = 0.3) {
+get_factor_coords <- function(H, method, pca.red, distance, n.neighbors, min.dist) {
   H <- t(H)
   distance <- tolower(distance)
   if(distance == "cor" || distance == "correlation") distance <- "pearson"
@@ -110,6 +110,7 @@ get_sample_coords <- function(H, H.coords, alpha, n_pull) {
 #' @param pca.red Whether or not to run PCA on transposed H matrix before calculating factor distances
 #' @param dist.use Similarity function to use for calculating factor positions. Options include pearson (correlation), IC (mutual information), cosine, euclidean.
 #' @param n.neighbors Number of neighbors for UMAP factor projection
+#' @param min.dist Minimum distance for UMAP factor projection
 #'
 #' @return A list of factor (H.coords) and sample coordinates (sample.coords) in 2D
 #'
@@ -117,7 +118,8 @@ get_sample_coords <- function(H, H.coords, alpha, n_pull) {
 #'
 EmbedSWNE <- function(H, SNN = NULL, alpha.exp = 1, snn.exp = 1.0, n_pull = NULL,
                       proj.method = "umap", pca.red = F, dist.use = "cosine",
-                      snn.factor.proj = T, n.neighbors = max(round(nrow(H)/3),4)) {
+                      snn.factor.proj = T, n.neighbors = max(round(nrow(H)/3),4),
+                      min.dist = 0.5) {
   if (!is.null(SNN) && (colnames(H) != rownames(SNN) || colnames(H) != colnames(SNN))) {
     stop("Column names of H must match row and column names of the SNN matrix")
   }
@@ -138,10 +140,12 @@ EmbedSWNE <- function(H, SNN = NULL, alpha.exp = 1, snn.exp = 1.0, n_pull = NULL
   if (!is.null(SNN) && snn.factor.proj) {
     H.smooth <- t(as.matrix(SNN %*% t(H)))
     H.coords <- get_factor_coords(H.smooth, method = proj.method, pca.red = pca.red,
-                                  distance = dist.use, n.neighbors = n.neighbors)
+                                  distance = dist.use, n.neighbors = n.neighbors,
+                                  min.dist = min.dist)
   } else {
     H.coords <- get_factor_coords(H, method = proj.method, pca.red = pca.red,
-                                  distance = dist.use, n.neighbors = n.neighbors)
+                                  distance = dist.use, n.neighbors = n.neighbors,
+                                  min.dist = min.dist)
   }
 
   H.coords <- data.frame(H.coords)
