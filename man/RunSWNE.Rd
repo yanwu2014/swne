@@ -11,10 +11,11 @@
 \usage{
 \method{RunSWNE}{seurat}(object, proj.method = "umap",
   reduction.use = "pca", cells.use = NULL, dims.use = NULL,
-  dist.metric = "cosine", n.cores = 8, k, k.range, var.genes,
-  loss = "mse", genes.embed, hide.factors = T, n_pull = 3,
-  alpha.exp = 1.25, snn.exp = 1, reduction.name = "SWNE",
-  return.format = c("embedding", "seurat"), ...)
+  dist.metric = "cosine", distance.matrix = NULL, n.cores = 8, k,
+  k.range, var.genes, loss = "mse", genes.embed, hide.factors = T,
+  n_pull = 3, alpha.exp = 1.25, snn.exp = 1,
+  reduction.name = "SWNE", return.format = c("embedding", "seurat"),
+  ...)
 
 \method{RunSWNE}{Pagoda2}(object, proj.method = "umap",
   dist.metric = "cosine", n.cores = 8, k, k.range, var.genes,
@@ -46,6 +47,8 @@
 \item{cells.use}{Which cells to analyze (default, all cells)}
 
 \item{dims.use}{Which dimensions to use as input features}
+
+\item{distance.matrix}{If set, runs tSNE on the given distance matrix instead of data matrix (experimental)}
 
 \item{n.cores}{Number of cores to use (passed to FindNumFactors)}
 

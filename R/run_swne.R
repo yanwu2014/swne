@@ -10,6 +10,7 @@
 #' @param proj.method Method to use to project factors in 2D. Either "sammon" or "umap"
 #' @param dist.use Similarity function to use for calculating factor positions (passed to EmbedSWNE).
 #'                 Options include pearson (correlation), IC (mutual information), cosine, euclidean.
+#' @param distance.matrix If set, runs tSNE on the given distance matrix instead of data matrix (experimental)
 #' @param n.cores Number of cores to use (passed to FindNumFactors)
 #' @param k Number of NMF factors (passed to RunNMF). If none given, will be derived from FindNumFactors.
 #' @param k.range Range of factors for FindNumFactors to iterate over if k is not given
@@ -41,7 +42,7 @@ RunSWNE <- function(x, ...) {
 #
 
 RunSWNE.seurat <- function(object, proj.method = "umap", reduction.use = "pca", cells.use = NULL, dims.use = NULL,
-                           dist.metric = "cosine", n.cores = 8, k, k.range, var.genes,
+                           dist.metric = "cosine", distance.matrix = NULL,  n.cores = 8, k, k.range, var.genes,
                            loss = "mse", genes.embed, hide.factors = T, n_pull = 3,
                            alpha.exp = 1.25, # Increase this > 1.0 to move the cells closer to the factors. Values > 2 start to distort the data.
                            snn.exp = 1.0, # Lower this < 1.0 to move similar cells closer to each other
