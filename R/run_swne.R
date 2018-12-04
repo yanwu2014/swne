@@ -59,9 +59,7 @@ RunSWNE.seurat <- function(object, proj.method = "umap", reduction.use = "pca", 
   if (length(x = dims.use) < 2) {
     stop("Cannot perform SWNE on only one dimension, please provide two or more dimensions")
   }
-  if (!is.null(x = distance.matrix)) {
-    genes.use <- rownames(x = object@data)
-  }
+  genes.use <- rownames(x = object@data)
   if (is.null(x = genes.use)) {
     data.use <- GetDimReduction(object = object, reduction.type = reduction.use,
                                 slot = "cell.embeddings")[, dims.use]
@@ -237,6 +235,18 @@ run_swne <- function(norm_counts, var.genes, snn, k, alpha.exp, snn.exp, n_pull,
   return(swne_embedding)
 }
 
+##Internal Functions from Seurat (version 2.3)
+# Set CalcParam information
+#
+# @param object      A Seurat object
+# @param calculation The name of the calculation that was done
+# @param time store time of calculation as well
+# @param ...  Parameters for the calculation
+#
+# @return object with the calc.param slot modified to either append this
+# calculation or replace the previous instance of calculation with
+# a new list of parameters
+#
 SetCalcParams <- function(object, calculation, time = TRUE, ...) {
   object@calc.params[calculation] <- list(...)
   object@calc.params[[calculation]]$object <- NULL
@@ -247,3 +257,68 @@ SetCalcParams <- function(object, calculation, time = TRUE, ...) {
   return(object)
 }
 
+# Get CalcParam information
+#
+# @param object      A Seurat object
+# @param calculation The name of the calculation that was done
+# @param parameter  Parameter for the calculation to pull
+#
+# @return parameter value for given calculation
+#
+GetCalcParam <- function(object, calculation, parameter){
+  if(parameter == "time"){
+    return(object@calc.params[[calculation]][parameter][[1]])
+  }
+  return(unname(unlist(object@calc.params[[calculation]][parameter])))
+}
+
+# Set a default value if an object is null
+#
+# @param x An object to set if it's null
+# @param default The value to provide if x is null
+#
+# @return default if x is null, else x
+#
+SetIfNull <- function(x, default) {
+  if(is.null(x = x)){
+    return(default)
+  } else {
+    return(x)
+  }
+}
+
+# Prep data for dimensional reduction
+#
+# Common checks and preparatory steps before running certain dimensional
+# reduction techniques
+#
+# @param object        Seurat object
+# @param genes.use     Genes to use as input for the dimensional reduction technique.
+#                      Default is object@@var.genes
+# @param dims.compute  Number of dimensions to compute
+# @param use.imputed   Whether to run the dimensional reduction on imputed values
+# @param assay.type Assay to scale data for. Default is RNA. Can be changed for multimodal analysis
+
+PrepDR <- function(
+  object,
+  genes.use = NULL,
+  use.imputed = FALSE,
+  assay.type="RNA"
+) {
+  if (length(object@var.genes) == 0 && is.null(x = genes.use)) {
+    stop("Variable genes haven't been set. Run MeanVarPlot() or provide a vector
+          of genes names in genes.use and retry.")
+  }
+  if (use.imputed) {
+    data.use <- t(x = scale(x = t(x = object@imputed)))
+  } else {
+    data.use <- GetAssayData(object, assay.type = assay.type,slot = "scale.data")
+  }
+  genes.use <- SetIfNull(x = genes.use, default = object@var.genes)
+  genes.use <- unique(x = genes.use[genes.use %in% rownames(x = data.use)])
+  genes.var <- apply(X = data.use[genes.use, ], MARGIN = 1, FUN = var)
+  genes.use <- genes.use[genes.var > 0]
+  genes.use <- genes.use[!is.na(x = genes.use)]
+  data.use <- data.use[genes.use, ]
+  return(data.use)
+}
