@@ -14,8 +14,8 @@
   genes.use = NULL, dist.metric = "cosine", distance.matrix = NULL,
   n.cores = 8, k, k.range, var.genes, loss = "mse", genes.embed,
   hide.factors = T, n_pull = 3, alpha.exp = 1.25, snn.exp = 1,
-  reduction.name = "SWNE", return.format = c("embedding", "seurat"),
-  ...)
+  reduction.name = "swne", reduction.key = "SWNE_",
+  return.format = c("embedding", "seurat"), ...)
 
 \method{RunSWNE}{Pagoda2}(object, proj.method = "umap",
   dist.metric = "cosine", n.cores = 8, k, k.range, var.genes,
@@ -72,7 +72,9 @@
 
 \item{snn.exp}{Decreasing snn.exp increases the effect of the similarity matrix on the embedding (passed to EmbedSWNE)}
 
-\item{reduction.name}{dimensional reduction key, specifies the string before the number for the dimension names. SWNE_ by default}
+\item{reduction.name}{dimensional reduction name, specifies the position in the object$dr list. swne by default}
+
+\item{reduction.key}{dimensional reduction key, specifies the string before the number for the dimension names. SWNE_ by default}
 
 \item{return.format}{format to return ("seurat" object or raw "embedding")}
 

@@ -22,7 +22,8 @@
 #' @param n_pull Maximum number of factors "pulling" on each sample
 #' @param genes.embed Genes to add to the SWNE embedding
 #' @param hide.factors Hide factors when plotting SWNE embedding
-#' @param reduction.name dimensional reduction key, specifies the string before the number for the dimension names. SWNE_ by default
+#' @param reduction.name dimensional reduction name, specifies the position in the object$dr list. swne by default
+#' @param reduction.key dimensional reduction key, specifies the string before the number for the dimension names. SWNE_ by default
 #' @param return.format format to return ("seurat" object or raw "embedding")
 #'
 #' @return A list of factor (H.coords) and sample coordinates (sample.coords) in 2D
@@ -39,20 +40,24 @@ RunSWNE <- function(x, ...) {
 #' @rdname RunSWNE
 #' @method RunSWNE seurat
 #' @export
-#
+#' @import Seurat
 
 RunSWNE.seurat <- function(object, proj.method = "umap", reduction.use = "pca", cells.use = NULL, dims.use = NULL, genes.use = NULL,
                            dist.metric = "cosine", distance.matrix = NULL,  n.cores = 8, k, k.range, var.genes,
                            loss = "mse", genes.embed, hide.factors = T, n_pull = 3,
                            alpha.exp = 1.25, # Increase this > 1.0 to move the cells closer to the factors. Values > 2 start to distort the data.
                            snn.exp = 1.0, # Lower this < 1.0 to move similar cells closer to each other
-                           reduction.name = "SWNE", return.format = c("embedding", "seurat"), ...
+                           reduction.name = "swne", reduction.key = "SWNE_", return.format = c("embedding", "seurat"), ...
 ){
-  if (length(x = dims.use) < 2) {
-    stop("Cannot perform tSNE on only one dimension, please provide two or more dimensions")
-  }
   if (is.null(dims.use)) {
-    dims.use <- 1:k
+    if (is.null(k) || missing(k)) {
+      dims.use <- 1:20
+    } else {
+      dims.use <- 1:k
+    }
+  }
+  if (length(x = dims.use) < 2) {
+    stop("Cannot perform SWNE on only one dimension, please provide two or more dimensions")
   }
   if (!is.null(x = distance.matrix)) {
     genes.use <- rownames(x = object@data)
@@ -64,7 +69,7 @@ RunSWNE.seurat <- function(object, proj.method = "umap", reduction.use = "pca", 
   if (!is.null(x = genes.use)) {
     data.use <- t(PrepDR(object = object, genes.use = genes.use))
   }
-  object_norm <- as.matrix(data.use)
+  object_norm <- ExtractNormCounts(object, obj.type = "seurat", rescale = F, rescale.method = "log", batch = NULL)
 
   if (missing(var.genes)) var.genes <- intersect(object@var.genes, rownames(object_norm))
   var.genes <- intersect(var.genes, rownames(object_norm))
@@ -82,8 +87,8 @@ RunSWNE.seurat <- function(object, proj.method = "umap", reduction.use = "pca", 
   }
 
   if(sum(dim(object@snn)) < 2){
-    object <- RunPCA(object, pc.genes = var.genes, do.print = F, pcs.compute = max(k,20))
-    pc.scores <- t(GetCellEmbeddings(object, reduction.type = reduction.type, dims.use = dims.use))
+    object <- RunPCA(object, pc.genes = var.genes, do.print = F, pcs.compute = min(k,20))
+    pc.scores <- t(GetCellEmbeddings(object, reduction.type = reduction.use, dims.use = dims.use))
     snn <- CalcSNN(pc.scores, k = 20, prune.SNN = 1/20)
   } else {
     snn <- object@snn
@@ -96,7 +101,7 @@ RunSWNE.seurat <- function(object, proj.method = "umap", reduction.use = "pca", 
     return(swne_embedding)
   } else if(return.format == "seurat"){
     object <- SetDimReduction(object = object, reduction.type = reduction.name,
-                              slot = "cell.embeddings", new.data = swne_embedding)
+                              slot = "cell.embeddings", new.data = as.matrix(swne_embedding$sample.coords))
     object <- SetDimReduction(object = object, reduction.type = reduction.name,
                               slot = "key", new.data = reduction.key)
     parameters.to.store <- as.list(environment(), all = TRUE)[names(formals("RunSWNE"))]
@@ -231,3 +236,14 @@ run_swne <- function(norm_counts, var.genes, snn, k, alpha.exp, snn.exp, n_pull,
 
   return(swne_embedding)
 }
+
+SetCalcParams <- function(object, calculation, time = TRUE, ...) {
+  object@calc.params[calculation] <- list(...)
+  object@calc.params[[calculation]]$object <- NULL
+  object@calc.params[[calculation]]$object2 <- NULL
+  if(time) {
+    object@calc.params[[calculation]]$time <- Sys.time()
+  }
+  return(object)
+}
+
