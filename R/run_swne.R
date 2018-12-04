@@ -41,7 +41,7 @@ RunSWNE <- function(x, ...) {
 #' @export
 #
 
-RunSWNE.seurat <- function(object, proj.method = "umap", reduction.use = "pca", cells.use = NULL, dims.use = NULL,
+RunSWNE.seurat <- function(object, proj.method = "umap", reduction.use = "pca", cells.use = NULL, dims.use = NULL, genes.use = NULL,
                            dist.metric = "cosine", distance.matrix = NULL,  n.cores = 8, k, k.range, var.genes,
                            loss = "mse", genes.embed, hide.factors = T, n_pull = 3,
                            alpha.exp = 1.25, # Increase this > 1.0 to move the cells closer to the factors. Values > 2 start to distort the data.

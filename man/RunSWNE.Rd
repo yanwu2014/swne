@@ -11,9 +11,9 @@
 \usage{
 \method{RunSWNE}{seurat}(object, proj.method = "umap",
   reduction.use = "pca", cells.use = NULL, dims.use = NULL,
-  dist.metric = "cosine", distance.matrix = NULL, n.cores = 8, k,
-  k.range, var.genes, loss = "mse", genes.embed, hide.factors = T,
-  n_pull = 3, alpha.exp = 1.25, snn.exp = 1,
+  genes.use = NULL, dist.metric = "cosine", distance.matrix = NULL,
+  n.cores = 8, k, k.range, var.genes, loss = "mse", genes.embed,
+  hide.factors = T, n_pull = 3, alpha.exp = 1.25, snn.exp = 1,
   reduction.name = "SWNE", return.format = c("embedding", "seurat"),
   ...)
 
@@ -48,6 +48,8 @@
 
 \item{dims.use}{Which dimensions to use as input features}
 
+\item{genes.use}{If set, run the SWNE on this subset of genes (instead of running on a set of reduced dimensions). Not set (NULL) by default}
+
 \item{distance.matrix}{If set, runs tSNE on the given distance matrix instead of data matrix (experimental)}
 
 \item{n.cores}{Number of cores to use (passed to FindNumFactors)}
@@ -77,8 +79,6 @@
 \item{n.var.genes}{Number of variable genes to use}
 
 \item{data.matrix}{a data matrix (genes x cells) which has been pre-normalized}
-
-\item{genes.use}{If set, run the SWNE on this subset of genes (instead of running on a set of reduced dimensions). Not set (NULL) by default}
 
 \item{batch}{Vector of batch effects to correct for}
 
