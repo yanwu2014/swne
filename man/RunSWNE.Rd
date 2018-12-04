@@ -10,9 +10,11 @@
 \title{Wrapper for running SWNE analysis}
 \usage{
 \method{RunSWNE}{seurat}(object, proj.method = "umap",
+  reduction.use = "pca", cells.use = NULL, dims.use = NULL,
   dist.metric = "cosine", n.cores = 8, k, k.range, var.genes,
   loss = "mse", genes.embed, hide.factors = T, n_pull = 3,
-  alpha.exp = 1.25, snn.exp = 1)
+  alpha.exp = 1.25, snn.exp = 1, reduction.name = "SWNE",
+  return.format = c("embedding", "seurat"), ...)
 
 \method{RunSWNE}{Pagoda2}(object, proj.method = "umap",
   dist.metric = "cosine", n.cores = 8, k, k.range, var.genes,
@@ -39,6 +41,12 @@
 
 \item{proj.method}{Method to use to project factors in 2D. Either "sammon" or "umap"}
 
+\item{reduction.use}{Which dimensional reduction (e.g. PCA, ICA) to use for the tSNE. Default is PCA.}
+
+\item{cells.use}{Which cells to analyze (default, all cells)}
+
+\item{dims.use}{Which dimensions to use as input features}
+
 \item{n.cores}{Number of cores to use (passed to FindNumFactors)}
 
 \item{k}{Number of NMF factors (passed to RunNMF). If none given, will be derived from FindNumFactors.}
@@ -59,9 +67,15 @@
 
 \item{snn.exp}{Decreasing snn.exp increases the effect of the similarity matrix on the embedding (passed to EmbedSWNE)}
 
+\item{reduction.name}{dimensional reduction key, specifies the string before the number for the dimension names. SWNE_ by default}
+
+\item{return.format}{format to return ("seurat" object or raw "embedding")}
+
 \item{n.var.genes}{Number of variable genes to use}
 
 \item{data.matrix}{a data matrix (genes x cells) which has been pre-normalized}
+
+\item{genes.use}{If set, run the SWNE on this subset of genes (instead of running on a set of reduced dimensions). Not set (NULL) by default}
 
 \item{batch}{Vector of batch effects to correct for}
 

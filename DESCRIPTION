@@ -45,6 +45,5 @@ Imports:
 Remotes:
   JEFworks/liger
 Suggests:
-  Seurat (>= 2.3.4),
-
-RoxygenNote: 6.1.0
+  Seurat (>= 2.3.4)
+RoxygenNote: 6.1.1

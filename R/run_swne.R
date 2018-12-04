@@ -91,9 +91,9 @@ RunSWNE.seurat <- function(object, proj.method = "umap", reduction.use = "pca", 
   if (missing(genes.embed)) genes.embed <- NULL
   swne_embedding <- run_swne(object_norm, var.genes, snn, k, alpha.exp, snn.exp, n_pull, proj.method, dist.metric, genes.embed,
            loss, n.cores, hide.factors)
-  if(return.format = "embedding"){
+  if(return.format == "embedding"){
     return(swne_embedding)
-  } else if(return.format = "seurat"){
+  } else if(return.format == "seurat"){
     object <- SetDimReduction(object = object, reduction.type = reduction.name,
                               slot = "cell.embeddings", new.data = swne_embedding)
     object <- SetDimReduction(object = object, reduction.type = reduction.name,
