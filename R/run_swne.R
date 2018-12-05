@@ -59,7 +59,9 @@ RunSWNE.seurat <- function(object, proj.method = "umap", reduction.use = "pca", 
   if (length(x = dims.use) < 2) {
     stop("Cannot perform SWNE on only one dimension, please provide two or more dimensions")
   }
-  genes.use <- rownames(x = object@data)
+  if (!is.null(x = distance.matrix)) {
+    genes.use <- rownames(x = object@data)
+  }
   if (is.null(x = genes.use)) {
     data.use <- GetDimReduction(object = object, reduction.type = reduction.use,
                                 slot = "cell.embeddings")[, dims.use]
@@ -84,17 +86,25 @@ RunSWNE.seurat <- function(object, proj.method = "umap", reduction.use = "pca", 
     k <- 3
   }
 
-  if(sum(dim(object@snn)) < 2){
-    object <- RunPCA(object, pc.genes = var.genes, do.print = F, pcs.compute = min(k,20))
-    pc.scores <- t(GetCellEmbeddings(object, reduction.type = reduction.use, dims.use = dims.use))
-    snn <- CalcSNN(pc.scores, k = 20, prune.SNN = 1/20)
-  } else {
-    snn <- object@snn
+  if (missing(genes.embed)) genes.embed <- NULL
+  if (is.null(x = distance.matrix)) {
+    if(sum(dim(object@snn)) < 2){
+      object <- RunPCA(object, pc.genes = var.genes, do.print = F, pcs.compute = min(k,20))
+      pc.scores <- t(GetCellEmbeddings(object, reduction.type = reduction.use, dims.use = dims.use))
+      snn <- CalcSNN(pc.scores, k = 20, prune.SNN = 1/20)
+    } else {
+      snn <- object@snn
+    }
+
+    swne_embedding <- run_swne(object_norm, var.genes, snn, k, alpha.exp, snn.exp, n_pull, proj.method, dist.metric, genes.embed,
+                               loss, n.cores, hide.factors)
+  }
+  else {
+    swne_embedding <- RunSWNE(as.matrix(distance.matrix), proj.method = proj.method, dist.metric = dist.metric, n.cores = n.cores, k = k,
+                              k.range = k.range, var.genes = var.genes, loss = loss, genes.embed = genes.embed,
+                              hide.factors = hide.factors, n_pull = n_pull, alpha.exp = alpha.exp, snn.exp = snn.exp)
   }
 
-  if (missing(genes.embed)) genes.embed <- NULL
-  swne_embedding <- run_swne(object_norm, var.genes, snn, k, alpha.exp, snn.exp, n_pull, proj.method, dist.metric, genes.embed,
-           loss, n.cores, hide.factors)
   if(return.format == "embedding"){
     return(swne_embedding)
   } else if(return.format == "seurat"){
