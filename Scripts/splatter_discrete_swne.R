@@ -24,7 +24,7 @@ norm.counts <- ScaleCounts(Matrix::t(r$misc$rawCounts), batch = NULL, method = "
 snn <- CalcSNN(t(pc.scores), k = 30, prune.SNN = 0.0)
 
 k <- 6
-nmf.res <- RunNMF(norm.counts[var.genes,], k = k, alpha = 0, init = nmf.init, 
+nmf.res <- RunNMF(norm.counts[var.genes,], k = k, alpha = 0, init = nmf.init,
                   n.cores = n.cores, loss = loss)
 H <- nmf.res$H
 
@@ -32,12 +32,12 @@ nmf.res$W <- ProjectFeatures(norm.counts, nmf.res$H, loss = "mse", n.cores = n.c
 top.genes.df <- SummarizeAssocFeatures(nmf.res$W, features.return = 2)
 
 swne.embedding <- EmbedSWNE(H, SNN = snn, alpha.exp = 1.0, snn.exp = 0.25, n_pull = 4,
-                            snn.factor.proj = T, dist.use = "cosine")
+                            snn.factor.proj = T, dist.use = "cosine", proj.method = "sammon")
 swne.embedding <- EmbedFeatures(swne.embedding, nmf.res$W, c("Gene2675", "Gene25475"), n_pull = k)
 swne.embedding$H.coords$name <- ""
 
 swne.embedding.no.snn <- EmbedSWNE(H, SNN = NULL, alpha.exp = 1.0, snn.exp = 0.25, n_pull = 4,
-                                   dist.use = "cosine")
+                                   dist.use = "cosine", proj.method = "sammon")
 swne.embedding.no.snn <- EmbedFeatures(swne.embedding.no.snn, nmf.res$W, c("Gene2675", "Gene25475"), n_pull = k)
 swne.embedding.no.snn$H.coords$name <- ""
 
@@ -46,30 +46,30 @@ swne.embedding.no.snn$H.coords$name <- ""
 ## Make SWNE plot
 color.seed <- 43859279
 pdf("splatter_discrete_swne.pdf", width = 4, height = 4)
-PlotSWNE(swne.embedding, alpha.plot = 0.4, sample.groups = clusters, do.label = T, label.size = 4, 
+PlotSWNE(swne.embedding, alpha.plot = 0.4, sample.groups = clusters, do.label = T, label.size = 4,
          pt.size = 1.5, seed = color.seed, show.legend = F)
 dev.off()
 
 pdf("splatter_discrete_swne_no_snn.pdf", width = 4, height = 4)
-PlotSWNE(swne.embedding.no.snn, alpha.plot = 0.4, sample.groups = clusters, do.label = T, label.size = 4, 
+PlotSWNE(swne.embedding.no.snn, alpha.plot = 0.4, sample.groups = clusters, do.label = T, label.size = 4,
          pt.size = 1.5, seed = color.seed, show.legend = F)
 dev.off()
 
 ## Make PCA plots
 pdf("splatter_discrete_pca1-2.pdf", width = 4, height = 4)
-PlotDims(pc.scores[,1:2], sample.groups = clusters, x.lab = NULL, y.lab = NULL, seed = color.seed, 
+PlotDims(pc.scores[,1:2], sample.groups = clusters, x.lab = NULL, y.lab = NULL, seed = color.seed,
          show.axes = T, alpha.plot = 0.6, label.size = 4, show.legend = F)
 dev.off()
 
 pdf("splatter_discrete_pca2-3.pdf", width = 4, height = 4)
-PlotDims(pc.scores[,c(2,3)], sample.groups = clusters, x.lab = NULL, y.lab = NULL, seed = color.seed, 
+PlotDims(pc.scores[,c(2,3)], sample.groups = clusters, x.lab = NULL, y.lab = NULL, seed = color.seed,
          show.axes = T, alpha.plot = 0.6, label.size = 4, show.legend = F)
 dev.off()
 
 
 ## Make t-SNE plot
 pdf("splatter_discrete_tsne.pdf", width = 4, height = 4)
-PlotDims(tsne.scores, sample.groups = clusters, x.lab = NULL, y.lab = NULL, seed = color.seed, 
+PlotDims(tsne.scores, sample.groups = clusters, x.lab = NULL, y.lab = NULL, seed = color.seed,
          show.axes = T, alpha.plot = 0.6, label.size = 4, show.legend = F)
 dev.off()
 
@@ -77,7 +77,7 @@ dev.off()
 ## Make MDS plot (calculate distance matrix first)
 mds.scores <- cmdscale(dist(t(as.matrix(norm.counts[var.genes,]))), k = 2)
 pdf("splatter_discrete_mds.pdf", width = 4, height = 4)
-PlotDims(mds.scores, sample.groups = clusters, x.lab = NULL, y.lab = NULL, seed = color.seed, 
+PlotDims(mds.scores, sample.groups = clusters, x.lab = NULL, y.lab = NULL, seed = color.seed,
          show.axes = T, alpha.plot = 0.6, label.size = 3.5, show.legend = F)
 dev.off()
 
@@ -86,7 +86,7 @@ dev.off()
 library(RDRToolbox)
 isomap.scores <- Isomap(t(as.matrix(norm.counts[var.genes,])), dims = 2, k = 20)$dim2
 pdf("splatter_discrete_isomap.pdf", width = 4, height = 4)
-PlotDims(isomap.scores, sample.groups = clusters, x.lab = NULL, y.lab = NULL, seed = color.seed, 
+PlotDims(isomap.scores, sample.groups = clusters, x.lab = NULL, y.lab = NULL, seed = color.seed,
          show.axes = T, alpha.plot = 0.6, label.size = 4, show.legend = F)
 dev.off()
 
@@ -94,7 +94,7 @@ dev.off()
 ## Make LLE plot
 lle.scores <- LLE(t(as.matrix(norm.counts[var.genes,])), dim = 2, k = 20)
 pdf("splatter_discrete_lle.pdf", width = 4, height = 4)
-PlotDims(lle.scores, sample.groups = clusters, x.lab = NULL, y.lab = NULL, seed = color.seed, 
+PlotDims(lle.scores, sample.groups = clusters, x.lab = NULL, y.lab = NULL, seed = color.seed,
          show.axes = T, alpha.plot = 0.6, label.size = 4, show.legend = F)
 dev.off()
 
@@ -105,7 +105,7 @@ dm <- DiffusionMap(t(as.matrix(norm.counts[var.genes,])), k = 20, n_eigs = 8)
 diff.scores <- dm@eigenvectors
 
 pdf("splatter_discrete_dmaps.pdf", width = 4, height = 4)
-PlotDims(diff.scores[,c(1,2)], sample.groups = clusters, x.lab = NULL, y.lab = NULL, seed = color.seed, 
+PlotDims(diff.scores[,c(1,2)], sample.groups = clusters, x.lab = NULL, y.lab = NULL, seed = color.seed,
          show.axes = T, alpha.plot = 0.6, label.size = 4, show.legend = F)
 dev.off()
 
@@ -116,7 +116,7 @@ umap.scores <- as.matrix(read.table("splatter.discrete.umap.tsv", sep = "\t", he
 rownames(umap.scores) <- colnames(norm.counts)
 
 pdf("splatter_discrete_umap_genes.pdf", width = 5, height = 5)
-PlotDims(umap.scores, sample.groups = clusters, x.lab = NULL, y.lab = NULL, seed = color.seed, 
+PlotDims(umap.scores, sample.groups = clusters, x.lab = NULL, y.lab = NULL, seed = color.seed,
          show.axes = T, alpha.plot = 0.3, label.size = 3.5, show.legend = F)
 dev.off()
 
@@ -168,8 +168,8 @@ scatter.df <- data.frame(x = si.avg.scores, y = embeddings.cor, name = names(emb
 pdf("splatter_discrete_quant_eval.pdf", width = 4.5, height = 4)
 ggplot(scatter.df, aes(x, y)) + geom_point(size = 2, alpha = 1) +
   theme_classic() + theme(legend.position = "none", text = element_text(size = 14)) +
-  xlab("Silhouette Score") + ylab("Cluster Distance Correlation") + 
-  geom_text_repel(aes(x, y, label = name), size = 4.5) + 
+  xlab("Silhouette Score") + ylab("Cluster Distance Correlation") +
+  geom_text_repel(aes(x, y, label = name), size = 4.5) +
   xlim(0, max(si.avg.scores)) + ylim(0, max(embeddings.cor))
 dev.off()
 
@@ -187,17 +187,17 @@ library(swne)
 
 k.range <- c(3, 4, 6, 8, 10, 12)
 k.range.embeddings <- lapply(k.range, function(k) {
-  nmf.res <- RunNMF(norm.counts[var.genes,], k = k, alpha = 0, init = "ica", 
+  nmf.res <- RunNMF(norm.counts[var.genes,], k = k, alpha = 0, init = "ica",
                     n.cores = n.cores, loss = loss)
   swne.embedding <- EmbedSWNE(nmf.res$H, SNN = snn, alpha.exp = 1.0, snn.exp = 0.25, n_pull = 4,
-                              snn.factor.proj = T, dist.use = "cosine")
+                              snn.factor.proj = T, dist.use = "cosine", proj.method = "sammon")
   swne.embedding$H.coords$name <- ""
-  
+
   pdf(paste("splatter_discrete_swne_k", k, ".pdf", sep = ""), width = 3.5, height = 3.5)
   print(PlotSWNE(swne.embedding, alpha.plot = 0.4, sample.groups = clusters, do.label = T, label.size = 4.5,
                  pt.size = 1.5, seed = color.seed, show.legend = F))
   dev.off()
-  
+
   return(t(as.matrix(swne.embedding$sample.coords)))
 })
 names(k.range.embeddings) <- paste0("k = ", k.range)

@@ -24,20 +24,20 @@ simulated.data <- lapply(n.cells, function(n) {
 library(swne)
 run_swne <- function(counts, n.genes, init, k, n.cores) {
   counts <- ScaleCounts(counts, method = "ft")
-  
+
   varinfo <- AdjustVariance(counts, gam.k = 10)
   varinfo <- varinfo[order(varinfo$lp),]
   od.genes <- rownames(varinfo[1:n.genes,])
-  
+
   nmf <- RunNMF(counts[od.genes,], init = init, k = k, n.cores = n.cores)
-  
+
   pca.center <- Matrix::rowMeans(counts[od.genes,])
   pca <- irlba::irlba(Matrix::t(counts[od.genes,]) - pca.center, nv = 40, maxit = 500)
   pca.red <- t(pca$u); colnames(pca.red) <- colnames(counts);
-  
+
   snn <- CalcSNN(pca.red, k = 30)
-  
-  emb <- EmbedSWNE(nmf$H, snn, n_pull = 4)
+
+  emb <- EmbedSWNE(nmf$H, snn, n_pull = 4, proj.method = "sammon")
   return(emb)
 }
 
@@ -70,21 +70,21 @@ runtimes.ngenes.df$genes <- ngenes.range
 library(ggplot2)
 
 pdf("splatter_runtime_ncells.pdf", width = 4, height = 4)
-ggplot(runtimes.ncells.df, aes(x = cells, y = mean)) + 
-  geom_line() + 
+ggplot(runtimes.ncells.df, aes(x = cells, y = mean)) +
+  geom_line() +
   geom_errorbar(aes(ymin = mean - sd, ymax = mean + sd), width = 0.05,
                 position = position_dodge()) +
-  scale_y_log10(breaks = c(50, 200, 500, 1000)) + scale_x_log10(breaks = n.cells) + 
-  theme_classic() + xlab("Number of cells") + ylab("Runtime (sec)") + 
+  scale_y_log10(breaks = c(50, 200, 500, 1000)) + scale_x_log10(breaks = n.cells) +
+  theme_classic() + xlab("Number of cells") + ylab("Runtime (sec)") +
   theme(axis.text = element_text(size = 11))
 dev.off()
 
 pdf("splatter_runtime_ngenes.pdf", width = 4, height = 4)
-ggplot(runtimes.ngenes.df, aes(x = genes, y = mean)) + 
-  geom_line() + 
+ggplot(runtimes.ngenes.df, aes(x = genes, y = mean)) +
+  geom_line() +
   geom_errorbar(aes(ymin = mean - sd, ymax = mean + sd), width = 0.05,
                 position = position_dodge()) +
-  scale_y_log10(breaks = c(25, 50, 100, 200)) + scale_x_log10(breaks = ngenes.range) + 
+  scale_y_log10(breaks = c(25, 50, 100, 200)) + scale_x_log10(breaks = ngenes.range) +
   theme_classic() + xlab("Number of genes") + ylab("Runtime (sec)") +
   theme(axis.text = element_text(size = 11))
 dev.off()

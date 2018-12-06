@@ -33,13 +33,13 @@ H <- nmf.res$H
 nmf.res$W <- ProjectFeatures(norm.counts, nmf.res$H, loss = loss, n.cores = n.cores)
 top.genes.df <- SummarizeAssocFeatures(nmf.res$W, features.return = 2)
 
-swne.embedding <- EmbedSWNE(H, SNN = snn, alpha.exp = 2.5, snn.exp = 0.05, n_pull = 3, snn.factor.proj = T, 
-                            dist.use = "cosine")
+swne.embedding <- EmbedSWNE(H, SNN = snn, alpha.exp = 2.5, snn.exp = 0.05, n_pull = 3, snn.factor.proj = T,
+                            dist.use = "cosine", proj.method = "sammon")
 swne.embedding <- EmbedFeatures(swne.embedding, nmf.res$W, c("Gene4435", "Gene1778"), n_pull = 3)
 swne.embedding$H.coords$name <- ""
 
 swne.embedding.no.snn <- EmbedSWNE(H, SNN = NULL, alpha.exp = 2.5, n_pull = 4, snn.factor.proj = T,
-                                   dist.use = "cosine")
+                                   dist.use = "cosine", proj.method = "sammon")
 swne.embedding.no.snn <- EmbedFeatures(swne.embedding.no.snn, nmf.res$W, c("Gene4435", "Gene1778"), n_pull = 3)
 swne.embedding.no.snn$H.coords$name <- ""
 
@@ -48,31 +48,31 @@ swne.embedding.no.snn$H.coords$name <- ""
 ## Make SWNE plot
 color.seed <- 43859279
 pdf("splatter_trajectory_swne.pdf", width = 4, height = 4)
-PlotSWNE(swne.embedding, alpha.plot = 0.4, sample.groups = clusters, do.label = T, label.size = 4, 
+PlotSWNE(swne.embedding, alpha.plot = 0.4, sample.groups = clusters, do.label = T, label.size = 4,
          pt.size = 1.5, seed = color.seed, show.legend = F)
 dev.off()
 
 pdf("splatter_trajectory_swne_no_snn.pdf", width = 4, height = 4)
-PlotSWNE(swne.embedding.no.snn, alpha.plot = 0.4, sample.groups = clusters, do.label = T, label.size = 4, 
+PlotSWNE(swne.embedding.no.snn, alpha.plot = 0.4, sample.groups = clusters, do.label = T, label.size = 4,
          pt.size = 1.5, seed = color.seed, show.legend = F)
 dev.off()
 
 
 ## Make PCA plots
 pdf("splatter_trajectory_pca1-2.pdf", width = 4, height = 4)
-PlotDims(pc.scores[,c(1,2)], sample.groups = clusters, x.lab = NULL, y.lab = NULL, seed = color.seed, 
+PlotDims(pc.scores[,c(1,2)], sample.groups = clusters, x.lab = NULL, y.lab = NULL, seed = color.seed,
          show.axes = T, alpha.plot = 0.6, label.size = 4, show.legend = F)
 dev.off()
 
 pdf("splatter_trajectory_pca1-3.pdf", width = 4, height = 4)
-PlotDims(pc.scores[,c(1,3)], sample.groups = clusters, x.lab = NULL, y.lab = NULL, seed = color.seed, 
+PlotDims(pc.scores[,c(1,3)], sample.groups = clusters, x.lab = NULL, y.lab = NULL, seed = color.seed,
          show.axes = T, alpha.plot = 0.6, label.size = 4, show.legend = F)
 dev.off()
 
 
 ## Make t-SNE plot
 pdf("splatter_trajectory_tsne.pdf", width = 4, height = 4)
-PlotDims(tsne.scores, sample.groups = clusters, x.lab = NULL, y.lab = NULL, seed = color.seed, 
+PlotDims(tsne.scores, sample.groups = clusters, x.lab = NULL, y.lab = NULL, seed = color.seed,
          show.axes = T, alpha.plot = 0.6, label.size = 4, show.legend = F)
 dev.off()
 
@@ -80,7 +80,7 @@ dev.off()
 ## Make MDS plot (calculate distance matrix first)
 mds.scores <- cmdscale(dist(t(as.matrix(norm.counts[var.genes,]))), k = 2)
 pdf("splatter_trajectory_mds.pdf", width = 4, height = 4)
-PlotDims(mds.scores, sample.groups = clusters, x.lab = NULL, y.lab = NULL, seed = color.seed, 
+PlotDims(mds.scores, sample.groups = clusters, x.lab = NULL, y.lab = NULL, seed = color.seed,
          show.axes = T, alpha.plot = 0.6, label.size = 4, show.legend = F)
 dev.off()
 
@@ -91,7 +91,7 @@ isomap.scores <- Isomap(t(as.matrix(norm.counts[var.genes,])), dims = 2, k = 20)
 rownames(isomap.scores) <- colnames(norm.counts)
 
 pdf("splatter_trajectory_isomap.pdf", width = 4, height = 4)
-PlotDims(isomap.scores, sample.groups = clusters, x.lab = NULL, y.lab = NULL, seed = color.seed, 
+PlotDims(isomap.scores, sample.groups = clusters, x.lab = NULL, y.lab = NULL, seed = color.seed,
          show.axes = T, alpha.plot = 0.6, label.size = 4, show.legend = F)
 dev.off()
 
@@ -101,7 +101,7 @@ lle.scores <- LLE(t(as.matrix(norm.counts[var.genes,])), dim = 2, k = 20)
 rownames(lle.scores) <- colnames(norm.counts)
 
 pdf("splatter_trajectory_lle.pdf", width = 4, height = 4)
-PlotDims(lle.scores, sample.groups = clusters, x.lab = NULL, y.lab = NULL, seed = color.seed, 
+PlotDims(lle.scores, sample.groups = clusters, x.lab = NULL, y.lab = NULL, seed = color.seed,
          show.axes = T, alpha.plot = 0.6, label.size = 4, show.legend = F)
 dev.off()
 
@@ -113,7 +113,7 @@ diff.scores <- dm@eigenvectors
 rownames(diff.scores) <- colnames(norm.counts)
 
 pdf("splatter_trajectory_dmaps.pdf", width = 4, height = 4)
-PlotDims(diff.scores[,c(1,2)], sample.groups = clusters, x.lab = NULL, y.lab = NULL, seed = color.seed, 
+PlotDims(diff.scores[,c(1,2)], sample.groups = clusters, x.lab = NULL, y.lab = NULL, seed = color.seed,
          show.axes = T, alpha.plot = 0.6, label.size = 4, show.legend = F)
 dev.off()
 
@@ -124,7 +124,7 @@ umap.scores <- as.matrix(read.table("splatter.trajectory.umap.tsv", sep = "\t", 
 rownames(umap.scores) <- colnames(norm.counts)
 
 pdf("splatter_trajectory_umap_genes.pdf", width = 4, height = 4)
-PlotDims(umap.scores, sample.groups = clusters, x.lab = NULL, y.lab = NULL, seed = color.seed, 
+PlotDims(umap.scores, sample.groups = clusters, x.lab = NULL, y.lab = NULL, seed = color.seed,
          show.axes = T, alpha.plot = 0.6, label.size = 4, show.legend = F)
 dev.off()
 
@@ -135,7 +135,7 @@ umap.scores <- as.matrix(read.table("splatter.trajectory.umap.pcs.tsv", sep = "\
 rownames(umap.scores) <- colnames(norm.counts)
 
 pdf("splatter_trajectory_umap_pcs.pdf", width = 4, height = 4)
-PlotDims(umap.scores, sample.groups = clusters, x.lab = NULL, y.lab = NULL, seed = color.seed, 
+PlotDims(umap.scores, sample.groups = clusters, x.lab = NULL, y.lab = NULL, seed = color.seed,
          show.axes = T, alpha.plot = 0.6, label.size = 4, show.legend = F)
 dev.off()
 
@@ -171,7 +171,7 @@ for(i in 1:ncol(traj.nn)) {
   ps <- path.step[[i]]
   ps.cells <- names(path.step[path.step == ps])
   traj.nn[ps.cells, i] <- 1; traj.nn[i, ps.cells] <- 1;
-  
+
   p <- strsplit(ps, split = "\\.")[[1]][[1]]
   s <- as.integer(strsplit(ps, split = "\\.")[[1]][[2]])
   if (s > 0) {
@@ -207,13 +207,13 @@ traj.nn <- as(traj.nn, "dgCMatrix")
 # ## Visualize reference NN graph to ensure it's correct
 # library(igraph)
 # library(RColorBrewer)
-# 
+#
 # traj.graph <- graph_from_adjacency_matrix(traj.nn, mode = "undirected")
 # is_connected(traj.graph) ## Ensure graph is connected
-# 
+#
 # col.palette <- brewer.pal(length(levels(clusters)), "Set1")
 # V(traj.graph)$size <- 1.0; V(traj.graph)$color <- sapply(as.integer(clusters), function(i) col.palette[[i]]);
-# 
+#
 # l.use <- layout_with_kk(traj.graph)
 # plot(traj.graph, layout = l.use, vertex.color = V(traj.graph)$color,
 #      vertex.label = NA, edge.lty = "blank", vertex.frame.color = NA)
@@ -247,8 +247,8 @@ scatter.df <- data.frame(x = knn.simil, y = embeddings.cor, name = names(embeddi
 pdf("splatter_trajectory_quant_eval.pdf", width = 4.5, height = 4)
 ggplot(scatter.df, aes(x, y)) + geom_point(size = 2, alpha = 1) +
   theme_classic() + theme(legend.position = "none", text = element_text(size = 14)) +
-  xlab("Neighborhood Score") + ylab("Path-Time Distance Correlation") + 
-  geom_text_repel(aes(x, y, label = name), size = 4.5) + 
+  xlab("Neighborhood Score") + ylab("Path-Time Distance Correlation") +
+  geom_text_repel(aes(x, y, label = name), size = 4.5) +
   xlim(0, max(knn.simil)) + ylim(0, max(embeddings.cor))
 dev.off()
 
@@ -267,17 +267,18 @@ library(FNN)
 
 k.range <- c(3, 6, 8, 10, 14, 18)
 k.range.embeddings <- lapply(k.range, function(k) {
-  nmf.res <- RunNMF(norm.counts[var.genes,], k = k, alpha = 0, init = "ica", 
+  nmf.res <- RunNMF(norm.counts[var.genes,], k = k, alpha = 0, init = "ica",
                     n.cores = n.cores, loss = loss, n.rand.init = 10)
   swne.embedding <- EmbedSWNE(nmf.res$H, SNN = snn, alpha.exp = 3, snn.exp = 0.1, n_pull = 4,
-                              snn.factor.proj = T, dist.use = "cosine")
+                              snn.factor.proj = T, dist.use = "cosine",
+                              proj.method = "sammon")
   swne.embedding$H.coords$name <- ""
-  
+
   pdf(paste("splatter_trajectory_swne_k", k, ".pdf", sep = ""), width = 3.5, height = 3.5)
   print(PlotSWNE(swne.embedding, alpha.plot = 0.4, sample.groups = clusters, do.label = T, label.size = 4.5,
                  pt.size = 1.5, seed = color.seed, show.legend = F))
   dev.off()
-  
+
   return(t(as.matrix(swne.embedding$sample.coords)))
 })
 names(k.range.embeddings) <- paste0("k = ", k.range)

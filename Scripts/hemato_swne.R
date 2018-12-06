@@ -16,7 +16,7 @@ dim(counts)
 
 se.obj <- CreateSeuratObject(counts)
 se.obj <- SetIdent(se.obj, cells.use = names(clusters), clusters)
-se.obj@ident <- plyr::revalue(se.obj@ident, 
+se.obj@ident <- plyr::revalue(se.obj@ident,
                               c("1" = 'Ery', "2" = 'Ery', "3" = 'Ery', "4" = 'Ery', "5" = 'Ery',
                                 "6" = 'Ery', "7" = 'MP/EP', "8" = 'MK', "9" = 'GMP', "10" = 'GMP',
                                 "11" = 'DC', "12" = 'Bas', "13" = 'Bas', "14" = 'M', "15" = 'M',
@@ -52,8 +52,8 @@ nmf.res$W <- ProjectFeatures(norm.counts, nmf.res$H, loss = "mse", n.cores = n.c
 nmf.scores <- nmf.res$H
 
 snn.matrix <- se.obj@snn
-swne.embedding <- EmbedSWNE(nmf.scores, SNN = snn.matrix, alpha.exp = 2.0, snn.exp = 0.1, n_pull = 3, 
-                            dist.use = "cosine")
+swne.embedding <- EmbedSWNE(nmf.scores, SNN = snn.matrix, alpha.exp = 2.0, snn.exp = 0.1, n_pull = 3,
+                            dist.use = "cosine", proj.method = "sammon")
 
 swne.embedding <- RenameFactors(swne.embedding, name.mapping = c("factor_4" = "Metal binding",
                                                                  "factor_8" = "Antigen presentation",
@@ -68,32 +68,32 @@ cluster_colors <- c("Bas" = "#ff6347", "DC" = "#46C7EF", "Eos" = "#EFAD1E", "Ery
 
 pdf("hemato_swne_plot.pdf", width = 6, height = 6)
 PlotSWNE(swne.embedding, alpha.plot = 0.4, sample.groups = clusters, do.label = T,
-         label.size = 3.5, pt.size = 1.5, show.legend = F) + 
+         label.size = 3.5, pt.size = 1.5, show.legend = F) +
   scale_color_manual(values = cluster_colors)
 dev.off()
 
 pdf("hemato_swne_plot_nolabels.pdf", width = 6, height = 6)
 PlotSWNE(swne.embedding, alpha.plot = 0.5, sample.groups = clusters, do.label = F,
-         label.size = 0, pt.size = 1.5, show.legend = F) + 
+         label.size = 0, pt.size = 1.5, show.legend = F) +
   scale_color_manual(values = cluster_colors)
 dev.off()
 
 tsne.scores <- GetCellEmbeddings(se.obj, reduction.type = "tsne")
 pdf("hemato_tsne_plot.pdf", width = 6, height = 6)
-PlotDims(tsne.scores, sample.groups = clusters, show.legend = F, show.axes = F, 
-         alpha.plot = 0.5, label.size = 3.5, pt.size = 1.5) + 
+PlotDims(tsne.scores, sample.groups = clusters, show.legend = F, show.axes = F,
+         alpha.plot = 0.5, label.size = 3.5, pt.size = 1.5) +
   scale_color_manual(values = cluster_colors)
 dev.off()
 
 pdf("hemato_swne_plot_nolabels.pdf", width = 6, height = 6)
 PlotSWNE(swne.embedding, alpha.plot = 0.5, sample.groups = clusters, do.label = F,
-         label.size = 0, pt.size = 1.5, show.legend = F) + 
+         label.size = 0, pt.size = 1.5, show.legend = F) +
   scale_color_manual(values = cluster_colors)
 dev.off()
 
 pdf("hemato_tsne_plot_nolabels.pdf", width = 6, height = 6)
-PlotDims(tsne.scores, sample.groups = clusters, show.legend = F, show.axes = F, 
-         alpha.plot = 0.5, pt.size = 1.5, label.size = 0) + 
+PlotDims(tsne.scores, sample.groups = clusters, show.legend = F, show.axes = F,
+         alpha.plot = 0.5, pt.size = 1.5, label.size = 0) +
   scale_color_manual(values = cluster_colors)
 dev.off()
 

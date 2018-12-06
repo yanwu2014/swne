@@ -17,7 +17,7 @@ se.obj <- FindVariableGenes(se.obj, x.low.cutoff = 0.01, y.cutoff = 0.5)
 length(se.obj@var.genes)
 rm(counts)
 
-se.obj <- ScaleData(se.obj, genes.use = se.obj@var.genes, model.use = "negbinom", 
+se.obj <- ScaleData(se.obj, genes.use = se.obj@var.genes, model.use = "negbinom",
                     vars.to.regress = c("nUMI"))
 se.obj <- RunPCA(se.obj, pcs.compute = 40, do.print = F)
 PCElbowPlot(se.obj, num.pc = 40)
@@ -26,7 +26,7 @@ pcs.use <- 20
 se.obj <- RunTSNE(se.obj, dims.use = 1:pcs.use)
 
 clusters <- se.obj@ident; names(clusters) <- se.obj@cell.names; levels(clusters);
-clusters <- plyr::revalue(clusters, replace = 
+clusters <- plyr::revalue(clusters, replace =
                             c("Ex1" = "Ex", "Ex3a" = "Ex", "Ex3b" = "Ex", "Ex3c" = "Ex", "Ex3d" = "Ex",
                               "Ex4" = "Ex", "Ex5a" = "Ex", "Ex5b" = "Ex", "Ex6a" = "Ex", "Ex6b" = "Ex",
                               "Ex8" = "Ex", "In1a" = "In1", "In1b" = "In1", "In1c" = "In1", "In4a" = "In4",
@@ -59,12 +59,12 @@ nmf.res$W <- ProjectFeatures(norm.counts, nmf.res$H, loss = loss, n.cores = n.co
 nmf.scores <- nmf.res$H
 
 se.obj <- BuildSNN(se.obj, dims.use = 1:pcs.use, k = 30, prune.SNN = 1/15, force.recalc = T)
-swne.embedding <- EmbedSWNE(nmf.scores, se.obj@snn, alpha.exp = 1.75, snn.exp = 0.1, 
-                            n_pull = 6, dist.use = "cosine")
+swne.embedding <- EmbedSWNE(nmf.scores, se.obj@snn, alpha.exp = 1.75, snn.exp = 0.1,
+                            n_pull = 6, dist.use = "cosine", proj.method = "sammon")
 
 ## Rename NMFs
 swne.embedding <- RenameFactors(swne.embedding, name.mapping =
-                                  c("factor_2" = "Myelin", "factor_9" = "Immune response", 
+                                  c("factor_2" = "Myelin", "factor_9" = "Immune response",
                                     "factor_18" = "Cell junctions"))
 
 ## Embed genes
@@ -72,24 +72,24 @@ genes.embed <- c("PLP1", "CBLN2", "LHFPL3", "SLC1A2", "FSTL5", "NRGN", "GRIK1")
 swne.embedding <- EmbedFeatures(swne.embedding, nmf.res$W, genes.embed, n_pull = 4, scale.cols = F)
 
 pdf("snDropSeq_swne_plot_clusters.pdf", width = 6.5, height = 6.5)
-PlotSWNE(swne.embedding, alpha.plot = 0.3, sample.groups = clusters, do.label = T, 
+PlotSWNE(swne.embedding, alpha.plot = 0.3, sample.groups = clusters, do.label = T,
          label.size = 3.5, pt.size = 1.0, show.legend = F, seed = seed)
 dev.off()
 
 pdf("snDropSeq_swne_plot_nolabel.pdf", width = 6.5, height = 6.5)
-PlotSWNE(swne.embedding, alpha.plot = 0.3, sample.groups = clusters, do.label = T, 
+PlotSWNE(swne.embedding, alpha.plot = 0.3, sample.groups = clusters, do.label = T,
          label.size = 0, pt.size = 1.0, show.legend = F, seed = seed)
 dev.off()
 
 
 tsne.scores <- GetCellEmbeddings(se.obj, reduction.type = "tsne")
 pdf("snDropSeq_tsne_plot_clusters.pdf", width = 6, height = 6)
-PlotDims(tsne.scores, sample.groups = clusters, pt.size = 0.5, label.size = 4, 
+PlotDims(tsne.scores, sample.groups = clusters, pt.size = 0.5, label.size = 4,
          alpha.plot = 0.4, show.legend = F, show.axes = F, seed = seed)
 dev.off()
 
 pdf("snDropSeq_tsne_plot_nolabel.pdf", width = 6, height = 6)
-PlotDims(tsne.scores, sample.groups = clusters, pt.size = 0.5, label.size = 0, 
+PlotDims(tsne.scores, sample.groups = clusters, pt.size = 0.5, label.size = 0,
          alpha.plot = 0.4, show.legend = F, show.axes = F, seed = seed)
 dev.off()
 
@@ -143,12 +143,12 @@ dev.off()
 save.image("snDropSeq_swne.RData")
 
 #### Subset to Excitatory neurons to look at layer specificity ####
-ex.se.obj <- SubsetData(se.obj, ident.use = c("Ex1", "Ex3a", "Ex3b", "Ex3c", "Ex3d", "Ex4", 
+ex.se.obj <- SubsetData(se.obj, ident.use = c("Ex1", "Ex3a", "Ex3b", "Ex3c", "Ex3d", "Ex4",
                                               "Ex5a", "Ex5b", "Ex6a", "Ex6b", "Ex8"))
 ex.clusters <- ex.se.obj@ident; names(ex.clusters) <- ex.se.obj@cell.names; levels(ex.clusters);
-ex.clusters <- plyr::revalue(ex.clusters, replace = 
+ex.clusters <- plyr::revalue(ex.clusters, replace =
                                c("Ex1" = "L2/3", "Ex3a" = "L4", "Ex3b" = "L4", "Ex3c" = "L4", "Ex3d" = "L4",
-                                 "Ex4" = "L4/5", "Ex5a" = "L5", "Ex5b" = "L5", "Ex6a" = "L6", "Ex6b" = "L6", 
+                                 "Ex4" = "L4/5", "Ex5a" = "L5", "Ex5b" = "L5", "Ex6a" = "L6", "Ex6b" = "L6",
                                  "Ex8" = "L6b"))
 levels(ex.clusters)
 
@@ -166,7 +166,7 @@ ex.se.obj <- RunTSNE(ex.se.obj, dims.use = 1:pcs.use)
 ex.norm.counts <- ScaleCounts(se.obj@raw.data[,ex.se.obj@cell.names], method = "ft")
 ex.var.genes <- intersect(ex.se.obj@var.genes, rownames(ex.norm.counts))
 
-ex.k.res <- FindNumFactors(ex.norm.counts[ex.var.genes,], k.range = k.range, n.cores = n.cores, 
+ex.k.res <- FindNumFactors(ex.norm.counts[ex.var.genes,], k.range = k.range, n.cores = n.cores,
                            na.frac = 0.25, seed = seed, loss = loss)
 ex.k.res$k
 
@@ -177,8 +177,9 @@ ex.nmf.res$W <- ProjectFeatures(ex.norm.counts, ex.nmf.res$H, loss = loss, n.cor
 ex.nmf.scores <- ex.nmf.res$H
 
 ex.se.obj <- BuildSNN(ex.se.obj, k = 20, prune.SNN = 1/20, dims.use = 1:pcs.use, force.recalc = T)
-ex.swne.embedding <- EmbedSWNE(ex.nmf.scores, ex.se.obj@snn, alpha.exp = 5.0, snn.exp = 0.25, 
-                               n_pull = 4, snn.factor.proj = T, pca.red = F, dist.use = "cosine")
+ex.swne.embedding <- EmbedSWNE(ex.nmf.scores, ex.se.obj@snn, alpha.exp = 5.0, snn.exp = 0.25,
+                               n_pull = 4, snn.factor.proj = T, pca.red = F, dist.use = "cosine",
+                               proj.method = "sammon")
 
 ## Hide all factors
 ex.swne.embedding$H.coords$name <- ""
@@ -187,23 +188,23 @@ genes.embed <- c("NTNG1", "DAB1", "HS3ST2", "DCC", "POSTN")
 ex.swne.embedding <- EmbedFeatures(ex.swne.embedding, ex.nmf.res$W, genes.embed, n_pull = 4, scale.cols = F)
 
 pdf("snDropSeq_swne_ex_neurons.pdf", width = 6.5, height = 6.5)
-PlotSWNE(ex.swne.embedding, alpha.plot = 0.3, sample.groups = ex.clusters, do.label = T, 
+PlotSWNE(ex.swne.embedding, alpha.plot = 0.3, sample.groups = ex.clusters, do.label = T,
          label.size = 4.0, pt.size = 1.0, show.legend = F, seed = seed)
 dev.off()
 
 pdf("snDropSeq_swne_ex_neurons_nolabel.pdf", width = 6.5, height = 6.5)
-PlotSWNE(ex.swne.embedding, alpha.plot = 0.3, sample.groups = ex.clusters, do.label = T, 
+PlotSWNE(ex.swne.embedding, alpha.plot = 0.3, sample.groups = ex.clusters, do.label = T,
          label.size = 0, pt.size = 1.0, show.legend = F, seed = seed)
 dev.off()
 
 ex.tsne.scores <- GetCellEmbeddings(ex.se.obj, reduction.type = "tsne")
 pdf("snDropSeq_tsne_ex_neurons.pdf", width = 6, height = 6)
-PlotDims(ex.tsne.scores, sample.groups = ex.clusters, pt.size = 0.5, label.size = 4, 
+PlotDims(ex.tsne.scores, sample.groups = ex.clusters, pt.size = 0.5, label.size = 4,
          alpha.plot = 0.35, show.legend = F, show.axes = F, seed = seed)
 dev.off()
 
 pdf("snDropSeq_tsne_ex_neurons_nolabel.pdf", width = 6, height = 6)
-PlotDims(ex.tsne.scores, sample.groups = ex.clusters, pt.size = 0.5, label.size = 0, 
+PlotDims(ex.tsne.scores, sample.groups = ex.clusters, pt.size = 0.5, label.size = 0,
          alpha.plot = 0.4, show.legend = F, show.axes = F, seed = seed)
 dev.off()
 
@@ -224,7 +225,7 @@ dev.off()
 
 
 ex.top.genes.df <- SummarizeAssocFeatures(ex.gene.factor.assoc, features.return = 6)
-ex.top.genes.df <- subset(ex.top.genes.df, assoc_score > 0.3 & 
+ex.top.genes.df <- subset(ex.top.genes.df, assoc_score > 0.3 &
                             factor %in% c("factor_6", "factor_12"))
 ex.gene.nmf.heat <- ex.gene.factor.assoc[unique(ex.top.genes.df$feature),]
 pdf("snDropSeq_ex_metagene_heatmap.pdf", width = 5, height = 3.5)
@@ -247,21 +248,22 @@ save.image("snDropSeq_swne.RData")
 # ## Look at effect of different SNNs
 # # ex.snn <- CalcSNN(ex.nmf.scores, k = 30)
 # ex.snn <- CalcSNN(ex.norm.counts[ex.se.obj@var.genes,], k = 30)
-# ex.swne.embedding <- EmbedSWNE(ex.nmf.scores, ex.snn, alpha.exp = 5.0, snn.exp = 0.25, 
-#                                n_pull = 4, snn.factor.proj = T, pca.red = F, dist.use = "cosine")
-# 
+# ex.swne.embedding <- EmbedSWNE(ex.nmf.scores, ex.snn, alpha.exp = 5.0, snn.exp = 0.25,
+#                                n_pull = 4, snn.factor.proj = T, pca.red = F,
+#                                dist.use = "cosine", proj.method = "sammon")
+#
 # ## Hide all factors
 # ex.swne.embedding$H.coords$name <- ""
-# 
+#
 # genes.embed <- c("NTNG1", "DAB1", "HS3ST2", "DCC", "POSTN")
 # ex.swne.embedding <- EmbedFeatures(ex.swne.embedding, ex.nmf.res$W, genes.embed, n_pull = 4, scale.cols = F)
-# 
+#
 # pdf("snDropSeq_swne_ex_neurons_vargenes.pdf", width = 6.5, height = 6.5)
-# PlotSWNE(ex.swne.embedding, alpha.plot = 0.3, sample.groups = ex.clusters, do.label = T, 
+# PlotSWNE(ex.swne.embedding, alpha.plot = 0.3, sample.groups = ex.clusters, do.label = T,
 #          label.size = 4.0, pt.size = 1.0, show.legend = F, seed = seed)
 # dev.off()
-# 
+#
 # pdf("snDropSeq_swne_ex_neurons_vargenes_nolabels.pdf", width = 6.5, height = 6.5)
-# PlotSWNE(ex.swne.embedding, alpha.plot = 0.3, sample.groups = ex.clusters, do.label = T, 
+# PlotSWNE(ex.swne.embedding, alpha.plot = 0.3, sample.groups = ex.clusters, do.label = T,
 #          label.size = 0, pt.size = 1.0, show.legend = F, seed = seed)
 # dev.off()
