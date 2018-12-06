@@ -65,7 +65,7 @@ get_factor_coords <- function(H, method, pca.red, distance, n.neighbors, min.dis
       umap.cfg$metric <- distance
     }
 
-    H.umap <- umap::umap(t(H), config = umap.cfg, method = "naive")
+  H.umap <- umap::umap(t(H), config = umap.cfg, method = "naive")
     H.coords <- H.umap$layout
   } else {
     stop("Invalid factor projection method")
