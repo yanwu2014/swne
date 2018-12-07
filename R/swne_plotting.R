@@ -504,10 +504,8 @@ FeaturePlotSWNE <- function(swne.embedding, feature.scores, feature.name = NULL,
   sample.coords <- swne.embedding$sample.coords
   feature.coords <- swne.embedding$feature.coords
 
-  if (any(is.na(feature.scores))) {
-    feature.scores <- feature.scores[!is.na(feature.scores)]
-    sample.coords <- sample.coords[names(feature.scores),]
-  }
+  feature.scores <- feature.scores[!is.na(feature.scores)]
+  sample.coords <- sample.coords[names(feature.scores),]
   feature.scores <- as.numeric(feature.scores[rownames(sample.coords)])
   feature.quantiles <- quantile(feature.scores, probs = quantiles)
 
