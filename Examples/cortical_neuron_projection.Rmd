@@ -37,7 +37,7 @@ names(train.clusters) <- train.obj@cell.names
 Run NMF and project features
 ```{r message=FALSE,warning=FALSE}
 n.cores <- 12
-k <- 30
+k <- 20
 
 train.nmf.res <- RunNMF(train.norm.counts[var.genes,], k = k, init = "ica", n.cores = n.cores, ica.fast = T)
 train.nmf.res$W <- ProjectFeatures(train.norm.counts, train.nmf.res$H, n.cores = n.cores)
