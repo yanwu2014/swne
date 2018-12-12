@@ -1,7 +1,7 @@
 ---
 title: "Projecting cortical neurons across technologies with SWNE"
 author: "Yan Wu"
-date: "11/12/2018"
+date: "12/11/2018"
 output: html_document
 ---
 
@@ -37,7 +37,7 @@ names(train.clusters) <- train.obj@cell.names
 Run NMF and project features
 ```{r message=FALSE,warning=FALSE}
 n.cores <- 12
-k <- 20
+k <- 30
 
 train.nmf.res <- RunNMF(train.norm.counts[var.genes,], k = k, init = "ica", n.cores = n.cores, ica.fast = T)
 train.nmf.res$W <- ProjectFeatures(train.norm.counts, train.nmf.res$H, n.cores = n.cores)
@@ -53,7 +53,7 @@ train.obj <- BuildSNN(train.obj, dims.use = 1:20, k.param = 20, prune.SNN = 1/20
 Run SWNE embedding and hide the factors
 ```{r message=FALSE,warning=FALSE}
 train.embedding <- EmbedSWNE(train.nmf.scores, train.obj@snn, alpha.exp = 1.25, snn.exp = 1, 
-                             n_pull = 3, proj.method = "umap", dist.use = "cosine")
+                             n_pull = 3, proj.method = "sammon", dist.use = "cosine")
 train.embedding$H.coords$name <- "" ## Hide factors
 ```
 

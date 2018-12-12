@@ -92,7 +92,7 @@ alpha.exp <- 1.25 # Increase this > 1.0 to move the cells closer to the factors.
 snn.exp <- 1.0 # Lower this < 1.0 to move similar cells closer to each other
 n_pull <- 3 # The number of factors pulling on each cell. Must be at least 3.
 swne.embedding <- EmbedSWNE(nmf.scores, snn, alpha.exp = alpha.exp, snn.exp = snn.exp,
-                            n_pull = n_pull, proj.method = "umap", dist.use = "cosine")
+                            n_pull = n_pull, proj.method = "sammon", dist.use = "cosine")
 ```
 
 

@@ -42,7 +42,7 @@ RunSWNE <- function(x, ...) {
 #' @export
 #' @import Seurat
 
-RunSWNE.seurat <- function(object, proj.method = "umap", reduction.use = "pca", cells.use = NULL, dims.use = NULL, genes.use = NULL,
+RunSWNE.seurat <- function(object, proj.method = "sammon", reduction.use = "pca", cells.use = NULL, dims.use = NULL, genes.use = NULL,
                            dist.metric = "cosine", distance.matrix = NULL,  n.cores = 8, k, k.range, var.genes,
                            loss = "mse", genes.embed, hide.factors = T, n_pull = 3,
                            alpha.exp = 1.25, # Increase this > 1.0 to move the cells closer to the factors. Values > 2 start to distort the data.
@@ -130,7 +130,7 @@ RunSWNE.seurat <- function(object, proj.method = "umap", reduction.use = "pca", 
 #' @method RunSWNE Pagoda2
 #' @export
 #'
-RunSWNE.Pagoda2 <- function(object, proj.method = "umap", dist.metric = "cosine", n.cores = 8, k, k.range, var.genes,
+RunSWNE.Pagoda2 <- function(object, proj.method = "sammon", dist.metric = "cosine", n.cores = 8, k, k.range, var.genes,
                             loss = "mse", genes.embed, hide.factors = T, n_pull = 3, n.var.genes = 3000,
                             alpha.exp = 1.25, # Increase this > 1.0 to move the cells closer to the factors. Values > 2 start to distort the data.
                             snn.exp = 1.0 # Lower this < 1.0 to move similar cells closer to each other
@@ -166,7 +166,7 @@ RunSWNE.Pagoda2 <- function(object, proj.method = "umap", dist.metric = "cosine"
 #' @rdname RunSWNE
 #' @method RunSWNE dgCMatrix
 #' @export
-RunSWNE.dgCMatrix <- function(data.matrix, proj.method = "umap", dist.metric = "cosine", n.cores = 3, k, k.range,
+RunSWNE.dgCMatrix <- function(data.matrix, proj.method = "sammon", dist.metric = "cosine", n.cores = 3, k, k.range,
                               var.genes = rownames(data.matrix), loss = "mse", genes.embed, hide.factors = T, n_pull = 3,
                               alpha.exp = 1.25, # Increase this > 1.0 to move the cells closer to the factors. Values > 2 start to distort the data.
                               snn.exp = 1.0 # Lower this < 1.0 to move similar cells closer to each other
@@ -197,7 +197,7 @@ RunSWNE.dgCMatrix <- function(data.matrix, proj.method = "umap", dist.metric = "
 #' @rdname RunSWNE
 #' @method RunSWNE matrix
 #' @export
-RunSWNE.matrix <- function(data.matrix, proj.method = "umap", dist.metric = "cosine", n.cores = 3, k, k.range,
+RunSWNE.matrix <- function(data.matrix, proj.method = "sammon", dist.metric = "cosine", n.cores = 3, k, k.range,
                            var.genes = rownames(data.matrix), loss = "mse", genes.embed, hide.factors = T, n_pull = 3,
                            alpha.exp = 1.25, # Increase this > 1.0 to move the cells closer to the factors. Values > 2 start to distort the data.
                            snn.exp = 1.0 # Lower this < 1.0 to move similar cells closer to each other
@@ -213,7 +213,7 @@ RunSWNE.matrix <- function(data.matrix, proj.method = "umap", dist.metric = "cos
 #' @rdname RunSWNE
 #' @method RunSWNE dgTMatrix
 #' @export
-RunSWNE.dgTMatrix <- function(data.matrix, proj.method = "umap", dist.metric = "cosine", n.cores = 3, k, k.range,
+RunSWNE.dgTMatrix <- function(data.matrix, proj.method = "sammon", dist.metric = "cosine", n.cores = 3, k, k.range,
                               var.genes = rownames(data.matrix), loss = "mse", genes.embed, hide.factors = T, n_pull = 3,
                               alpha.exp = 1.25, # Increase this > 1.0 to move the cells closer to the factors. Values > 2 start to distort the data.
                               snn.exp = 1.0 # Lower this < 1.0 to move similar cells closer to each other

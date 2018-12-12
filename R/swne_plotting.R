@@ -117,7 +117,7 @@ get_sample_coords <- function(H, H.coords, alpha, n_pull) {
 #' @export
 #'
 EmbedSWNE <- function(H, SNN = NULL, alpha.exp = 1, snn.exp = 1.0, n_pull = NULL,
-                      proj.method = "umap", pca.red = F, dist.use = "cosine",
+                      proj.method = "sammon", pca.red = F, dist.use = "cosine",
                       snn.factor.proj = T, n.neighbors = max(round(nrow(H)/3),4),
                       min.dist = 0.5) {
   if (!is.null(SNN) && (colnames(H) != rownames(SNN) || colnames(H) != colnames(SNN))) {
