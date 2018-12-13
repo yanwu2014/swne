@@ -455,6 +455,8 @@ PlotSWNE <- function(swne.embedding, alpha.plot = 0.25, sample.groups = NULL, do
 
   if (!show.legend) {
     ggobj <- ggobj + theme(legend.position = "none")
+  } else {
+    ggobj <- ggobj + theme(legend.title = element_blank())
   }
 
   if (use.brewer.pal) {
@@ -628,6 +630,8 @@ PlotDims <- function(dim.scores, sample.groups = NULL, x.lab = "tsne1", y.lab = 
 
   if (!show.legend) {
     ggobj <- ggobj + theme(legend.position = "none")
+  } else {
+    ggobj <- ggobj + theme(legend.title = element_blank())
   }
 
   if (use.brewer.pal) {
