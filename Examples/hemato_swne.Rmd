@@ -1,7 +1,7 @@
 ---
 title: "Hematopoiesis Trajectory Visualization and Benchmarking with SWNE"
 author: "Yan Wu"
-date: "1/3/2019"
+date: "1/4/2019"
 output: html_document
 ---
 
@@ -14,10 +14,10 @@ This is a walkthrough on how to recreate the hematopoiesis visualizations from F
 
 
 Load the required libraries and data. The hematopoiesis data (from Paul et al) can be downloaded [here](ftp://genome-miner.ucsd.edu/swne_files/hemato_data.tar.gz).
-```{r}
-library(Seurat)
+```{r message=FALSE,warning=FALSE}
+suppressWarnings(library(Seurat))
+suppressWarnings(library(monocle))
 library(swne)
-library(monocle)
 library(ggplot2)
 
 ## Load monocle2 object
@@ -35,7 +35,7 @@ counts <- counts[,names(clusters)]
 
 
 Filter genes and cells and make Seurat object
-```{r}
+```{r message=FALSE,warning=FALSE}
 counts <- FilterData(counts, min.samples.frac = 0.005, trim = 0.005, min.nonzero.features = 200)
 info.genes <- info.genes[info.genes %in% rownames(counts)]
 dim(counts)
@@ -45,7 +45,7 @@ se.obj <- CreateSeuratObject(counts)
 
 
 Set cluster names, exclude lymphoid cells and dendritic cells (which are not part of the developmental trajectory), set cluster colors.
-```{r}
+```{r message=FALSE,warning=FALSE}
 se.obj <- SetIdent(se.obj, cells.use = names(clusters), clusters)
 se.obj@ident <- plyr::revalue(se.obj@ident, 
                               c("1" = 'Ery', "2" = 'Ery', "3" = 'Ery', "4" = 'Ery', "5" = 'Ery',
@@ -62,7 +62,7 @@ cluster_colors <- c("Bas" = "#ff6347", "Eos" = "#EFAD1E",
 
 
 Scale data, run PCA, t-SNE, and UMAP, and build the SNN.
-```{r}
+```{r message=FALSE,warning=FALSE}
 ## Scale data
 se.obj@data <- ScaleCounts(se.obj@raw.data[,se.obj@cell.names], method = "log")
 se.obj@scale.data <- se.obj@data - Matrix::rowMeans(se.obj@data)
@@ -79,7 +79,7 @@ se.obj <- BuildSNN(se.obj, dims.use = 1:15, k.param = 40, prune.SNN = 0.0, force
 
 
 Identify number of factors to use for SWNE
-```{r}
+```{r message=FALSE,warning=FALSE}
 k.range <- seq(2,20,2) ## Range of factor values to test
 n.cores <- 16 ## Number of cores to use
 
@@ -92,7 +92,7 @@ PlotFactorSelection(k.err, font.size = 15)
 
 
 Run SWNE
-```{r}
+```{r message=FALSE,warning=FALSE}
 k <- 12
 nmf.res <- RunNMF(norm.counts[info.genes,], k = k, init = "ica", n.cores = n.cores, ica.fast = F) ## Run NMF
 nmf.scores <- nmf.res$H
@@ -105,7 +105,7 @@ swne.embedding <- EmbedSWNE(nmf.scores, SNN = se.obj@snn, alpha.exp = 1.5, snn.e
 ```
 
 
-Identify key factors and embed key genes. See Table S1 from the paper for how these factors were named and key genes selected.
+Identify biologically relevant factors and embed key marker genes. See [Table S1](https://www.biorxiv.org/highwire/filestream/84916/field_highwire_adjunct_files/0/276261-1.xlsx) from the Cell Systems paper for how the factors were named and how key genes were selected.
 ```{r}
 swne.embedding <- RenameFactors(swne.embedding, name.mapping = c("factor_4" = "Erythrocyte differentiation",
                                                                  "factor_5" = "Metal binding",
@@ -166,7 +166,7 @@ FeaturePlotDims(umap.scores, pseudotime, alpha.plot = 0.4, show.axes = F, pt.siz
 Now let's compute a quantitative evaluation of SWNE, tSNE, and UMAP as well as other embeddings.
 
 First we need to compute those other embeddings, including dmaps, MDS, Isomap, LLE, and PCA
-```{r}
+```{r message=FALSE,warning=FALSE}
 library(destiny)
 dm <- DiffusionMap(t(as.matrix(norm.counts[info.genes,])), k = 20, n_eigs = 2)
 diff.scores <- dm@eigenvectors; rownames(diff.scores) <- colnames(norm.counts);
