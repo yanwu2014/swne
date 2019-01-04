@@ -68,7 +68,7 @@ nmf.res$W <- ProjectFeatures(norm.counts, nmf.res$H, n.cores = n.cores)
 nmf.scores <- nmf.res$H
 
 swne.embedding <- EmbedSWNE(nmf.scores, SNN = se.obj@snn, alpha.exp = 1.5, snn.exp = 1, n_pull = 3,
-                            proj.method = "sammon", dist.use = "cosine")
+                            dist.use = "cosine")
 
 swne.embedding <- RenameFactors(swne.embedding, name.mapping = c("factor_4" = "Erythrocyte differentiation",
                                                                  "factor_5" = "Metal binding",

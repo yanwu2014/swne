@@ -1,0 +1,286 @@
+---
+title: "Hematopoiesis Trajectory Visualization and Benchmarking with SWNE"
+author: "Yan Wu"
+date: "1/3/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+This is a walkthrough on how to recreate the hematopoiesis visualizations from Figure 2 of our [Cell Systems](http://dx.doi.org/10.1016/j.cels.2018.10.015) paper.
+
+
+Load the required libraries and data. The hematopoiesis data (from Paul et al) can be downloaded [here](ftp://genome-miner.ucsd.edu/swne_files/hemato_data.tar.gz).
+```{r}
+library(Seurat)
+library(swne)
+library(monocle)
+library(ggplot2)
+
+## Load monocle2 object
+load("~/swne/Data/hemato_data/hemato_monocle_orig_cds.RData")
+
+## Load counts and informative genes
+counts <- ReadData("~/swne/Data/hemato_data/hemato_expr_debatched.tsv", make.sparse = T)
+info.genes <- scan("~/swne/Data/hemato_data/hemato_info_genes.txt", sep = "\n", what = character())
+
+## Load clusters
+clusters.df <- read.table("~/swne/Data/hemato_data/hemato_cluster_mapping.csv", sep = ",")
+clusters <- clusters.df[[2]]; names(clusters) <- clusters.df[[1]]
+counts <- counts[,names(clusters)]
+```
+
+
+Filter genes and cells and make Seurat object
+```{r}
+counts <- FilterData(counts, min.samples.frac = 0.005, trim = 0.005, min.nonzero.features = 200)
+info.genes <- info.genes[info.genes %in% rownames(counts)]
+dim(counts)
+
+se.obj <- CreateSeuratObject(counts)
+```
+
+
+Set cluster names, exclude lymphoid cells and dendritic cells (which are not part of the developmental trajectory), set cluster colors.
+```{r}
+se.obj <- SetIdent(se.obj, cells.use = names(clusters), clusters)
+se.obj@ident <- plyr::revalue(se.obj@ident, 
+                              c("1" = 'Ery', "2" = 'Ery', "3" = 'Ery', "4" = 'Ery', "5" = 'Ery',
+                                "6" = 'Ery', "7" = 'MP/EP', "8" = 'MK', "9" = 'GMP', "10" = 'GMP',
+                                "11" = 'DC', "12" = 'Bas', "13" = 'Bas', "14" = 'M', "15" = 'M',
+                                "16" = 'Neu', "17" = 'Neu', "18" = 'Eos', "19" = 'lymphoid'))
+se.obj <- SubsetData(se.obj, ident.remove = c("lymphoid", "DC"))
+
+clusters <- se.obj@ident; names(clusters) <- se.obj@cell.names;
+cluster_colors <- c("Bas" = "#ff6347", "Eos" = "#EFAD1E", 
+                    "Ery" = "#8CB3DF", "M" = "#53C0AD", "MP/EP" = "#4EB859", 
+                    "GMP" = "#D097C4", "MK" = "#ACC436", "Neu" = "#F5918A")
+```
+
+
+Scale data, run PCA, t-SNE, and UMAP, and build the SNN.
+```{r}
+## Scale data
+se.obj@data <- ScaleCounts(se.obj@raw.data[,se.obj@cell.names], method = "log")
+se.obj@scale.data <- se.obj@data - Matrix::rowMeans(se.obj@data)
+
+## Run PCA
+se.obj <- RunPCA(se.obj, pc.genes = info.genes, do.print = F, pcs.compute = 40)
+PCElbowPlot(se.obj, num.pc = 40)
+
+## Run t-SNE, UMAP, and SNN
+se.obj <- RunTSNE(se.obj, dims.use = 1:15)
+se.obj <- RunUMAP(se.obj, reduction.use = "pca", dims.use = 1:15)
+se.obj <- BuildSNN(se.obj, dims.use = 1:15, k.param = 40, prune.SNN = 0.0, force.recalc = T)
+```
+
+
+Identify number of factors to use for SWNE
+```{r}
+k.range <- seq(2,20,2) ## Range of factor values to test
+n.cores <- 16 ## Number of cores to use
+
+norm.counts <- se.obj@data[,names(clusters)]
+k.err <- FindNumFactors(norm.counts[info.genes,], k.range = k.range, n.cores = n.cores, 
+                        seed = 32590, do.plot = F)
+
+PlotFactorSelection(k.err, font.size = 15)
+```
+
+
+Run SWNE
+```{r}
+k <- 12
+nmf.res <- RunNMF(norm.counts[info.genes,], k = k, init = "ica", n.cores = n.cores, ica.fast = F) ## Run NMF
+nmf.scores <- nmf.res$H
+
+nmf.res$W <- ProjectFeatures(norm.counts, nmf.res$H, n.cores = n.cores) ## Project all genes onto NMF
+
+## Run SWNE embedding
+swne.embedding <- EmbedSWNE(nmf.scores, SNN = se.obj@snn, alpha.exp = 1.5, snn.exp = 0.1, n_pull = 3,
+                            dist.use = "cosine")
+```
+
+
+Identify key factors and embed key genes. See Table S1 from the paper for how these factors were named and key genes selected.
+```{r}
+swne.embedding <- RenameFactors(swne.embedding, name.mapping = c("factor_4" = "Erythrocyte differentiation",
+                                                                 "factor_5" = "Metal binding",
+                                                                 "factor_9" = "Epigenetic regulation",
+                                                                 "factor_10" = "HSC maintenance",
+                                                                 "factor_11" = "Inflammation"))
+genes.embed <- c("Apoe", "Mt2", "Gpr56", "Sun2", "Flt3")
+swne.embedding <- EmbedFeatures(swne.embedding, nmf.res$W, genes.embed, n_pull = 3)
+```
+
+
+Make SWNE plot
+```{r}
+PlotSWNE(swne.embedding, alpha.plot = 0.4, sample.groups = clusters, do.label = T,
+         label.size = 3.5, pt.size = 2, show.legend = F) +
+  scale_color_manual(values = cluster_colors)
+```
+
+Make t-SNE plot
+```{r}
+## tSNE plots
+tsne.scores <- GetCellEmbeddings(se.obj, reduction.type = "tsne")
+PlotDims(tsne.scores, sample.groups = clusters, show.legend = F, show.axes = F,
+         alpha.plot = 0.5, label.size = 3.5, pt.size = 1.5) +
+  scale_color_manual(values = cluster_colors)
+```
+
+Make UMAP plot
+```{r}
+umap.scores <- GetCellEmbeddings(se.obj, reduction.type = "umap")
+PlotDims(umap.scores, sample.groups = clusters, show.legend = F, show.axes = F,
+         alpha.plot = 0.5, label.size = 3.5, pt.size = 1.5) +
+  scale_color_manual(values = cluster_colors)
+```
+
+Extract pre-computed pseudotime (computed using Monocle2)
+```{r}
+pseudotime <- cds$Pseudotime; names(pseudotime) <- colnames(cds@reducedDimS);
+pseudotime <- pseudotime[names(clusters)]
+```
+
+SWNE pseudotime plot
+```{r}
+FeaturePlotSWNE(swne.embedding, pseudotime, alpha.plot = 0.4, label.size = 3.5, pt.size = 1.5)
+```
+
+t-SNE pseudotime plot
+```{r}
+FeaturePlotDims(tsne.scores, pseudotime, alpha.plot = 0.4, show.axes = F, pt.size = 1.5)
+```
+
+UMAP pseudotime plot
+```{r}
+FeaturePlotDims(umap.scores, pseudotime, alpha.plot = 0.4, show.axes = F, pt.size = 1.5)
+```
+
+
+Now let's compute a quantitative evaluation of SWNE, tSNE, and UMAP as well as other embeddings.
+
+First we need to compute those other embeddings, including dmaps, MDS, Isomap, LLE, and PCA
+```{r}
+library(destiny)
+dm <- DiffusionMap(t(as.matrix(norm.counts[info.genes,])), k = 20, n_eigs = 2)
+diff.scores <- dm@eigenvectors; rownames(diff.scores) <- colnames(norm.counts);
+
+library(RDRToolbox)
+isomap.scores <- Isomap(t(as.matrix(norm.counts[info.genes,])), dims = 2, k = 20)$dim2
+rownames(isomap.scores) <- colnames(norm.counts)
+
+lle.scores <- LLE(t(as.matrix(norm.counts[info.genes,])), dim = 2, k = 20)
+rownames(lle.scores) <- colnames(norm.counts)
+
+mds.scores <- cmdscale(dist(t(as.matrix(norm.counts[info.genes,]))), k = 2)
+pc.scores <- GetCellEmbeddings(se.obj, dims.use = 1:2)
+
+embeddings <- list(swne = t(as.matrix(swne.embedding$sample.coords)),
+                   tsne = t(tsne.scores),
+                   pca = t(pc.scores),
+                   lle = t(lle.scores),
+                   mds = t(mds.scores),
+                   isomap = t(isomap.scores),
+                   dmaps = t(diff.scores),
+                   umap = t(umap.scores))
+```
+
+
+Next we define some helper functions that will help us evaluate these embeddings
+```{r}
+library(FNN)
+library(proxy)
+
+## Calculate approximate kNN for an embedding
+ComputeKNN <- function(emb, k) {
+  knn.idx <- knn.index(t(emb), k = k)
+  knn.matrix <- matrix(0, ncol(emb), ncol(emb))
+  for (i in 1:nrow(knn.idx)) {
+    knn.matrix[knn.idx[i,],i] <- 1
+    knn.matrix[i, knn.idx[i,]] <- 1
+  }
+  rownames(knn.matrix) <- colnames(knn.matrix) <- colnames(emb)
+  as(knn.matrix, "dgCMatrix")
+}
+
+
+## Calculate Jaccard similarities
+CalcJaccard <- function(x,y) {
+  a <- sum(x)
+  b <- sum(y)
+  c <- sum(x == 1 & y == 1)
+  c/(a + b - c)
+}
+
+
+## Function for identifying cells in the same path and time step
+GetPathStep <- function(metadata, step.size, make.factor = T) {
+  path.step <- as.character(metadata$Group); names(path.step) <- rownames(metadata);
+  for (path in levels(factor(metadata$Group))) {
+    steps <- sort(unique(subset(metadata, Group == path)$Step))
+    step.range <- seq(min(steps), max(steps), step.size)
+    for(i in step.range) {
+      cells.step <- rownames(subset(metadata, Group == path & Step %in% seq(i, i + step.size - 1, 1)))
+      path.step[cells.step] <- paste(path, i, sep = ".")
+    }
+  }
+  if (make.factor) {
+    path.step <- factor(path.step)
+  }
+  path.step
+}
+
+
+## Calculate pairwise distances between centroids
+CalcPairwiseDist <- function(data.use, clusters, dist.method = "euclidean") {
+  data.centroids <- t(apply(data.use, 1, function(x) tapply(x, clusters, mean)))
+  return(proxy::dist(data.centroids, method = dist.method, by_rows = F))
+}
+```
+
+
+Compute how well each embedding maintains local structure compared to the original gene expression space by comparing kNN networks.
+```{r}
+n.neighbors <- 40
+ref.knn <- ComputeKNN(norm.counts[info.genes,], k = n.neighbors)
+
+## Compute kNN for embeddings
+embeddings.knn <- lapply(embeddings, ComputeKNN, k = n.neighbors)
+
+knn.simil <- sapply(embeddings.knn, function(knn.emb) {
+  mean(sapply(1:ncol(knn.emb), function(i) CalcJaccard(knn.emb[,i], ref.knn[,i])))
+})
+```
+
+
+Compute how well each embedding maintains global strucutre by computing the centroids of each trajectory-cluster grouping in the embedding space and original gene expression space and correlating the pairwise distances between the centroids.
+```{r}
+metadata.df <- data.frame(Group = clusters, Step = order(pseudotime[names(clusters)]))
+clusters.steps <- GetPathStep(metadata.df, step.size = 50, make.factor = T)
+traj.dist <- CalcPairwiseDist(norm.counts[info.genes,], clusters.steps)
+
+embeddings.cor <- sapply(embeddings, function(emb) {
+  emb.dist <- CalcPairwiseDist(emb, clusters.steps)
+  cor(traj.dist, emb.dist)
+})
+```
+
+
+Plot how well each embedding maintaings global vs local structure.
+```{r}
+library(ggplot2)
+library(ggrepel)
+
+scatter.df <- data.frame(x = knn.simil, y = embeddings.cor, name = names(embeddings))
+ggplot(scatter.df, aes(x, y)) + geom_point(size = 2, alpha = 1) +
+  theme_classic() + theme(legend.position = "none", text = element_text(size = 16)) +
+  xlab("Neighborhood Score") + ylab("Path-Time Distance Correlation") +
+  geom_text_repel(aes(x, y, label = name), size = 5) +
+  xlim(0, max(knn.simil)) + ylim(0, max(embeddings.cor))
+```
