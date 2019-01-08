@@ -65,7 +65,7 @@ get_factor_coords <- function(H, method, pca.red, distance, n.neighbors, min.dis
       umap.cfg$metric <- distance
     }
 
-  H.umap <- umap::umap(t(H), config = umap.cfg, method = "naive")
+    H.umap <- umap::umap(t(H), config = umap.cfg, method = "naive")
     H.coords <- H.umap$layout
   } else {
     stop("Invalid factor projection method")
@@ -352,8 +352,8 @@ RenameFactors <- function(swne.embedding, name.mapping, set.empty = T) {
 #' Plots swne embedding
 #'
 #' @param swne.embedding SWNE embedding (list of factor and sample coordinates) from EmbedSWNE
-#' @param alpha.plot Data point transparency
 #' @param sample.groups Factor defining sample groups
+#' @param alpha.plot Data point transparency
 #' @param do.label Label the sample groups
 #' @param label.size Label font size
 #' @param pt.size Sample point size
@@ -371,7 +371,7 @@ RenameFactors <- function(swne.embedding, name.mapping, set.empty = T) {
 #' @import RColorBrewer
 #' @export
 #'
-PlotSWNE <- function(swne.embedding, alpha.plot = 0.25, sample.groups = NULL, do.label = F,
+PlotSWNE <- function(swne.embedding, sample.groups, alpha.plot = 0.25, do.label = F,
                      label.size = 4.5, pt.size = 1, samples.plot = NULL, show.legend = T, seed = NULL,
                      colors.use = NULL, use.brewer.pal = T, contour.geom = "path",
                      contour.alpha = 0.25) {
@@ -383,19 +383,17 @@ PlotSWNE <- function(swne.embedding, alpha.plot = 0.25, sample.groups = NULL, do
   sample.coords$pt.size <- pt.size
 
   set.seed(seed)
-  if (!is.null(sample.groups)) {
-    sample.groups <- factor(sample.groups[rownames(sample.coords)])
-    if (sum(is.na(sample.groups)) > 0) {
-      sample.groups <- as.character(sample.groups)
-      sample.groups[is.na(sample.groups)] <- "NA"
-      sample.groups <- factor(sample.groups)
-      names(sample.groups) <- rownames(sample.coords)
-    }
-    sample.groups <- factor(sample.groups, levels = sample(levels(sample.groups)))
-    sample.coords$sample.groups <- sample.groups[rownames(sample.coords)]
-  } else {
-    sample.coords$sample.groups <- factor(rep(1, nrow(sample.coords)))
+  sample.groups <- factor(sample.groups[rownames(sample.coords)])
+  n.missing <- sum(is.na(sample.groups))
+  if (n.missing > 0) {
+    na.cells <- names(sample.groups[is.na(sample.groups)])
+    label.cells <- names(sample.groups[!is.na(sample.groups)])
+    na.sample.coords <- sample.coords[na.cells,]
+    sample.coords <- sample.coords[label.cells,]
+    sample.groups <- sample.groups[label.cells]
   }
+  sample.groups <- factor(sample.groups, levels = sample(levels(sample.groups)))
+  sample.coords$sample.groups <- sample.groups[rownames(sample.coords)]
 
   if (!is.null(samples.plot)) {
     sample.coords <- sample.coords[samples.plot,]
@@ -413,6 +411,12 @@ PlotSWNE <- function(swne.embedding, alpha.plot = 0.25, sample.groups = NULL, do
                    geom = contour.geom, position = "identity", type = "t", level = 0.95,
                    na.rm = T, inherit.aes = F, linetype = 2, alpha = contour.alpha,
                    colour = "darkred")
+  }
+
+  if (n.missing > 0) {
+    ## Plot samples with missing labels
+    ggobj <- ggobj +
+      geom_point(data = na.sample.coords, aes(x, y), alpha = alpha.plot, size = pt.size, color = "lightgrey")
   }
 
   ## Plot sample coordinates
@@ -462,12 +466,10 @@ PlotSWNE <- function(swne.embedding, alpha.plot = 0.25, sample.groups = NULL, do
   if (use.brewer.pal) {
     brewer.colors <- colorRampPalette(RColorBrewer::brewer.pal(12, "Paired"))(nlevels(sample.groups))
     names(brewer.colors) <- levels(sample.groups)
-    if ("NA" %in% levels(sample.groups)) brewer.colors[["NA"]] <- "#D3D3D3"
     ggobj <- ggobj + scale_color_manual(values = brewer.colors)
   }
 
   if (!is.null(colors.use)) {
-    colors.use[["NA"]] <- "#D3D3D3"
     if(!all(levels(sample.groups) %in% names(colors.use))) {
       stop("Must specify colors for each group")
     }
@@ -588,25 +590,35 @@ FeaturePlotSWNE <- function(swne.embedding, feature.scores, feature.name = NULL,
 #' @import RColorBrewer
 #' @export
 #'
-PlotDims <- function(dim.scores, sample.groups = NULL, x.lab = "tsne1", y.lab = "tsne2",
+PlotDims <- function(dim.scores, sample.groups, x.lab = "tsne1", y.lab = "tsne2",
                      main.title = NULL, pt.size = 1.0, font.size = 12, alpha.plot = 1.0, do.label = T,
                      label.size = 4, show.legend = T, show.axes = T, seed = NULL, colors.use = NULL,
                      use.brewer.pal = T) {
 
   set.seed(seed)
-  if (!is.null(sample.groups)) {
-    sample.groups <- factor(sample.groups[rownames(dim.scores)])
-    if (sum(is.na(sample.groups)) > 0) {
-      sample.groups <- as.character(sample.groups)
-      sample.groups[is.na(sample.groups)] <- "NA"
-      sample.groups <- factor(sample.groups)
-      names(sample.groups) <- rownames(dim.scores)
-    }
-    sample.groups <- factor(sample.groups, levels = sample(levels(sample.groups)))
+  sample.groups <- factor(sample.groups[rownames(dim.scores)])
+  n.missing <- sum(is.na(sample.groups))
+  if (n.missing > 0) {
+    na.cells <- names(sample.groups[is.na(sample.groups)])
+    label.cells <- names(sample.groups[!is.na(sample.groups)])
+    na.dim.scores <- dim.scores[na.cells,]
+    dim.scores <- dim.scores[label.cells,]
+    sample.groups <- sample.groups[label.cells]
   }
+  sample.groups <- factor(sample.groups, levels = sample(levels(sample.groups)))
 
   gg.df <- data.frame(x = dim.scores[,1], y = dim.scores[,2], sample.groups = sample.groups)
-  ggobj <- ggplot(gg.df, aes(x, y)) + geom_point(size = pt.size, alpha = alpha.plot, aes(colour = sample.groups)) +
+
+  ggobj <- ggplot()
+  if (n.missing > 0) {
+    ## Plot samples with missing labels
+    na.gg.df <- data.frame(x = na.dim.scores[,1], y = na.dim.scores[,2])
+    ggobj <- ggobj + geom_point(data = na.gg.df, aes(x, y), alpha = alpha.plot,
+                                size = pt.size, color = "lightgrey")
+  }
+
+  ggobj <- ggobj + geom_point(data = gg.df, size = pt.size, alpha = alpha.plot,
+                              aes(x, y, colour = sample.groups)) +
     theme(text = element_text(size = font.size)) +
     xlab(x.lab) + ylab(y.lab) + ggtitle(main.title) +
     guides(colour = guide_legend(override.aes = list(alpha = 1, size = label.size)))
@@ -624,8 +636,8 @@ PlotDims <- function(dim.scores, sample.groups = NULL, x.lab = "tsne1", y.lab = 
     group.pts$ident <- levels(gg.df$sample.groups)
     group.pts <- subset(group.pts, ident != "NA")
 
-    ggobj <- ggobj + ggrepel::geom_text_repel(data = group.pts, mapping = aes(label = ident), size = label.size,
-                                              box.padding = 0.15)
+    ggobj <- ggobj + ggrepel::geom_text_repel(data = group.pts, mapping = aes(x, y, label = ident),
+                                              size = label.size, box.padding = 0.15)
   }
 
   if (!show.legend) {
@@ -637,12 +649,10 @@ PlotDims <- function(dim.scores, sample.groups = NULL, x.lab = "tsne1", y.lab = 
   if (use.brewer.pal) {
     brewer.colors <- colorRampPalette(RColorBrewer::brewer.pal(12, "Paired"))(nlevels(sample.groups))
     names(brewer.colors) <- levels(sample.groups)
-    if ("NA" %in% levels(sample.groups)) brewer.colors[["NA"]] <- "#D3D3D3"
     ggobj <- ggobj + scale_color_manual(values = brewer.colors)
   }
 
   if (!is.null(colors.use)) {
-    colors.use[["NA"]] <- "#D3D3D3"
     if(!all(levels(sample.groups) %in% names(colors.use))) {
       stop("Must specify colors for each group")
     }
