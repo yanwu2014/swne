@@ -70,8 +70,8 @@ n.cores <- 24
 nmf.res <- RunNMF(xp[var.genes,], k = 20, n.cores = n.cores, ica.fast = T)
 nmf.res$W <- ProjectFeatures(xp, nmf.res$H, n.cores = n.cores)
 
-snn <- CalcSNN(t(pca), k = 40, prune.SNN = 0.0)
-swne.embedding <- EmbedSWNE(nmf.res$H, SNN = snn, alpha.exp = 1.5, snn.exp = 0.5, n_pull = 3)
+snn <- CalcSNN(t(pca), k = 50, prune.SNN = 0.0)
+swne.embedding <- EmbedSWNE(nmf.res$H, SNN = snn, alpha.exp = 1.25, snn.exp = 0.1, n_pull = 3)
 swne.embedding$H.coords$name <- ""
 
 ## Embed selected genes onto swne plot
