@@ -1,0 +1,201 @@
+---
+title: "Benchmarking SWNE on a large mouse hematopoiesis dataset"
+author: "Yan Wu"
+date: "1/9/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+This is a walkthrough comparing SWNE, UMAP, and t-SNE on a hematopoiesis dataset from the [Mouse Cell Atlas](http://bis.zju.edu.cn/MCA/). Based off of the analysis done by in Figure 2d of [Becht, McInnes et al](https://www.nature.com/articles/nbt.4314).
+
+
+Load the required libraries and data. The Mouse Cell Atlas data as well as the UMAP, tSNE, and PCA reductions can be downloaded [here](ftp://genome-miner.ucsd.edu/swne_files/Han.tar.gz) courtesy of Becht, McInnes et al.
+```{r message=FALSE,warning=FALSE}
+library(Matrix)
+library(swne)
+
+## Load data
+load("~/swne/Data/Han/BM_BMcKit_PB_RData/xp.RData")
+load("~/swne/Data/Han/BM_BMcKit_PB_RData/g2.RData")
+load("~/swne/Data/Han/BM_BMcKit_PB_RData/cells_AUC.RData")
+
+## Filter dataset
+w2 <- !is.na(g2)
+xp <- Matrix::t(xp[w2,])
+
+load("~/swne/Data/Han/BM_BMcKit_PB_RData/pca_g2.RData")
+rownames(pca) <- colnames(xp)
+```
+
+
+Assign labels to cells using the classifier results from Becht, McInnes et al.
+```{r message=FALSE,warning=FALSE}
+## Assign labels to cells
+lineages <- c("Multi Potential Progenitor", "Macrophage Lineage", "Neutrophil Lineage",
+              "Erythrocyte Lineage", "B Cell Lineage", "T Cell Lineage", "NK Cell Lineage")
+cutoffs <- setNames(c(0.04,0.09,0.05,0.045,0.09,0.075,0.04), lineages)
+
+labels <- sapply(lineages, function(i) cells_AUC@assays[[1]][i,][w2] >= cutoffs[i])
+labels <- apply(labels, 1, which)
+labels <- sapply(labels, function(x) { if(length(x) == 1) {x} else {0} })
+labels[labels != 0] <- lineages[labels[labels != 0]]
+labels[labels == 0] <- NA
+names(labels) <- colnames(xp)
+labels <- factor(labels)
+labels <- plyr::revalue(labels, replace = c("Multi Potential Progenitor" = "MPP",
+                                            "Macrophage Lineage" = "Macrophage",
+                                            "Neutrophil Lineage" = "Neutrophil",
+                                            "Erythrocyte Lineage" = "Erythrocyte",
+                                            "B Cell Lineage" = "B Cell",
+                                            "T Cell Lineage" = "T Cell",
+                                            "NK Cell Lineage" = "NK Cell"))
+table(labels); paste("Cells with missing labels:", sum(is.na(labels)))
+```
+
+
+Make the t-SNE plot using the pre-computed t-SNE from Becht, McInnes et al.
+```{r}
+## Set a seed to make sure the cluster colors are consistent
+plot.seed <- 312525
+
+load("~/swne/Data/Han/BM_BMcKit_PB_RData/tsne_g2.RData")
+rownames(tsne) <- names(labels)
+PlotDims(tsne, sample.groups = labels, show.legend = F, show.axes = F,
+         alpha.plot = 0.75, label.size = 4, pt.size = 0.5,
+         seed = plot.seed, use.brewer.pal = T)
+```
+
+
+Make the UMAP plot using the pre-computed UMAP from Becht, McInnes et al.
+```{r}
+load("~/swne/Data/Han/BM_BMcKit_PB_RData/umap_g2.RData")
+rownames(umap) <- names(labels)
+PlotDims(umap, sample.groups = labels, show.legend = F, show.axes = F,
+         alpha.plot = 0.75, label.size = 4, pt.size = 0.5,
+         seed = plot.seed, use.brewer.pal = T)
+```
+
+
+Identify variable genes to use for SWNE
+```{r}
+var.df <- AdjustVariance(xp, verbose = F, plot = T)
+var.df <- var.df[order(var.df$lp),]
+
+n.genes <- 2e3 ## Use the top 2000 genes
+var.genes <- rownames(var.df[1:n.genes,])
+```
+
+
+Run SWNE
+```{r}
+n.cores <- 24
+nmf.res <- RunNMF(xp[var.genes,], k = 20, n.cores = n.cores, ica.fast = T)
+nmf.res$W <- ProjectFeatures(xp, nmf.res$H, n.cores = n.cores)
+
+snn <- CalcSNN(t(pca), k = 40, prune.SNN = 0.0)
+swne.embedding <- EmbedSWNE(nmf.res$H, SNN = snn, alpha.exp = 1.5, snn.exp = 0.5, n_pull = 3)
+swne.embedding$H.coords$name <- ""
+```
+
+
+Embed some hematopoiesis marker genes and plot SWNE embedding
+```{r}
+## Embed selected genes onto swne plot
+genes.embed <- c("Ms4a1", "Cd4", "Ly6g", "Nkg7", "Fcgr1")
+swne.embedding <- EmbedFeatures(swne.embedding, nmf.res$W, genes.embed,
+                                n_pull = 3)
+
+## SWNE plot
+PlotSWNE(swne.embedding, alpha.plot = 0.6, sample.groups = labels, do.label = T,
+         label.size = 4, pt.size = 0.75, show.legend = F, seed = plot.seed,
+         use.brewer.pal = T)
+```
+
+
+Next, we'll define some helper functions for quantitative benchmarking of these embeddings
+```{r}
+library(FNN)
+library(proxy)
+
+## Calculate approximate kNN for an embedding
+ComputeKNN <- function(emb, k) {
+  knn.idx <- knn.index(t(emb), k = k)
+  knn.matrix <- matrix(0, ncol(emb), ncol(emb))
+  for (i in 1:nrow(knn.idx)) {
+    knn.matrix[knn.idx[i,],i] <- 1
+    knn.matrix[i, knn.idx[i,]] <- 1
+  }
+  rownames(knn.matrix) <- colnames(knn.matrix) <- colnames(emb)
+  as(knn.matrix, "dgCMatrix")
+}
+
+
+## Calculate Jaccard similarities
+CalcJaccard <- function(x,y) {
+  a <- sum(x)
+  b <- sum(y)
+  c <- sum(x == 1 & y == 1)
+  c/(a + b - c)
+}
+
+
+## Calculate pairwise distances between centroids
+CalcPairwiseDist <- function(data.use, clusters, dist.method = "euclidean") {
+  data.centroids <- t(apply(data.use, 1, function(x) tapply(x, clusters, mean)))
+  return(proxy::dist(data.centroids, method = dist.method, by_rows = F))
+}
+```
+
+
+
+Compute how well each embedding maintains the pairwise distances between cell types relative to the original gene expression space. This is meant to capture how well each embedding maintains the global structure of the data.
+```{r}
+## Compile embeddings
+embeddings <- list(swne = t(as.matrix(swne.embedding$sample.coords)),
+                   tsne = t(tsne), umap = t(umap))
+
+
+## Compute cluster distance correlations
+label.cells <- names(labels[!is.na(labels)])
+ref.dist <- CalcPairwiseDist(xp[,label.cells], labels[label.cells])
+
+embeddings.cor <- sapply(embeddings, function(emb) {
+  emb.dist <- CalcPairwiseDist(emb[,label.cells], labels[label.cells])
+  cor(ref.dist, emb.dist)
+})
+print(embeddings.cor)
+```
+
+
+Compute how well each embedding maintains the nearest neighbors of each cell relative to the original gene expression space. This is meant to capture how well each embedding maintains the local structure of the data.
+```{r}
+n.neighbors <- 30
+
+## Computing the kNN in the original gene expression space can take a couple hours so to save time we'll load a pre-computed
+## object
+# ref.knn <- ComputeKNN(xp[,label.cells], k = n.neighbors)
+load("~/swne/Data/Han/BM_BMcKit_PB_RData/Han_hemato_ref_knn.RData")
+embeddings.knn <- lapply(embeddings, function(x) ComputeKNN(x[,label.cells], k = n.neighbors))
+
+knn.simil <- sapply(embeddings.knn, function(knn.emb) {
+  mean(sapply(1:ncol(knn.emb), function(i) CalcJaccard(knn.emb[,i], ref.knn[,i])))
+})
+print(knn.simil)
+```
+
+
+Finally we'll plot the combined global/local structure results
+```{r}
+library(ggplot2)
+library(ggrepel)
+
+scatter.df <- data.frame(x = knn.simil, y = embeddings.cor, name = names(embeddings))
+ggplot(scatter.df, aes(x, y)) + geom_point(size = 2, alpha = 1) +
+  theme_classic() + theme(legend.position = "none", text = element_text(size = 16)) +
+  xlab("Neighborhood Similarity") + ylab("Cluster Distance Correlation") +
+  geom_text_repel(aes(x, y, label = name), size = 6.5) +
+  xlim(0, max(knn.simil)) + ylim(0, max(embeddings.cor))
+```
