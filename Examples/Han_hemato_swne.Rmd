@@ -1,7 +1,7 @@
 ---
 title: "Benchmarking SWNE on a large mouse hematopoiesis dataset"
 author: "Yan Wu"
-date: "1/9/2019"
+date: "1/10/2019"
 output: html_document
 ---
 
@@ -79,25 +79,37 @@ PlotDims(umap, sample.groups = labels, show.legend = F, show.axes = F,
 ```
 
 
-Identify variable genes to use for SWNE
+Filter lowly expressed genes and get gene variance info
 ```{r}
-var.df <- AdjustVariance(xp, verbose = F, plot = F)
-var.df <- var.df[order(var.df$lp),]
-
-n.genes <- 8e3
-var.genes <- rownames(var.df[1:n.genes,])
+## 
+norm.xp <- xp*1000
+norm.xp <- FilterData(norm.xp, min.samples.frac = 2.5e-4, trim = 1e-4, min.nonzero.features = 0,
+                      max.sample.sum = Inf)
+var.df <- AdjustVariance(norm.xp, verbose = F, plot = F)
 ```
 
+
+Stabilize gene variances with a log-transformation
+```{r}
+norm.xp@x <- log(norm.xp@x + 1)
+```
+
+
+Select variable genes to use
+```{r}
+n.genes <- 2e3
+var.df <- var.df[order(var.df$lp),]
+var.genes <- rownames(var.df[1:n.genes,])
+```
 
 Run SWNE
 ```{r}
 n.cores <- 24
-nmf.res <- RunNMF(xp[var.genes,], k = 20, n.cores = n.cores, ica.fast = T)
-nmf.res$W <- ProjectFeatures(xp, nmf.res$H, n.cores = n.cores)
+nmf.res <- RunNMF(norm.xp[var.genes,], k = 30, n.cores = n.cores, ica.fast = T)
+nmf.res$W <- ProjectFeatures(norm.xp, nmf.res$H, n.cores = n.cores)
 
-snn <- CalcSNN(t(pca), k = 50, prune.SNN = 0.0)
-swne.embedding <- EmbedSWNE(nmf.res$H, SNN = snn, alpha.exp = 1.25, snn.exp = 0.1, n_pull = 3,
-                            proj.method = "sammon")
+snn <- CalcSNN(t(pca), k = 60, prune.SNN = 0.0)
+swne.embedding <- EmbedSWNE(nmf.res$H, SNN = snn, alpha.exp = 1.25, snn.exp = 0.25, n_pull = 3)
 swne.embedding$H.coords$name <- ""
 ```
 
@@ -105,13 +117,13 @@ swne.embedding$H.coords$name <- ""
 Embed some hematopoiesis marker genes and plot SWNE embedding
 ```{r}
 ## Embed selected genes onto swne plot
-genes.embed <- c("Ms4a1", "Cd4", "Ly6g", "Nkg7", "Fcgr1")
+genes.embed <- c("Ms4a1", "Cd4", "Ly6g", "Fcgr1")
 swne.embedding <- EmbedFeatures(swne.embedding, nmf.res$W, genes.embed,
                                 n_pull = 3)
 
 ## SWNE plot
 PlotSWNE(swne.embedding, alpha.plot = 0.6, sample.groups = labels, do.label = T,
-         label.size = 4, pt.size = 0.75, show.legend = F, seed = plot.seed,
+         label.size = 6, pt.size = 0.75, show.legend = F, seed = plot.seed,
          use.brewer.pal = T)
 ```
 
@@ -155,9 +167,8 @@ CalcPairwiseDist <- function(data.use, clusters, dist.method = "euclidean") {
 Compute how well each embedding maintains the pairwise distances between cell types relative to the original gene expression space. This is meant to capture how well each embedding maintains the global structure of the data.
 ```{r}
 ## Compile embeddings
-embeddings <- list(swne = t(as.matrix(swne.embedding$sample.coords)),
-                   tsne = t(tsne), umap = t(umap))
-
+embeddings <- list(tsne = t(tsne), umap = t(umap))
+swne.emb <- t(as.matrix(swne.embedding$sample.coords))
 
 ## Compute cluster distance correlations
 label.cells <- names(labels[!is.na(labels)])
@@ -167,24 +178,33 @@ embeddings.cor <- sapply(embeddings, function(emb) {
   emb.dist <- CalcPairwiseDist(emb[,label.cells], labels[label.cells])
   cor(ref.dist, emb.dist)
 })
-print(embeddings.cor)
+
+## Compare the SWNE embedding to the variance stabilized expression
+## space to ensure we're comparing apples to apples
+norm.ref.dist <- CalcPairwiseDist(norm.xp[,label.cells], labels[label.cells])
+swne.emb.dist <- CalcPairwiseDist(swne.emb[,label.cells], labels[label.cells])
+embeddings.cor <- c(embeddings.cor, cor(norm.ref.dist, swne.emb.dist))
+names(embeddings.cor) <- c("tsne", "umap", "swne")
 ```
 
 
 Compute how well each embedding maintains the nearest neighbors of each cell relative to the original gene expression space. This is meant to capture how well each embedding maintains the local structure of the data.
 ```{r}
+# Calculate neighborhood fidelity
 n.neighbors <- 30
-
-## Computing the kNN in the original gene expression space can take a couple hours so to save time we'll load a pre-computed
-## object
 # ref.knn <- ComputeKNN(xp[,label.cells], k = n.neighbors)
-load("~/swne/Data/Han/BM_BMcKit_PB_RData/Han_hemato_ref_knn.RData")
-embeddings.knn <- lapply(embeddings, function(x) ComputeKNN(x[,label.cells], k = n.neighbors))
+# norm.ref.knn <- ComputeKNN(norm.xp[,label.cells], k = n.neighbors)
+load("~/swne/Data/Han/BM_BMcKit_PB_RData/Han_hemato_ref_knn.RData") ## Load pre-computed kNN networks to save time. Computing the kNN networks in the original expression space can take quite a bit of time.
 
+## Compute kNN for embeddings
+embeddings.knn <- lapply(embeddings, function(x) ComputeKNN(x[,label.cells], k = n.neighbors))
 knn.simil <- sapply(embeddings.knn, function(knn.emb) {
   mean(sapply(1:ncol(knn.emb), function(i) CalcJaccard(knn.emb[,i], ref.knn[,i])))
 })
-print(knn.simil)
+
+swne.knn <- ComputeKNN(swne.emb[,label.cells], k = n.neighbors)
+knn.simil <- c(knn.simil, mean(sapply(1:ncol(swne.knn), function(i) CalcJaccard(swne.knn[,i], ref.knn[,i])))) 
+names(knn.simil) <- c("tsne", "umap", "swne")
 ```
 
 
@@ -193,7 +213,7 @@ Finally we'll plot the combined global/local structure results
 library(ggplot2)
 library(ggrepel)
 
-scatter.df <- data.frame(x = knn.simil, y = embeddings.cor, name = names(embeddings))
+scatter.df <- data.frame(x = knn.simil, y = embeddings.cor, name = names(embeddings.cor))
 ggplot(scatter.df, aes(x, y)) + geom_point(size = 2, alpha = 1) +
   theme_classic() + theme(legend.position = "none", text = element_text(size = 16)) +
   xlab("Neighborhood Similarity") + ylab("Cluster Distance Correlation") +

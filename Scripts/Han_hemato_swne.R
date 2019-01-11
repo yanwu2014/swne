@@ -32,6 +32,7 @@ labels <- plyr::revalue(labels, replace = c("Multi Potential Progenitor" = "MPP"
                                             "NK Cell Lineage" = "NK Cell"))
 table(labels); paste("Cells with missing labels:", sum(is.na(labels)));
 
+
 ## Run PCA
 load("Han/BM_BMcKit_PB_RData/pca_g2.RData")
 rownames(pca) <- names(labels)
@@ -44,7 +45,7 @@ load("Han/BM_BMcKit_PB_RData/tsne_g2.RData")
 rownames(tsne) <- names(labels)
 pdf("Han_hemato_tsne_plot.pdf", width = 6, height = 6)
 PlotDims(tsne, sample.groups = labels, show.legend = F, show.axes = F,
-         alpha.plot = 0.75, label.size = 4, pt.size = 0.5,
+         alpha.plot = 0.75, label.size = 6, pt.size = 0.5,
          seed = plot.seed, use.brewer.pal = T)
 dev.off()
 
@@ -53,39 +54,46 @@ load("Han/BM_BMcKit_PB_RData/umap_g2.RData")
 rownames(umap) <- names(labels)
 pdf("Han_hemato_umap_plot.pdf", width = 6, height = 6)
 PlotDims(umap, sample.groups = labels, show.legend = F, show.axes = F,
-         alpha.plot = 0.75, label.size = 4, pt.size = 0.5,
+         alpha.plot = 0.75, label.size = 6, pt.size = 0.5,
          seed = plot.seed, use.brewer.pal = T)
 dev.off()
 
-## Run SWNE
 
 ## Filter lowly expressed genes and get gene variance info
-var.df <- AdjustVariance(xp, verbose = F, plot = T)
+norm.xp <- xp*1000
+norm.xp <- FilterData(norm.xp, min.samples.frac = 2.5e-4, trim = 1e-4, min.nonzero.features = 0,
+                      max.sample.sum = Inf)
+var.df <- AdjustVariance(norm.xp, verbose = F, plot = T)
 
+## Stabilize gene variances
+norm.xp@x <- log(norm.xp@x + 1)
+hist(norm.xp@x)
+
+## Select variable genes
 n.genes <- 2e3
 var.df <- var.df[order(var.df$lp),]
 var.genes <- rownames(var.df[1:n.genes,])
 
+## Run SWNE
 n.cores <- 24
-nmf.res <- RunNMF(xp[var.genes,], k = 20, n.cores = n.cores, ica.fast = T)
-nmf.res$W <- ProjectFeatures(xp, nmf.res$H, n.cores = n.cores)
+nmf.res <- RunNMF(norm.xp[var.genes,], k = 30, n.cores = n.cores, ica.fast = T)
+nmf.res$W <- ProjectFeatures(norm.xp, nmf.res$H, n.cores = n.cores)
 
 snn <- CalcSNN(t(pca), k = 50, prune.SNN = 0.0)
-swne.embedding <- EmbedSWNE(nmf.res$H, SNN = snn, alpha.exp = 1.25, snn.exp = 0.1, n_pull = 3)
+swne.embedding <- EmbedSWNE(nmf.res$H, SNN = snn, alpha.exp = 1.25, snn.exp = 0.25, n_pull = 3)
 swne.embedding$H.coords$name <- ""
 
 ## Embed selected genes onto swne plot
-genes.embed <- c("Ms4a1", "Cd4", "Ly6g", "Nkg7", "Fcgr1")
+genes.embed <- c("Ms4a1", "Cd4", "Ly6g", "Fcgr1")
 swne.embedding <- EmbedFeatures(swne.embedding, nmf.res$W, genes.embed,
                                 n_pull = 3)
 
 ## SWNE plots
 pdf("Han_hemato_swne_plot.pdf", width = 6, height = 6)
 PlotSWNE(swne.embedding, alpha.plot = 0.6, sample.groups = labels, do.label = T,
-         label.size = 4, pt.size = 0.75, show.legend = F, seed = plot.seed,
+         label.size = 6, pt.size = 0.75, show.legend = F, seed = plot.seed,
          use.brewer.pal = T)
 dev.off()
-
 
 ## Quantitative evaluation of t-SNE, UMAP, SWNE
 library(FNN)
@@ -121,9 +129,8 @@ CalcPairwiseDist <- function(data.use, clusters, dist.method = "euclidean") {
 
 
 ## Compile embeddings
-embeddings <- list(swne = t(as.matrix(swne.embedding$sample.coords)),
-                   tsne = t(tsne), umap = t(umap))
-
+embeddings <- list(tsne = t(tsne), umap = t(umap))
+swne.emb <- t(as.matrix(swne.embedding$sample.coords))
 
 ## Compute cluster distance correlations
 label.cells <- names(labels[!is.na(labels)])
@@ -133,30 +140,40 @@ embeddings.cor <- sapply(embeddings, function(emb) {
   emb.dist <- CalcPairwiseDist(emb[,label.cells], labels[label.cells])
   cor(ref.dist, emb.dist)
 })
-print(embeddings.cor)
+
+## Compare the SWNE embedding to the variance stabilized expression
+## space to ensure we're comparing apples to apples
+norm.ref.dist <- CalcPairwiseDist(norm.xp[,label.cells], labels[label.cells])
+swne.emb.dist <- CalcPairwiseDist(swne.emb[,label.cells], labels[label.cells])
+embeddings.cor <- c(embeddings.cor, cor(norm.ref.dist, swne.emb.dist))
+names(embeddings.cor) <- c("tsne", "umap", "swne")
+embeddings.cor
 
 ## Calculate neighborhood fidelity
 n.neighbors <- 30
 ref.knn <- ComputeKNN(xp[,label.cells], k = n.neighbors)
+norm.ref.knn <- ComputeKNN(norm.xp[,label.cells], k = n.neighbors)
+save(ref.knn, norm.ref.knn, file = "Han_hemato_ref_knn.RData")
 
 ## Compute kNN for embeddings
 embeddings.knn <- lapply(embeddings, function(x) ComputeKNN(x[,label.cells], k = n.neighbors))
-
 knn.simil <- sapply(embeddings.knn, function(knn.emb) {
   mean(sapply(1:ncol(knn.emb), function(i) CalcJaccard(knn.emb[,i], ref.knn[,i])))
 })
-print(knn.simil)
 
+swne.knn <- ComputeKNN(swne.emb[,label.cells], k = n.neighbors)
+knn.simil <- c(knn.simil, mean(sapply(1:ncol(swne.knn), function(i) CalcJaccard(swne.knn[,i], ref.knn[,i])))) 
+names(knn.simil) <- c("tsne", "umap", "swne")
 
 library(ggplot2)
 library(ggrepel)
 
 pdf("Han_hemato_quant_eval.pdf", width = 5, height = 4.5)
-scatter.df <- data.frame(x = knn.simil, y = embeddings.cor, name = names(embeddings))
+scatter.df <- data.frame(x = knn.simil, y = embeddings.cor, name = names(embeddings.cor))
 ggplot(scatter.df, aes(x, y)) + geom_point(size = 2, alpha = 1) +
   theme_classic() + theme(legend.position = "none", text = element_text(size = 16)) +
   xlab("Neighborhood Similarity") + ylab("Cluster Distance Correlation") +
-  geom_text_repel(aes(x, y, label = name), size = 6.5) +
+  geom_text_repel(aes(x, y, label = name), size = 8) +
   xlim(0, max(knn.simil)) + ylim(0, max(embeddings.cor))
 dev.off()
 
