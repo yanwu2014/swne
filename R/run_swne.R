@@ -1,12 +1,12 @@
 #' Wrapper for running SWNE analysis
 #'
-#' @param object A Seurat or Pagoda2 object with normalized data
+#' @param object A Seurat, Pagoda2 or cisTopicObject object with normalized data
 #' @param reduction.use Which dimensional reduction (e.g. PCA, ICA) to use for the tSNE. Default is PCA.
 #' @param cells.use Which cells to analyze (default, all cells)
 #' @param dims.use Which dimensions to use as input features
 #' @param genes.use If set, run the SWNE on this subset of genes (instead of running on a set of reduced dimensions). Not set (NULL) by default
 #' @param data.matrix a data matrix (genes x cells) which has been pre-normalized
-#' @param batch Vector of batch effects to correct for
+#' @param batch Vector of batch IDs to regress away
 #' @param proj.method Method to use to project factors in 2D. Either "sammon" or "umap"
 #' @param dist.use Similarity function to use for calculating factor positions (passed to EmbedSWNE).
 #'                 Options include pearson (correlation), IC (mutual information), cosine, euclidean.
@@ -35,6 +35,34 @@ RunSWNE <- function(x, ...) {
   UseMethod("RunSWNE")
 }
 
+
+
+#' @rdname RunSWNE
+#' @method RunSWNE cisTopic
+#' @export
+#' @import cisTopic
+RunSWNE.cisTopic <- function(cisTopicObject, proj.method = "sammon", cells.use = NULL,
+                             dist.metric = "cosine", n.cores = 8, hide.factors = T, n_pull = 3,
+                             alpha.exp = 1.25, # Increase this > 1.0 to move the cells closer to the factors. Values > 2 start to distort the data.
+                             snn.exp = 1.0, # Lower this < 1.0 to move similar cells closer to each other
+                             snn.k = 20,
+                             prune.SNN = 1/15) {
+
+  cisTopicObject <- getRegionsScores(cisTopicObject)
+  cisTopicObject <- cisTopic::runPCA(cisTopicObject, target = "cell", method = "Probability")
+
+  pc.emb <- t(cisTopicObject@dr$cell[["PCA"]]$ind.coord)
+  topic.emb <- modelMatSelection(cisTopicObject, target = "cell", method = "Probability")
+
+  snn <- CalcSNN(pc.emb, k = snn.k, prune.SNN = prune.SNN)
+  swne.emb <- EmbedSWNE(topic.emb, snn, alpha.exp = alpha.exp, snn.exp = snn.exp, n_pull = n_pull)
+
+  if (hide.factors) {
+    swne.emb$H.coords$name <- ""
+  }
+
+  return(swne.emb)
+}
 
 
 #' @rdname RunSWNE

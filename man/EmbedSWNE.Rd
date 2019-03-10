@@ -5,7 +5,7 @@
 \title{Embeds NMF factors and samples in 2 dimensions}
 \usage{
 EmbedSWNE(H, SNN = NULL, alpha.exp = 1, snn.exp = 1, n_pull = NULL,
-  proj.method = "umap", pca.red = F, dist.use = "cosine",
+  proj.method = "sammon", pca.red = F, dist.use = "cosine",
   snn.factor.proj = T, n.neighbors = max(round(nrow(H)/3), 4),
   min.dist = 0.5)
 }

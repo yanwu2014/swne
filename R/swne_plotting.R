@@ -198,44 +198,6 @@ EmbedFeatures <- function(swne.embedding, feature.assoc, features.embed, alpha.e
 }
 
 
-#' Embeds genesets relative to factor coordinates
-#'
-#' @param swne.embedding Existing swne embedding from EmbedSWNE
-#' @param feature.assoc Feature loadings or correlations (features x factors)
-#' @param genesets.embed Genesets to embed (in the form of a named list of genes)
-#' @param alpha.exp Increasing alpha.exp increases how much the factors "pull" the features
-#' @param n_pull Number of factors pulling on each feature. Must be >= 3
-#' @param scale.cols Whether or not to scale the input columns to 0 - 1
-#' @param overwrite Whether or not to overwrite any existing feature embedding
-#'
-#' @return swne.embedding with updated feature coordinates (feature.coords)
-#'
-#' @export
-#'
-EmbedGenesets <- function(swne.embedding, feature.assoc, genesets.embed, alpha.exp = 1, n_pull = NULL,
-                          scale.cols = T, overwrite = F) {
-  feature.assoc <- do.call(cbind, lapply(genesets.embed, function(genes) {
-    apply(feature.assoc[genes,], 2, mean)
-  }))
-  stopifnot(nrow(swne.embedding$H.coords) == nrow(feature.assoc))
-
-  if (scale.cols) {
-    feature.assoc <- apply(feature.assoc, 2, normalize_vector, method = "bounded")
-  }
-
-  feature.coords <- get_sample_coords(feature.assoc, swne.embedding$H.coords, alpha = alpha.exp, n_pull = n_pull)
-  feature.coords <- data.frame(feature.coords)
-  feature.coords$name <- rownames(feature.coords); rownames(feature.coords) <- NULL;
-
-  if (overwrite || is.null(swne.embedding$feature.coords)) {
-    swne.embedding$feature.coords <- feature.coords
-  } else {
-    swne.embedding$feature.coords <- rbind(swne.embedding$feature.coords, feature.coords)
-  }
-
-  return(swne.embedding)
-}
-
 
 
 #' Embeds data for generating elliptical contours to mark areas where features are present
@@ -373,7 +335,7 @@ RenameFactors <- function(swne.embedding, name.mapping, set.empty = T) {
 #'
 PlotSWNE <- function(swne.embedding, sample.groups, alpha.plot = 0.25, do.label = F,
                      label.size = 4.5, pt.size = 1, samples.plot = NULL, show.legend = T, seed = NULL,
-                     colors.use = NULL, use.brewer.pal = T, contour.geom = "path",
+                     colors.use = NULL, use.brewer.pal = F, contour.geom = "path",
                      contour.alpha = 0.25) {
   H.coords <- swne.embedding$H.coords
   H.coords.plot <- subset(H.coords, name != "")
@@ -593,7 +555,7 @@ FeaturePlotSWNE <- function(swne.embedding, feature.scores, feature.name = NULL,
 PlotDims <- function(dim.scores, sample.groups, x.lab = "tsne1", y.lab = "tsne2",
                      main.title = NULL, pt.size = 1.0, font.size = 12, alpha.plot = 1.0, do.label = T,
                      label.size = 4, show.legend = T, show.axes = T, seed = NULL, colors.use = NULL,
-                     use.brewer.pal = T) {
+                     use.brewer.pal = F) {
 
   set.seed(seed)
   sample.groups <- factor(sample.groups[rownames(dim.scores)])

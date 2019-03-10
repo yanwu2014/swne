@@ -4,11 +4,10 @@
 \alias{PlotDims}
 \title{Plots 2D embedding}
 \usage{
-PlotDims(dim.scores, sample.groups = NULL, x.lab = "tsne1",
-  y.lab = "tsne2", main.title = NULL, pt.size = 1, font.size = 12,
-  alpha.plot = 1, do.label = T, label.size = 4, show.legend = T,
-  show.axes = T, seed = NULL, colors.use = NULL,
-  use.brewer.pal = T)
+PlotDims(dim.scores, sample.groups, x.lab = "tsne1", y.lab = "tsne2",
+  main.title = NULL, pt.size = 1, font.size = 12, alpha.plot = 1,
+  do.label = T, label.size = 4, show.legend = T, show.axes = T,
+  seed = NULL, colors.use = NULL, use.brewer.pal = F)
 }
 \arguments{
 \item{dim.scores}{2D embedding coordinates. Must be N x 2 samples}

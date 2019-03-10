@@ -4,17 +4,17 @@
 \alias{PlotSWNE}
 \title{Plots swne embedding}
 \usage{
-PlotSWNE(swne.embedding, alpha.plot = 0.25, sample.groups = NULL,
+PlotSWNE(swne.embedding, sample.groups, alpha.plot = 0.25,
   do.label = F, label.size = 4.5, pt.size = 1, samples.plot = NULL,
   show.legend = T, seed = NULL, colors.use = NULL,
-  use.brewer.pal = T, contour.geom = "path", contour.alpha = 0.25)
+  use.brewer.pal = F, contour.geom = "path", contour.alpha = 0.25)
 }
 \arguments{
 \item{swne.embedding}{SWNE embedding (list of factor and sample coordinates) from EmbedSWNE}
 
-\item{alpha.plot}{Data point transparency}
-
 \item{sample.groups}{Factor defining sample groups}
+
+\item{alpha.plot}{Data point transparency}
 
 \item{do.label}{Label the sample groups}
 

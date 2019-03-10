@@ -2,6 +2,7 @@
 % Please edit documentation in R/run_swne.R
 \name{RunSWNE}
 \alias{RunSWNE}
+\alias{RunSWNE.cisTopic}
 \alias{RunSWNE.seurat}
 \alias{RunSWNE.Pagoda2}
 \alias{RunSWNE.dgCMatrix}
@@ -9,7 +10,12 @@
 \alias{RunSWNE.dgTMatrix}
 \title{Wrapper for running SWNE analysis}
 \usage{
-\method{RunSWNE}{seurat}(object, proj.method = "umap",
+\method{RunSWNE}{cisTopic}(cisTopicObject, proj.method = "sammon",
+  cells.use = NULL, dist.metric = "cosine", n.cores = 8,
+  hide.factors = T, n_pull = 3, alpha.exp = 1.25, snn.exp = 1,
+  snn.k = 20, prune.SNN = 1/15)
+
+\method{RunSWNE}{seurat}(object, proj.method = "sammon",
   reduction.use = "pca", cells.use = NULL, dims.use = NULL,
   genes.use = NULL, dist.metric = "cosine", distance.matrix = NULL,
   n.cores = 8, k, k.range, var.genes, loss = "mse", genes.embed,
@@ -17,42 +23,50 @@
   reduction.name = "swne", reduction.key = "SWNE_",
   return.format = c("embedding", "seurat"), ...)
 
-\method{RunSWNE}{Pagoda2}(object, proj.method = "umap",
+\method{RunSWNE}{Pagoda2}(object, proj.method = "sammon",
   dist.metric = "cosine", n.cores = 8, k, k.range, var.genes,
   loss = "mse", genes.embed, hide.factors = T, n_pull = 3,
   n.var.genes = 3000, alpha.exp = 1.25, snn.exp = 1)
 
-\method{RunSWNE}{dgCMatrix}(data.matrix, proj.method = "umap",
+\method{RunSWNE}{dgCMatrix}(data.matrix, proj.method = "sammon",
   dist.metric = "cosine", n.cores = 3, k, k.range,
   var.genes = rownames(data.matrix), loss = "mse", genes.embed,
   hide.factors = T, n_pull = 3, alpha.exp = 1.25, snn.exp = 1)
 
-\method{RunSWNE}{matrix}(data.matrix, proj.method = "umap",
+\method{RunSWNE}{matrix}(data.matrix, proj.method = "sammon",
   dist.metric = "cosine", n.cores = 3, k, k.range,
   var.genes = rownames(data.matrix), loss = "mse", genes.embed,
   hide.factors = T, n_pull = 3, alpha.exp = 1.25, snn.exp = 1)
 
-\method{RunSWNE}{dgTMatrix}(data.matrix, proj.method = "umap",
+\method{RunSWNE}{dgTMatrix}(data.matrix, proj.method = "sammon",
   dist.metric = "cosine", n.cores = 3, k, k.range,
   var.genes = rownames(data.matrix), loss = "mse", genes.embed,
   hide.factors = T, n_pull = 3, alpha.exp = 1.25, snn.exp = 1)
 }
 \arguments{
-\item{object}{A Seurat or Pagoda2 object with normalized data}
-
 \item{proj.method}{Method to use to project factors in 2D. Either "sammon" or "umap"}
 
-\item{reduction.use}{Which dimensional reduction (e.g. PCA, ICA) to use for the tSNE. Default is PCA.}
-
 \item{cells.use}{Which cells to analyze (default, all cells)}
+
+\item{n.cores}{Number of cores to use (passed to FindNumFactors)}
+
+\item{hide.factors}{Hide factors when plotting SWNE embedding}
+
+\item{n_pull}{Maximum number of factors "pulling" on each sample}
+
+\item{alpha.exp}{Increasing alpha.exp increases how much the NMF factors "pull" the samples (passed to EmbedSWNE)}
+
+\item{snn.exp}{Decreasing snn.exp increases the effect of the similarity matrix on the embedding (passed to EmbedSWNE)}
+
+\item{object}{A Seurat, Pagoda2 or cisTopicObject object with normalized data}
+
+\item{reduction.use}{Which dimensional reduction (e.g. PCA, ICA) to use for the tSNE. Default is PCA.}
 
 \item{dims.use}{Which dimensions to use as input features}
 
 \item{genes.use}{If set, run the SWNE on this subset of genes (instead of running on a set of reduced dimensions). Not set (NULL) by default}
 
 \item{distance.matrix}{If set, runs tSNE on the given distance matrix instead of data matrix (experimental)}
-
-\item{n.cores}{Number of cores to use (passed to FindNumFactors)}
 
 \item{k}{Number of NMF factors (passed to RunNMF). If none given, will be derived from FindNumFactors.}
 
@@ -64,14 +78,6 @@
 
 \item{genes.embed}{Genes to add to the SWNE embedding}
 
-\item{hide.factors}{Hide factors when plotting SWNE embedding}
-
-\item{n_pull}{Maximum number of factors "pulling" on each sample}
-
-\item{alpha.exp}{Increasing alpha.exp increases how much the NMF factors "pull" the samples (passed to EmbedSWNE)}
-
-\item{snn.exp}{Decreasing snn.exp increases the effect of the similarity matrix on the embedding (passed to EmbedSWNE)}
-
 \item{reduction.name}{dimensional reduction name, specifies the position in the object$dr list. swne by default}
 
 \item{reduction.key}{dimensional reduction key, specifies the string before the number for the dimension names. SWNE_ by default}
@@ -82,7 +88,7 @@
 
 \item{data.matrix}{a data matrix (genes x cells) which has been pre-normalized}
 
-\item{batch}{Vector of batch effects to correct for}
+\item{batch}{Vector of batch IDs to regress away}
 
 \item{dist.use}{Similarity function to use for calculating factor positions (passed to EmbedSWNE).
 Options include pearson (correlation), IC (mutual information), cosine, euclidean.}

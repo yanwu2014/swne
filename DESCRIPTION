@@ -1,14 +1,13 @@
 Package: swne
 Type: Package
 Title: Similarity Weighted Nonnegative Embedding: A method for visualizing high dimensional datasets
-Version: 0.3.7
+Version: 0.4.0
 Author: Yan Wu
 Maintainer: Yan Wu <yauwning@gmail.com>
-Description: Uses NMF to reduce high dimenensional dataset into NMF components, embeds NMF components
-  in a 2D space for visualization, and then embeds the data points based on their NMF component magnitudes,
-  using a similarity matrix to ensure that data points close in the high dimensional space are also close 
-  in the 2D visualization. Because the NMFs are embedded in the visualization as well,
-  they can be interpreted via correlation with the features in the dataset.
+Description: Uses matrix factorization to reduce high dimenensional dataset into factors, embeds factors
+  in a 2D space for visualization, and then embeds samples and features relative to the factors,
+  using a similarity matrix to ensure that samples which are close in the high dimensional space are also close 
+  in the 2D visualization. The embedding of key features enhances interpretation of SWNE visualizations.
 Authors@R: person("Yan", "Wu", email = "yauwning@gmail.com", role = c("aut", "cre"))
 License: GPL-2
 Encoding: UTF-8
@@ -40,10 +39,12 @@ Imports:
   irlba,
   methods,
   umap,
-  reshape,
-  snow
+  reshape
 Remotes:
+  aertslab/cisTopic,
   JEFworks/liger
 Suggests:
-  Seurat (>= 2.3.4)
+  Seurat (>= 2.3.4),
+  org.Hs.eg.db,
+  TxDb.Hsapiens.UCSC.hg38.knownGene
 RoxygenNote: 6.1.1
