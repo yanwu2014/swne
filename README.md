@@ -12,9 +12,7 @@ If you use SWNE in your research, please consider citing [Wu et al, Cell Systems
 Run the following code to install the package using devtools:
 
 ```
-if(!require(devtools)){
-install.packages("devtools") # If not already installed
-}
+if(!require(devtools)){ install.packages("devtools") # If not already installed; }
 devtools::install_github("yanwu2014/swne")
 ```
 
@@ -50,15 +48,24 @@ PlotSWNE(swne.embedding, alpha.plot = 0.4, sample.groups = clusters,
 
 
 ## Chromatin Accessibility Quickstart with cisTopic
-Download the example [cisTopic object](https://bit.ly/2HnClXK) which contains single cell THS-seq profiles of 14,535 human brain cells
+Download the example [cisTopic object](https://bit.ly/2HnClXK) which contains single cell THS-seq profiles of 14,535 human brain cells from [Lake, Sos, Chen et al, NBT, 2017](https://www.nature.com/articles/nbt.4038)
 
 ```
 library(cisTopic)
 library(swne)
+library(org.Hs.eg.db)
+library(TxDb.Hsapiens.UCSC.hg38.knownGene)
 
 ## Load data
 cisTopicObject <- readRDS("Data/adult-vCTX_cisTopic.RObj")
+
+## Pull out clusters
 clusters <- cisTopicObject@other$clusters
+
+## Annotate regions
+cisTopicObject <- getRegionsScores(cisTopicObject)
+cisTopicObject <- annotateRegions(cisTopicObject, txdb = TxDb.Hsapiens.UCSC.hg38.knownGene,
+                                  annoDb = "org.Hs.eg.db")
 
 ## Run SWNE embedding
 swne.emb <- RunSWNE(cisTopicObject, alpha.exp = 1.25, snn.exp = 1, snn.k = 30)

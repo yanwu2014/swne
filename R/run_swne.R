@@ -39,8 +39,8 @@ RunSWNE <- function(x, ...) {
 
 #' @rdname RunSWNE
 #' @method RunSWNE cisTopic
-#' @export
 #' @import cisTopic
+#' @export
 RunSWNE.cisTopic <- function(cisTopicObject, proj.method = "sammon", cells.use = NULL,
                              dist.metric = "cosine", n.cores = 8, hide.factors = T, n_pull = 3,
                              alpha.exp = 1.25, # Increase this > 1.0 to move the cells closer to the factors. Values > 2 start to distort the data.

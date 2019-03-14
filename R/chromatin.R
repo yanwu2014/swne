@@ -11,17 +11,11 @@
 #'
 #' @return swne.embedding with feature coordinates (feature.coords)
 #'
-#' @import org.Hs.eg.db
-#' @import TxDb.Hsapiens.UCSC.hg38.knownGene
 #' @import cisTopic
-#'
 #' @export
 #'
 EmbedPromoters <- function(swne.embedding, cisTopicObject, genes.embed, peaks.use = NULL, alpha.exp = 1, n_pull = 3,
                            scale.cols = T, overwrite = T) {
-  cisTopicObject <- getRegionsScores(cisTopicObject)
-  cisTopicObject <- annotateRegions(cisTopicObject, txdb = TxDb.Hsapiens.UCSC.hg38.knownGene,
-                                    annoDb = "org.Hs.eg.db")
   regions.anno <- cisTopicObject@region.data
 
   if (!is.null(peaks.use)) regions.anno <- regions.anno[peaks.use,]
