@@ -294,6 +294,11 @@ SelectFeatures <- function(counts, batch = NULL, n.features = 3e3, gam.k = 10) {
 #' @export
 #'
 ExtractDebatchedSeurat <- function(se.obj) {
+  if (!requireNamespace(Seurat, quietly = T)) {
+    stop("Seurat needed for this function to work. Please install it.",
+         call. = F)
+  }
+
   if (!ncol(se.obj@dr$cca.aligned@cell.embeddings) != length(se.obj@cell.names)) {
     stop("Run CCA alignment first")
   }
@@ -330,6 +335,10 @@ ExtractNormCounts <- function(obj, obj.type = "seurat", rescale = T, rescale.met
   }
 
   if (obj.type == "seurat") {
+    if (!requireNamespace(Seurat, quietly = T)) {
+      stop("Seurat needed for this function to work. Please install it.",
+           call. = F)
+    }
     if (rescale) {
       counts <- obj@raw.data[,intersect(obj@cell.names, colnames(obj@raw.data))]
       norm.counts <- ScaleCounts(counts, batch = batch, method = rescale.method)
@@ -338,6 +347,10 @@ ExtractNormCounts <- function(obj, obj.type = "seurat", rescale = T, rescale.met
       norm.counts <- t(apply(norm.counts, 1, function(x) (x - min(x))/(max(x) - min(x))))
     }
   } else if (obj.type == "pagoda2") {
+    if (!requireNamespace(pagoda2, quietly = T)) {
+      stop("pagoda2 needed for this function to work. Please install it.",
+           call. = F)
+    }
     if (!is.null(obj$counts)) {
       counts <- Matrix::t(obj$misc$rawCounts[intersect(rownames(obj$misc$rawCounts), rownames(obj$counts)),])
     } else {

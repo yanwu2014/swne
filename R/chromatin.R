@@ -11,11 +11,14 @@
 #'
 #' @return swne.embedding with feature coordinates (feature.coords)
 #'
-#' @import cisTopic
 #' @export
 #'
 EmbedPromoters <- function(swne.embedding, cisTopicObject, genes.embed, peaks.use = NULL, alpha.exp = 1, n_pull = 3,
                            scale.cols = T, overwrite = T) {
+  if (!requireNamespace(cisTopic, quietly = T)) {
+    stop("cisTopic needed for this function to work. Please install it.",
+         call. = F)
+  }
   regions.anno <- cisTopicObject@region.data
 
   if (!is.null(peaks.use)) regions.anno <- regions.anno[peaks.use,]
