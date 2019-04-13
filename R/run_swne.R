@@ -68,8 +68,6 @@ RunSWNE.cisTopic <- function(cisTopicObject, proj.method = "sammon", cells.use =
 #' @rdname RunSWNE
 #' @method RunSWNE seurat
 #' @export
-#' @import Seurat
-
 RunSWNE.seurat <- function(object, proj.method = "sammon", reduction.use = "pca", cells.use = NULL, dims.use = NULL, genes.use = NULL,
                            dist.metric = "cosine", distance.matrix = NULL,  n.cores = 8, k, k.range, var.genes,
                            loss = "mse", genes.embed, hide.factors = T, n_pull = 3,
@@ -77,6 +75,8 @@ RunSWNE.seurat <- function(object, proj.method = "sammon", reduction.use = "pca"
                            snn.exp = 1.0, # Lower this < 1.0 to move similar cells closer to each other
                            reduction.name = "swne", reduction.key = "SWNE_", return.format = c("embedding", "seurat"), ...
 ){
+  requireNamespace(Seurat)
+
   if (is.null(dims.use)) {
     if (is.null(k) || missing(k)) {
       dims.use <- 1:20
