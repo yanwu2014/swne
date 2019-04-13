@@ -16,6 +16,15 @@ if(!require(devtools)){ install.packages("devtools") # If not already installed;
 devtools::install_github("yanwu2014/swne")
 ```
 
+If you want to run SWNE on chromatin accessibility data, install [cisTopic](github.com/aertslab/cisTopic) as well.
+
+```
+devtools::install_github("aertslab/RcisTarget")
+devtools::install_github("aertslab/AUCell")
+devtools::install_github("aertslab/cisTopic")
+```
+
+
 ## Recent Updates
 *(03/09/2019): Added functionality for analyzing single cell chromatin accessibility data with `RunSWNE`, `EmbedPromoter`, and changed default color scheme of plots
 

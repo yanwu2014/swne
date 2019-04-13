@@ -39,7 +39,6 @@ RunSWNE <- function(x, ...) {
 
 #' @rdname RunSWNE
 #' @method RunSWNE cisTopic
-#' @import cisTopic
 #' @export
 RunSWNE.cisTopic <- function(cisTopicObject, proj.method = "sammon", cells.use = NULL,
                              dist.metric = "cosine", n.cores = 8, hide.factors = T, n_pull = 3,
@@ -47,6 +46,7 @@ RunSWNE.cisTopic <- function(cisTopicObject, proj.method = "sammon", cells.use =
                              snn.exp = 1.0, # Lower this < 1.0 to move similar cells closer to each other
                              snn.k = 20,
                              prune.SNN = 1/15) {
+  requireNamespace(cisTopic)
 
   cisTopicObject <- getRegionsScores(cisTopicObject)
   cisTopicObject <- cisTopic::runPCA(cisTopicObject, target = "cell", method = "Probability")

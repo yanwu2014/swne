@@ -41,10 +41,8 @@ Imports:
   umap,
   reshape
 Remotes:
-  aertslab/RcisTarget,
-  aertslab/AUCell,
-  aertslab/cisTopic,
   JEFworks/liger
 Suggests:
-  Seurat (>= 2.3.4)
+  Seurat (>= 2.3.4),
+  cisTopic
 RoxygenNote: 6.1.1
