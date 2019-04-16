@@ -46,7 +46,7 @@ RunSWNE.cisTopic <- function(cisTopicObject, proj.method = "sammon", cells.use =
                              snn.exp = 1.0, # Lower this < 1.0 to move similar cells closer to each other
                              snn.k = 20,
                              prune.SNN = 1/15) {
-  if (!requireNamespace(cisTopic, quietly = T)) {
+  if (!requireNamespace("cisTopic", quietly = T)) {
     stop("cisTopic needed for this function to work. Please install it.",
          call. = F)
   }
@@ -78,7 +78,7 @@ RunSWNE.seurat <- function(object, proj.method = "sammon", reduction.use = "pca"
                            snn.exp = 1.0, # Lower this < 1.0 to move similar cells closer to each other
                            reduction.name = "swne", reduction.key = "SWNE_", return.format = c("embedding", "seurat"), ...
 ){
-  if (!requireNamespace(Seurat, quietly = T)) {
+  if (!requireNamespace("Seurat", quietly = T)) {
     stop("Seurat needed for this function to work. Please install it.",
          call. = F)
   }
@@ -169,7 +169,7 @@ RunSWNE.Pagoda2 <- function(object, proj.method = "sammon", dist.metric = "cosin
                             alpha.exp = 1.25, # Increase this > 1.0 to move the cells closer to the factors. Values > 2 start to distort the data.
                             snn.exp = 1.0 # Lower this < 1.0 to move similar cells closer to each other
 ){
-  if (!requireNamespace(pagoda2, quietly = T)) {
+  if (!requireNamespace("pagoda2", quietly = T)) {
     stop("pagoda2 needed for this function to work. Please install it.",
          call. = F)
   }

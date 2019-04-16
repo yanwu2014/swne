@@ -15,7 +15,7 @@
 #'
 EmbedPromoters <- function(swne.embedding, cisTopicObject, genes.embed, peaks.use = NULL, alpha.exp = 1, n_pull = 3,
                            scale.cols = T, overwrite = T) {
-  if (!requireNamespace(cisTopic, quietly = T)) {
+  if (!requireNamespace("cisTopic", quietly = T)) {
     stop("cisTopic needed for this function to work. Please install it.",
          call. = F)
   }

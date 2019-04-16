@@ -294,7 +294,7 @@ SelectFeatures <- function(counts, batch = NULL, n.features = 3e3, gam.k = 10) {
 #' @export
 #'
 ExtractDebatchedSeurat <- function(se.obj) {
-  if (!requireNamespace(Seurat, quietly = T)) {
+  if (!requireNamespace("Seurat", quietly = T)) {
     stop("Seurat needed for this function to work. Please install it.",
          call. = F)
   }
@@ -335,7 +335,7 @@ ExtractNormCounts <- function(obj, obj.type = "seurat", rescale = T, rescale.met
   }
 
   if (obj.type == "seurat") {
-    if (!requireNamespace(Seurat, quietly = T)) {
+    if (!requireNamespace("Seurat", quietly = T)) {
       stop("Seurat needed for this function to work. Please install it.",
            call. = F)
     }
@@ -347,7 +347,7 @@ ExtractNormCounts <- function(obj, obj.type = "seurat", rescale = T, rescale.met
       norm.counts <- t(apply(norm.counts, 1, function(x) (x - min(x))/(max(x) - min(x))))
     }
   } else if (obj.type == "pagoda2") {
-    if (!requireNamespace(pagoda2, quietly = T)) {
+    if (!requireNamespace("pagoda2", quietly = T)) {
       stop("pagoda2 needed for this function to work. Please install it.",
            call. = F)
     }
