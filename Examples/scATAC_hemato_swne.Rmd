@@ -9,10 +9,10 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-This is a walkthrough on how to use SWNE to visualize a hematopoiesis chromatin accessibility trajectory from [Buenrostro et al, 2018](https://doi.org/10.1016/j.cell.2018.03.074), starting from a [cisTopic](https://github.com/aertslab/cisTopic) object that has already been processed using the cisTopic pipeline. That object can be downloaded [here](ftp://genome-miner.ucsd.edu/swne_files/scATAC_hemato_cisTopic.Robj).
+This is a walkthrough on how to use SWNE to visualize a hematopoiesis chromatin accessibility trajectory from [Buenrostro et al, 2018](https://doi.org/10.1016/j.cell.2018.03.074), starting from a [cisTopic](https://github.com/aertslab/cisTopic) object that has already been processed using the cisTopic pipeline. That data can be downloaded [here](ftp://genome-miner.ucsd.edu/swne_files/scATAC_hemato_cisTopic.RData).
+
 
 Before we start, you'll need some additional packages for TF binding site annotation and analysis.
-
 ```{r eval=FALSE}
 if (!requireNamespace("BiocManager", quietly = TRUE))
     install.packages("BiocManager")
@@ -30,8 +30,8 @@ if(!require(devtools)){
 devtools::install_github("GreenleafLab/chromVARmotifs")
 ```
 
-Load the required libraries and data. The data has already been preprocessed with  using their standard pipeline. 
 
+Load the required libraries and data. The data has already been preprocessed with  using their standard pipeline. 
 ```{r message=FALSE,warning=FALSE}
 library(cisTopic)
 library(swne)
