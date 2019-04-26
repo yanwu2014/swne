@@ -196,7 +196,7 @@ $(document).ready(function () {
 </div>
 
 
-<p>This is a walkthrough on how to use SWNE to visualize a hematopoiesis chromatin accessibility trajectory from <a href="https://doi.org/10.1016/j.cell.2018.03.074">Buenrostro et al, 2018</a>, starting from a <a href="https://github.com/aertslab/cisTopic">cisTopic</a> object that has already been processed using the cisTopic pipeline. That object can be downloaded <a href="ftp://genome-miner.ucsd.edu/swne_files/scATAC_hemato_cisTopic.Robj">here</a>.</p>
+<p>This is a walkthrough on how to use SWNE to visualize a hematopoiesis chromatin accessibility trajectory from <a href="https://doi.org/10.1016/j.cell.2018.03.074">Buenrostro et al, 2018</a>, starting from a <a href="https://github.com/aertslab/cisTopic">cisTopic</a> object that has already been processed using the cisTopic pipeline. That data can be downloaded <a href="ftp://genome-miner.ucsd.edu/swne_files/scATAC_hemato_cisTopic.RData">here</a>.</p>
 <p>Before we start, you’ll need some additional packages for TF binding site annotation and analysis.</p>
 <pre class="r"><code>if (!requireNamespace(&quot;BiocManager&quot;, quietly = TRUE))
     install.packages(&quot;BiocManager&quot;)
@@ -237,13 +237,13 @@ swne.emb &lt;- RunSWNE(cisTopicObject, alpha.ex = 1.25, snn.exp = 1,
 cisTopicObject &lt;- getRegionsScores(cisTopicObject)
 cisTopicObject &lt;- annotateRegions(cisTopicObject, txdb = TxDb.Hsapiens.UCSC.hg19.knownGene,
                                   annoDb = &quot;org.Hs.eg.db&quot;)</code></pre>
-<pre><code>## &gt;&gt; preparing features information...      2019-04-26 02:33:19 PM 
-## &gt;&gt; identifying nearest features...        2019-04-26 02:33:20 PM 
-## &gt;&gt; calculating distance from peak to TSS...   2019-04-26 02:33:26 PM 
-## &gt;&gt; assigning genomic annotation...        2019-04-26 02:33:26 PM 
-## &gt;&gt; adding gene annotation...          2019-04-26 02:33:41 PM 
-## &gt;&gt; assigning chromosome lengths           2019-04-26 02:33:41 PM 
-## &gt;&gt; done...                    2019-04-26 02:33:41 PM</code></pre>
+<pre><code>## &gt;&gt; preparing features information...      2019-04-26 02:45:09 PM 
+## &gt;&gt; identifying nearest features...        2019-04-26 02:45:10 PM 
+## &gt;&gt; calculating distance from peak to TSS...   2019-04-26 02:45:15 PM 
+## &gt;&gt; assigning genomic annotation...        2019-04-26 02:45:15 PM 
+## &gt;&gt; adding gene annotation...          2019-04-26 02:45:29 PM 
+## &gt;&gt; assigning chromosome lengths           2019-04-26 02:45:30 PM 
+## &gt;&gt; done...                    2019-04-26 02:45:30 PM</code></pre>
 <p>Next we’ll embed the promoter accessibility of some key TFs</p>
 <pre class="r"><code>## Embed promoter accessibility of key TFs
 tfs.embed &lt;- c(&quot;GATA1&quot;, &quot;CEBPB&quot;)
