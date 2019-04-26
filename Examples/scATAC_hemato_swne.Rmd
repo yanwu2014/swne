@@ -1,0 +1,101 @@
+---
+title: "SWNE analysis of hematopoiesis chromatin accessibility"
+author: "Yan Wu"
+date: "4/26/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+This is a walkthrough on how to use SWNE to visualize a hematopoiesis chromatin accessibility trajectory from [Buenrostro et al, 2018](https://doi.org/10.1016/j.cell.2018.03.074), starting from a [cisTopic](https://github.com/aertslab/cisTopic) object that has already been processed using the cisTopic pipeline. That object can be downloaded [here](ftp://genome-miner.ucsd.edu/swne_files/scATAC_hemato_cisTopic.Robj).
+
+Before we start, you'll need some additional packages for TF binding site annotation and analysis.
+
+```{r eval=FALSE}
+if (!requireNamespace("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
+BiocManager::install("motifmatchr", version = "3.8")
+BiocManager::install("BSgenome.Hsapiens.UCSC.hg19", version = "3.8")
+BiocManager::install("TxDb.Hsapiens.UCSC.hg19.knownGene", version = "3.8")
+BiocManager::install("org.Hs.eg.db", version = "3.8")
+BiocManager::install("SummarizedExperiment", version = "3.8")
+BiocManager::install("TFBSTools", version = "3.8")
+BiocManager::install("chromVAR")
+
+if(!require(devtools)){ 
+  install.packages("devtools") # If not already installed; 
+}
+devtools::install_github("GreenleafLab/chromVARmotifs")
+```
+
+Load the required libraries and data. The data has already been preprocessed with  using their standard pipeline. 
+
+```{r message=FALSE,warning=FALSE}
+library(cisTopic)
+library(swne)
+library(chromVAR)
+library(chromVARmotifs)
+library(motifmatchr)
+library(SummarizedExperiment)
+library(org.Hs.eg.db)
+library(TxDb.Hsapiens.UCSC.hg19.knownGene)
+library(BSgenome.Hsapiens.UCSC.hg19)
+library(TFBSTools)
+
+load("~/swne/Data/scATAC_hemato_cisTopic.RData")
+```
+
+
+We can run SWNE directly on the cisTopicObject. Increasing `snn.k` and decreasing `snn.exp` will pull more cells onto the primary axes of variation (in this case the monocyte/lymphoid and erythrocyte trajectories) at the expense of some cell type separation.
+```{r message=FALSE,warning=FALSE}
+## Run SWNE
+swne.emb <- RunSWNE(cisTopicObject, alpha.ex = 1.25, snn.exp = 1, 
+                    n_pull = 3, snn.k = 50, prune.SNN = 1/20)
+swne.emb$H.coords$name <- ""
+```
+
+
+We need to annotate the peaks in order to embed promoter/binding site accessibility onto the visualization
+```{r message=FALSE,warning=FALSE}
+## Annotate topics
+cisTopicObject <- getRegionsScores(cisTopicObject)
+cisTopicObject <- annotateRegions(cisTopicObject, txdb = TxDb.Hsapiens.UCSC.hg19.knownGene,
+                                  annoDb = "org.Hs.eg.db")
+```
+
+
+Next we'll embed the promoter accessibility of some key TFs
+```{r message=FALSE,warning=FALSE}
+## Embed promoter accessibility of key TFs
+tfs.embed <- c("GATA1", "CEBPB")
+swne.emb <- EmbedPromoters(swne.emb, cisTopicObject, tfs.embed, n_pull = 3, promoterOnly = T)
+```
+
+
+We also want to look at the accessibility of the TF binding sites. This requires us to annotate which peaks overlap with which TF's binding sites.
+```{r message=FALSE,warning=FALSE}
+peak.gr <- cisTopicObject@region.ranges
+fragment_counts <- SummarizedExperiment(assays = list(counts = cisTopicObject@binary.count.matrix),
+                                        rowRanges = peak.gr)
+fragment_counts <- addGCBias(fragment_counts, genome = BSgenome.Hsapiens.UCSC.hg19)
+
+data("human_pwms_v2") ## Get position weight matrices from chromVARMotifs
+motif_ix <- matchMotifs(human_pwms_v2, fragment_counts, genome = BSgenome.Hsapiens.UCSC.hg19)
+motif_ix_mat <- assay(motif_ix)*1
+
+## Extract the TF symbol from the motif names
+colnames(motif_ix_mat) <- sapply(colnames(motif_ix_mat), ExtractField, field = 3, delim = "_")
+```
+
+
+Now we can embed the binding site accessibility of CEBPB and GATA1 and generate our final SWNE plot.
+```{r message=FALSE,warning=FALSE}
+swne.emb <- EmbedTFBS(swne.emb, cisTopicObject, motif_ix_mat, tfs.embed, n_pull = 3,
+                      overwrite = F)
+
+plot.seed <- 512223535
+PlotSWNE(swne.emb, sample.groups = clusters, pt.size = 1.25, alpha = 0.5, 
+         do.label = T, seed = plot.seed)
+```

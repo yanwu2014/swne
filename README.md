@@ -25,8 +25,8 @@ devtools::install_github("aertslab/cisTopic")
 ```
 
 
-## Recent Updates
-*(03/09/2019): Added functionality for analyzing single cell chromatin accessibility data with `RunSWNE`, `EmbedPromoter`, and changed default color scheme of plots
+## Key Updates
+*(04/26/2019): Added function for embedding transcription factor binding sites with `EmbedTFBS`. Add walkthrough for chromatin data.
 
 
 ## Gene Expression Quickstart with Seurat
@@ -57,7 +57,8 @@ PlotSWNE(swne.embedding, alpha.plot = 0.4, sample.groups = clusters,
 
 
 ## Chromatin Accessibility Quickstart with cisTopic
-Download the example [cisTopic object](https://bit.ly/2HnClXK) which contains single cell THS-seq profiles of 14,535 human brain cells from [Lake, Sos, Chen et al, NBT, 2017](https://www.nature.com/articles/nbt.4038)
+SWNE's chromatin accessibility visualizations currently only work with [cisTopic]((https://github.com/aertslab/cisTopic)), a great method by [Gonazalez-Blas et al](https://www.nature.com/articles/s41592-019-0367-1) that uses LDA to decompose scATAC or scTHS datasets. Download the example [cisTopic object](https://bit.ly/2HnClXK) which contains single cell THS-seq profiles of 14,535 human brain cells from [Lake, Sos, Chen et al, NBT, 2017](https://www.nature.com/articles/nbt.4038).
+
 
 ```
 library(cisTopic)
@@ -80,27 +81,31 @@ cisTopicObject <- annotateRegions(cisTopicObject, txdb = TxDb.Hsapiens.UCSC.hg38
 swne.emb <- RunSWNE(cisTopicObject, alpha.exp = 1.25, snn.exp = 1, snn.k = 30)
 
 ## Embed genes based on promoter accessibility
-marker.genes <- c("CUX2", "RORB", "FOXP2", "FLT1", "VIP", "CNR1",
-                  "GAD1", "SST", "SLC1A2", "MOBP", "P2RY12")
+marker.genes <- c("CUX2", "RORB", "FOXP2", "FLT1", "GAD1", "SST", "SLC1A2", "MOBP", "P2RY12")
 swne.emb <- EmbedPromoters(swne.embedding, cisTopicObject, genes.embed = marker.genes,
-                           peaks.use = NULL, alpha.exp = 1.25, n_pull = 3)
+                           peaks.use = NULL, alpha.exp = 1, n_pull = 3)
 
 PlotSWNE(swne.emb, sample.groups = clusters, pt.size = 0.5, alpha.plot = 0.5, do.label = T,
          seed = 123)
 ```
 
-![](Examples/cisTopic_quickstart_swne.png?raw=True "SWNE plot of 15k brain cells")
+![](Examples/cisTopic_quickstart_swne.png?raw=True "SWNE plot of chromatin accessibility for 15k brain cells")
 
 
-## Walkthroughs and examples
+## scRNA-seq Walkthroughs and examples
 Since SWNE is primarily meant for visualization and interpretation of the data, we typically use either [Seurat](http://satijalab.org/seurat/) or [Pagoda2](https://github.com/hms-dbmi/pagoda2) as a primary scRNA-seq pipeline. All the R markdown files used to generate the walkthroughs can be found under the Examples/ directory.
 
 1. A basic [walkthrough](https://yanwu2014.github.io/swne/Examples/pbmc3k_swne_seurat.html) of 3k PBMC cells starting from a pre-computed Seurat object.
 2. A basic [walkthrough](https://yanwu2014.github.io/swne/Examples/pbmc3k_swne_pagoda2.html) of 3k PBMC cells starting from a pre-computed Pagoda2 object.
-3. A [walkthrough](https://yanwu2014.github.io/swne/Examples/Han_hemato_swne.html) benchmarking SWNE against UMAP and SWNE using the mouse hematopoiesis data from the [Mouse Cell Atlas](http://bis.zju.edu.cn/MCA/). The walkthrough was based of an analysis done by the UMAP authors in Figure 2 of their UMAP paper [Becht, McInnes et al, NBT, 2019](https://www.nature.com/articles/nbt.4314).
+3. A [walkthrough](https://yanwu2014.github.io/swne/Examples/Han_hemato_swne.html) benchmarking SWNE against UMAP and SWNE using a large mouse hematopoiesis data from the [Mouse Cell Atlas](http://bis.zju.edu.cn/MCA/). The walkthrough was based of an analysis done by the UMAP authors in Figure 2 of their UMAP paper [Becht, McInnes et al, NBT, 2019](https://www.nature.com/articles/nbt.4314).
 4. A [walkthrough](https://yanwu2014.github.io/swne/Examples/hemato_swne.html) demonstrating SWNE on a hematopoiesis dataset and comparing SWNE against other embeddings including t-SNE and UMAP (recreating Figure 2 from our Cell Systems paper).
 5. A [walkthrough](https://yanwu2014.github.io/swne/Examples/multiple_pancreas_alignment_swne.html) using SWNE to visualize four pancreas datasets that have undergone batch alignment with Seurat's [manifold alignment](https://www.nature.com/articles/nbt.4096). The script used to generate the object can be found [here](https://yanwu2014.github.io/swne/Examples/multiple_pancreas_workflow.R) and the raw datasets can be found [here](http://bit.ly/IAexpmat).
 6. A [walkthrough](https://yanwu2014.github.io/swne/Examples/cortical_neuron_projection.html) using SWNE to project new data onto an existing SWNE embedding. In this case, we're projecting a neuronal dataset generated using the C1 system onto a neuronal dataset generated using snDropSeq.
+
+## scATAC/THS-seq Walkthroughs and examples
+Since SWNE is primarily meant for visualization and interpretation of the data, we typically use either [cisTopic](http://satijalab.org/seurat/) as a primary pipeline
+
+1. A [walkthrough](https://yanwu2014.github.io/swne/Examples/scATAC_hemato_swne.html) using SWNE to visualize a hematopoiesis trajectory that illustrates how to embed both the promoter accessibility of genes, and the binding site accessibility of transcription factors.
 
 
 ## Recreating Figures
