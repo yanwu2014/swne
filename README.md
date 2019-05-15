@@ -27,26 +27,26 @@ devtools::install_github("aertslab/cisTopic")
 
 ## Key Updates
 *(05/15/2019): Updated all code and vignettes for Seurat V3 objects. Removed C1/snDropSeq projection vignette since it's easier to use Seurat data integration (or CONOS).
+
 *(04/26/2019): Added function for embedding transcription factor binding sites with `EmbedTFBS`. Add walkthrough for chromatin data.
 
 
 ## Gene Expression Quickstart with Seurat
-Download the example [Seurat object](https://bit.ly/2B3Q3LN) which contains single cell RNA-seq profiles of 3000 PBMCs
+Download the example [Seurat object](https://bit.ly/2W3pT7k) which contains single cell RNA-seq profiles of 3000 PBMCs
 
 ```
-## Load data
-obj <- readRDS("pbmc3k_seurat.Robj")
+## Load object
+obj <- readRDS("Data/pbmc3k_final.RObj")
 
-## Get clusters
-clusters <- obj@ident; names(clusters) <- obj@cell.names;
+## Extract clusters
+clusters <- obj$seurat_clusters
 
-## Build SNN
-obj <- BuildSNN(obj, dims.use = 1:20, k.param = 20, prune.SNN = 1/20)
-
-## Run SWNE
+## Select genes to embed
 genes.embed <- c("MS4A1", "GNLY", "CD3E", "CD14",
                  "FCER1A", "FCGR3A", "LYZ", "PPBP", "CD8A")
-swne.embedding <- RunSWNE(obj, k = 10, genes.embed = genes.embed)
+
+## Run SWNE
+swne.embedding <- RunSWNE(obj, k = 16, genes.embed = genes.embed)
 
 ## Plot SWNE
 PlotSWNE(swne.embedding, alpha.plot = 0.4, sample.groups = clusters,
