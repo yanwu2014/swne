@@ -1,7 +1,7 @@
 Package: swne
 Type: Package
 Title: Similarity Weighted Nonnegative Embedding: A method for visualizing high dimensional datasets
-Version: 0.4.7
+Version: 0.5.0
 Author: Yan Wu
 Maintainer: Yan Wu <yauwning@gmail.com>
 Description: Uses matrix factorization to reduce high dimenensional dataset into factors, embeds factors
@@ -43,7 +43,7 @@ Remotes:
   linxihui/NNLM,
   JEFworks/liger
 Suggests:
-  Seurat (>= 2.3.4),
+  Seurat (>= 3.0.0),
   cisTopic,
   pagoda2
 RoxygenNote: 6.1.1

@@ -1,7 +1,7 @@
 ---
 title: "Hematopoiesis Trajectory Visualization and Benchmarking with SWNE"
 author: "Yan Wu"
-date: "1/4/2019"
+date: "5/14/2019"
 output: html_document
 ---
 
@@ -46,15 +46,16 @@ se.obj <- CreateSeuratObject(counts)
 
 Set cluster names, exclude lymphoid cells and dendritic cells (which are not part of the developmental trajectory), set cluster colors.
 ```{r message=FALSE,warning=FALSE}
-se.obj <- SetIdent(se.obj, cells.use = names(clusters), clusters)
-se.obj@ident <- plyr::revalue(se.obj@ident, 
-                              c("1" = 'Ery', "2" = 'Ery', "3" = 'Ery', "4" = 'Ery', "5" = 'Ery',
-                                "6" = 'Ery', "7" = 'MP/EP', "8" = 'MK', "9" = 'GMP', "10" = 'GMP',
-                                "11" = 'DC', "12" = 'Bas', "13" = 'Bas', "14" = 'M', "15" = 'M',
-                                "16" = 'Neu', "17" = 'Neu', "18" = 'Eos', "19" = 'lymphoid'))
+se.obj <- SetIdent(se.obj, value = clusters)
+Idents(se.obj) <- plyr::revalue(Idents(se.obj), 
+                                c("1" = 'Ery', "2" = 'Ery', "3" = 'Ery', "4" = 'Ery', "5" = 'Ery',
+                                  "6" = 'Ery', "7" = 'MP/EP', "8" = 'MK', "9" = 'GMP', "10" = 'GMP',
+                                  "11" = 'DC', "12" = 'Bas', "13" = 'Bas', "14" = 'M', "15" = 'M',
+                                  "16" = 'Neu', "17" = 'Neu', "18" = 'Eos', "19" = 'lymphoid'))
+
 se.obj <- SubsetData(se.obj, ident.remove = c("lymphoid", "DC"))
 
-clusters <- se.obj@ident; names(clusters) <- se.obj@cell.names;
+clusters <- Idents(se.obj)
 cluster_colors <- c("Bas" = "#ff6347", "Eos" = "#EFAD1E", 
                     "Ery" = "#8CB3DF", "M" = "#53C0AD", "MP/EP" = "#4EB859", 
                     "GMP" = "#D097C4", "MK" = "#ACC436", "Neu" = "#F5918A")
@@ -64,26 +65,29 @@ cluster_colors <- c("Bas" = "#ff6347", "Eos" = "#EFAD1E",
 Scale data, run PCA, t-SNE, and UMAP, and build the SNN.
 ```{r message=FALSE,warning=FALSE}
 ## Scale data
-se.obj@data <- ScaleCounts(se.obj@raw.data[,se.obj@cell.names], method = "log")
-se.obj@scale.data <- se.obj@data - Matrix::rowMeans(se.obj@data)
+VariableFeatures(se.obj) <- info.genes
+norm.counts <- ScaleCounts(counts)[,colnames(se.obj)]
+rownames(norm.counts) <- rownames(se.obj)
+
+se.obj <- SetAssayData(se.obj, new.data = norm.counts)
+se.obj <- SetAssayData(se.obj, slot = "scale.data", new.data = as.matrix(norm.counts - Matrix::rowMeans(norm.counts)))
 
 ## Run PCA
-se.obj <- RunPCA(se.obj, pc.genes = info.genes, do.print = F, pcs.compute = 40)
-PCElbowPlot(se.obj, num.pc = 40)
+se.obj <- RunPCA(se.obj, features = info.genes, verbose = F, pcs.compute = 40)
+ElbowPlot(se.obj)
 
 ## Run t-SNE, UMAP, and SNN
-se.obj <- RunTSNE(se.obj, dims.use = 1:15)
-se.obj <- RunUMAP(se.obj, reduction.use = "pca", dims.use = 1:15)
-se.obj <- BuildSNN(se.obj, dims.use = 1:15, k.param = 40, prune.SNN = 0.0, force.recalc = T)
+se.obj <- RunTSNE(se.obj, dims = 1:15)
+se.obj <- RunUMAP(se.obj, reduction.use = "pca", dims = 1:15, verbose = F)
+pc.emb <- Embeddings(se.obj, reduction = "pca")[,1:15]
 ```
 
 
 Identify number of factors to use for SWNE
 ```{r message=FALSE,warning=FALSE}
 k.range <- seq(2,20,2) ## Range of factor values to test
-n.cores <- 16 ## Number of cores to use
+n.cores <- 12 ## Number of cores to use
 
-norm.counts <- se.obj@data[,names(clusters)]
 k.err <- FindNumFactors(norm.counts[info.genes,], k.range = k.range, n.cores = n.cores, 
                         seed = 32590, do.plot = F)
 
@@ -100,18 +104,15 @@ nmf.scores <- nmf.res$H
 nmf.res$W <- ProjectFeatures(norm.counts, nmf.res$H, n.cores = n.cores) ## Project all genes onto NMF
 
 ## Run SWNE embedding
-swne.embedding <- EmbedSWNE(nmf.scores, SNN = se.obj@snn, alpha.exp = 1.5, snn.exp = 0.1, n_pull = 3,
+snn <- CalcSNN(t(pc.emb), k = 40, prune.SNN = 0)
+swne.embedding <- EmbedSWNE(nmf.scores, SNN = snn, alpha.exp = 1.5, snn.exp = 0.1, n_pull = 3,
                             dist.use = "cosine")
 ```
 
 
-Identify biologically relevant factors and embed key marker genes. See [Table S1](https://www.biorxiv.org/highwire/filestream/84916/field_highwire_adjunct_files/0/276261-1.xlsx) from the Cell Systems paper for how the factors were named and how key genes were selected.
+Embed key marker genes. See [Table S1](https://www.biorxiv.org/highwire/filestream/84916/field_highwire_adjunct_files/0/276261-1.xlsx) from the Cell Systems paper for how key genes were selected.
 ```{r}
-swne.embedding <- RenameFactors(swne.embedding, name.mapping = c("factor_4" = "Erythrocyte differentiation",
-                                                                 "factor_5" = "Metal binding",
-                                                                 "factor_9" = "Epigenetic regulation",
-                                                                 "factor_10" = "HSC maintenance",
-                                                                 "factor_11" = "Inflammation"))
+swne.embedding$H.coords$name <- ""
 genes.embed <- c("Apoe", "Mt2", "Gpr56", "Sun2", "Flt3")
 swne.embedding <- EmbedFeatures(swne.embedding, nmf.res$W, genes.embed, n_pull = 3)
 ```
@@ -127,7 +128,7 @@ PlotSWNE(swne.embedding, alpha.plot = 0.4, sample.groups = clusters, do.label = 
 Make t-SNE plot
 ```{r}
 ## tSNE plots
-tsne.scores <- GetCellEmbeddings(se.obj, reduction.type = "tsne")
+tsne.scores <- Embeddings(se.obj, "tsne")
 PlotDims(tsne.scores, sample.groups = clusters, show.legend = F, show.axes = F,
          alpha.plot = 0.5, label.size = 3.5, pt.size = 1.5) +
   scale_color_manual(values = cluster_colors)
@@ -135,7 +136,7 @@ PlotDims(tsne.scores, sample.groups = clusters, show.legend = F, show.axes = F,
 
 Make UMAP plot
 ```{r}
-umap.scores <- GetCellEmbeddings(se.obj, reduction.type = "umap")
+umap.scores <- Embeddings(se.obj, "umap")
 PlotDims(umap.scores, sample.groups = clusters, show.legend = F, show.axes = F,
          alpha.plot = 0.5, label.size = 3.5, pt.size = 1.5) +
   scale_color_manual(values = cluster_colors)
@@ -179,7 +180,7 @@ lle.scores <- LLE(t(as.matrix(norm.counts[info.genes,])), dim = 2, k = 20)
 rownames(lle.scores) <- colnames(norm.counts)
 
 mds.scores <- cmdscale(dist(t(as.matrix(norm.counts[info.genes,]))), k = 2)
-pc.scores <- GetCellEmbeddings(se.obj, dims.use = 1:2)
+pc.scores <- pc.emb[,1:2]
 
 embeddings <- list(swne = t(as.matrix(swne.embedding$sample.coords)),
                    tsne = t(tsne.scores),

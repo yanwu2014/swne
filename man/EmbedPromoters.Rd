@@ -6,7 +6,7 @@
 \usage{
 EmbedPromoters(swne.embedding, cisTopicObject, genes.embed,
   peaks.use = NULL, alpha.exp = 1, n_pull = 3, scale.cols = T,
-  overwrite = T)
+  overwrite = T, promoterOnly = T)
 }
 \arguments{
 \item{swne.embedding}{SWNE embedding computed using RunSWNE}
@@ -24,6 +24,9 @@ EmbedPromoters(swne.embedding, cisTopicObject, genes.embed,
 \item{scale.cols}{Whether or not to scale the input columns to 0 - 1}
 
 \item{overwrite}{Whether or not to overwrite any existing feature embedding}
+
+\item{promoterOnly}{Whether or not to only use promoter accessibility, otherwise the
+accessibility of the entire gene body will be used}
 }
 \value{
 swne.embedding with feature coordinates (feature.coords)

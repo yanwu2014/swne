@@ -1,7 +1,7 @@
 ---
 title: "Using Seurat's manifold aligment with SWNE"
 author: "Yan Wu"
-date: "11/12/2018"
+date: "5/15/2019"
 output: html_document
 ---
 
@@ -9,9 +9,9 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-This is a walkthrough demonstrating how to generate SWNE plots alongside the [Seurat](http://satijalab.org/seurat/) [manifold alignment pipeline]() from four pancreas [datasets](http://bit.ly/IAexpmat) generated using different single cell RNA-seq technologies.
+This is a walkthrough demonstrating how to generate SWNE plots alongside the [Seurat](http://satijalab.org/seurat/) [manifold alignment pipeline](https://satijalab.org/seurat/v3.0/pancreas_integration_label_transfer.html) from three pancreas [datasets](https://www.dropbox.com/s/1zxbn92y5du9pu0/pancreas_v3_files.tar.gz?dl=1) generated using different single cell RNA-seq technologies.
 
-To save time we will be using the pre-computed Seurat object `pancreas_integrated_seurat.Robj`, which can be downloaded [here](ftp://genome-miner.ucsd.edu/swne_files/pancreas_integrated_seurat.Robj).
+To save time we will be using the pre-computed Seurat object `pancreas_integrated_seurat.Robj`, which can be downloaded [here](ftp://genome-miner.ucsd.edu/swne_files/multiple_pancreas_seurat_v3.RObj).
 
 
 First let's load the required libraries
@@ -23,25 +23,34 @@ library(swne)
 
 Let's load the Seurat object
 ```{r}
-se.obj <- readRDS("~/swne/Data/pancreas_integrated_seurat.Robj")
+se.obj <- readRDS("~/swne/Data/multiple_pancreas_seurat_v3.RObj")
 ```
 
 
-We can "reconstruct" the gene expression matrix from the aligned correlated components and the corresponding gene loadings. This is not equivalent to the original gene expression matrix, as it only contains the reduced information from the correlated components, but it is batch-corrected and something we can run NMF on.
+We can extract the integrated expression matrix
 ```{r}
-cca.aligned.expr <- ExtractDebatchedSeurat(se.obj)
+aligned.counts <- as.matrix(GetAssayData(se.obj, assay = "integrated"))
 ```
 
+Note that this matrix has negative values, which we will have to rescale in order to run NMF
+```{r}
+dim(aligned.counts)
+hist(as.matrix(aligned.counts))
+aligned.counts <- t(apply(aligned.counts, 1, function(x) (x - min(x))/(max(x) - min(x))))
+```
 
 Once we have the "reconstructed matrix", we can run NMF and embed the components
 ```{r message=FALSE,warning=FALSE}
 k <- 20
 n.cores <- 8
 
-nmf.res <- RunNMF(cca.aligned.expr, k = k, alpha = 0, init = "ica", n.cores = n.cores)
+nmf.res <- RunNMF(aligned.counts, k = k, alpha = 0, init = "ica", n.cores = n.cores)
 
-swne.embedding <- EmbedSWNE(nmf.res$H, se.obj@snn, alpha.exp = 1.5, snn.exp = 1, 
-                            n_pull = 3, proj.method = "umap", dist.use = "cosine")
+pc.emb <- Embeddings(se.obj, "pca")
+snn <- CalcSNN(t(pc.emb), k = 20, prune.SNN = 0)
+
+swne.embedding <- EmbedSWNE(nmf.res$H, snn, alpha.exp = 1.5, snn.exp = 1, 
+                            n_pull = 3)
 ```
 
 
@@ -64,8 +73,8 @@ swne.embedding$H.coords$name <- ""
 
 We pull out the clusters and batches
 ```{r}
-clusters <- se.obj@ident; names(clusters) <- se.obj@cell.names;
-batch <- factor(se.obj@meta.data$tech); names(batch) <- se.obj@cell.names
+clusters <- se.obj$celltype
+batch <- se.obj$tech
 ```
 
 
@@ -79,12 +88,13 @@ PlotSWNE(swne.embedding, alpha.plot = 0.4, sample.groups = clusters, do.label = 
 We also can show that there are no batch effects
 ```{r}
 PlotSWNE(swne.embedding, alpha.plot = 0.4, sample.groups = batch, do.label = F, 
-         label.size = 3.5, pt.size = 0.5, show.legend = T, seed = 42)
+         label.size = 3.5, pt.size = 0.25, show.legend = T, seed = 42)
 ```
 
 
-t-SNE plot for comparison
+UMAP plot for comparison
 ```{r}
-tsne.emb <- GetCellEmbeddings(se.obj, "tsne")
-PlotDims(tsne.emb, sample.groups = clusters, show.legend = F, seed = 42)
+tsne.emb <- Embeddings(se.obj, "umap")
+PlotDims(tsne.emb, sample.groups = clusters, show.legend = F, seed = 42,
+         show.axes = F)
 ```

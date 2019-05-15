@@ -286,33 +286,6 @@ SelectFeatures <- function(counts, batch = NULL, n.features = 3e3, gam.k = 10) {
 }
 
 
-#' Reconstructs the gene expression matrix from the CCA gene loadings and cell embeddings
-#'
-#' @param se.obj Seurat object with multiple batches aligned via CCA alignment
-#' @return Reconstructed gene expression matrix
-#'
-#' @export
-#'
-ExtractDebatchedSeurat <- function(se.obj) {
-  if (!requireNamespace("Seurat", quietly = T)) {
-    stop("Seurat needed for this function to work. Please install it.",
-         call. = F)
-  }
-
-  if (!ncol(se.obj@dr$cca.aligned@cell.embeddings) != length(se.obj@cell.names)) {
-    stop("Run CCA alignment first")
-  }
-
-  cc.scores <- se.obj@dr$cca.aligned@cell.embeddings
-  cc.loadings <- se.obj@dr$cca@gene.loadings[,1:ncol(cc.scores)]
-
-  gene.expr <- cc.loadings %*% t(cc.scores)
-  gene.expr <- t(apply(gene.expr, 1, function(x) (x - min(x))/(max(x) - min(x))))
-
-  return(gene.expr)
-}
-
-
 #' Extracts scaled counts from Seurat or Pagoda2 objects
 #'
 #' @param obj Seurat or Pagoda2 object
@@ -340,10 +313,11 @@ ExtractNormCounts <- function(obj, obj.type = "seurat", rescale = T, rescale.met
            call. = F)
     }
     if (rescale) {
-      counts <- obj@raw.data[,intersect(obj@cell.names, colnames(obj@raw.data))]
+      counts <- GetAssayData(obj, slot = "counts", assay = "RNA")
+      counts <- counts[,intersect(colnames(obj), colnames(counts))]
       norm.counts <- ScaleCounts(counts, batch = batch, method = rescale.method)
     } else {
-      norm.counts <- obj@scale.data
+      norm.counts <- GetAssayData(obj, slot = "scale.data")
       norm.counts <- t(apply(norm.counts, 1, function(x) (x - min(x))/(max(x) - min(x))))
     }
   } else if (obj.type == "pagoda2") {

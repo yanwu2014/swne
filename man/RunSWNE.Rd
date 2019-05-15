@@ -3,7 +3,7 @@
 \name{RunSWNE}
 \alias{RunSWNE}
 \alias{RunSWNE.cisTopic}
-\alias{RunSWNE.seurat}
+\alias{RunSWNE.Seurat}
 \alias{RunSWNE.Pagoda2}
 \alias{RunSWNE.dgCMatrix}
 \alias{RunSWNE.matrix}
@@ -15,12 +15,12 @@
   hide.factors = T, n_pull = 3, alpha.exp = 1.25, snn.exp = 1,
   snn.k = 20, prune.SNN = 1/15)
 
-\method{RunSWNE}{seurat}(object, proj.method = "sammon",
+\method{RunSWNE}{Seurat}(object, proj.method = "sammon",
   reduction.use = "pca", cells.use = NULL, dims.use = NULL,
   genes.use = NULL, dist.metric = "cosine", distance.matrix = NULL,
   n.cores = 8, k, k.range, var.genes, loss = "mse", genes.embed,
   hide.factors = T, n_pull = 3, alpha.exp = 1.25, snn.exp = 1,
-  reduction.name = "swne", reduction.key = "SWNE_",
+  snn.k = 10, reduction.name = "swne", reduction.key = "SWNE_",
   return.format = c("embedding", "seurat"), ...)
 
 \method{RunSWNE}{Pagoda2}(object, proj.method = "sammon",
@@ -57,6 +57,8 @@
 \item{alpha.exp}{Increasing alpha.exp increases how much the NMF factors "pull" the samples (passed to EmbedSWNE)}
 
 \item{snn.exp}{Decreasing snn.exp increases the effect of the similarity matrix on the embedding (passed to EmbedSWNE)}
+
+\item{snn.k}{Changes the number of nearest neighbors used to build SNN (passed to CalcSNN)}
 
 \item{object}{A Seurat, Pagoda2 or cisTopicObject object with normalized data}
 

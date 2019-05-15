@@ -23,36 +23,43 @@ library(swne)
 
 Next let's load the Seurat object
 ```{r}
-se.obj <- readRDS("~/swne/Data/pbmc3k_seurat.Robj")
+obj <- readRDS("~/swne/Data/pbmc3k_seurat.Robj")
 ```
 
 Most scRNA-seq pipelines only use a subset of highly overdispersed genes for analysis. We'll pull out those variable genes here, as well as the cluster labels.
 ```{r}
 ## Pull out overdispersed genes as defined by Seurat
-var.genes <- se.obj@var.genes
+var.genes <- VariableFeatures(obj)
 length(var.genes)
 
 ## Pull out cell clusters as defined by Seurat
-cell.clusters <- se.obj@ident; names(cell.clusters) <- se.obj@cell.names;
+cell.clusters <- Idents(obj)
 levels(cell.clusters)
 ```
 
-We'll use Seurat to build an Shared Nearest Neighbors network (SNN) to smooth the cell embeddings with later
-```{r}
-se.obj <- BuildSNN(se.obj, dims.use = 1:20, k.param = 20, prune.SNN = 1/20)
-```
 
 The easiest way to generate an SWNE embedding is to use the wrapper function `RunSWNE`
 ```{r}
 ## Run SWNE
 genes.embed <- c("MS4A1", "GNLY", "CD3E", "CD14",
                  "FCER1A", "FCGR3A", "LYZ", "PPBP", "CD8A")
-swne.embedding <- RunSWNE(se.obj, k = 10, var.genes = var.genes, genes.embed = genes.embed)
+swne.embedding <- RunSWNE(obj, k = 16, alpha.exp = 1.5, snn.exp = 0.25, 
+                          var.genes = var.genes, genes.embed = genes.embed)
 
 ## Plot SWNE
 PlotSWNE(swne.embedding, alpha.plot = 0.4, sample.groups = cell.clusters,
-         do.label = T, label.size = 3.5, pt.size = 1.5, show.legend = F,
+         do.label = T, label.size = 3.5, pt.size = 1, show.legend = F,
          seed = 42)
+```
+
+`RunSWNE` can also return a Seurat object with SWNE set as a dimensional reduction
+```{r}
+## Run SWNE
+obj <- RunSWNE(obj, k = 16, alpha.exp = 1.5, snn.exp = 0.25, 
+               var.genes = var.genes, genes.embed = genes.embed,
+               return.format = "seurat")
+
+DimPlot(obj, reduction = "swne")
 ```
 
 
@@ -61,7 +68,7 @@ Now we'll go through the SWNE embedding process step by step
 
 First, let's pull out the counts, scale and adjust gene variance, while keeping the scaled matrix nonnegative.
 ```{r}
-norm.counts <- ExtractNormCounts(se.obj, obj.type = "seurat", rescale = T, rescale.method = "log")
+norm.counts <- ExtractNormCounts(obj, obj.type = "seurat", rescale = T, rescale.method = "log")
 dim(norm.counts)
 ```
 
@@ -76,9 +83,8 @@ k.err <- FindNumFactors(norm.counts[var.genes,], k.range = k.range, n.cores = 8,
 
 We then run the NMF decomposition. We can initialize the NMF using either Independent Component Analysis (ica), Nonnegative SVD (nnsvd), or a completely random initialization. ICA is recommended for most datasets. The output of `RunNMF` is a list of the gene loadings (W) and NMF embedding (H).
 ```{r}
-k <- 10
-nmf.res <- RunNMF(norm.counts[var.genes,], k = k, alpha = 0, init = "ica", n.cores = 8)
-nmf.scores <- nmf.res$H
+k <- 16
+nmf.res <- RunNMF(norm.counts[var.genes,], k = k)
 ```
 
 
@@ -86,17 +92,18 @@ We can either use the pre-computed Shared Nearest Neighbors (SNN) matrix from Se
 ```{r}
 # pc.scores <- t(GetCellEmbeddings(se.obj, reduction.type = "pca", dims.use = 1:k))
 # snn <- CalcSNN(pc.scores)
-snn <- se.obj@snn
+snn <- FindNeighbors(obj, k = 10, prune.SNN = 1/15)
+snn <- as(obj@graphs$RNA_snn, "dgCMatrix")
 ```
 
 
-Runs the SWNE embedding. The three key parameters are `alpha.exp`, `snn.exp`, and `n_pull`, which control how the factors and neighboring cells affect the cell coordinates.
+Run the SWNE embedding. The three key parameters are `alpha.exp`, `snn.exp`, and `n_pull`, which control how the factors and neighboring cells affect the cell coordinates.
 ```{r message=FALSE,warning=FALSE}
-alpha.exp <- 1.25 # Increase this > 1.0 to move the cells closer to the factors. Values > 2 start to distort the data.
-snn.exp <- 1.0 # Lower this < 1.0 to move similar cells closer to each other
+alpha.exp <- 1.5 # Increase this > 1.0 to move the cells closer to the factors. Values > 2 start to distort the data.
+snn.exp <- 0.25 # Lower this < 1.0 to move similar cells closer to each other
 n_pull <- 3 # The number of factors pulling on each cell. Must be at least 3.
-swne.embedding <- EmbedSWNE(nmf.scores, snn, alpha.exp = alpha.exp, snn.exp = snn.exp,
-                            n_pull = n_pull, proj.method = "sammon", dist.use = "cosine")
+swne.embedding <- EmbedSWNE(nmf.res$H, snn, alpha.exp = alpha.exp, snn.exp = snn.exp,
+                            n_pull = n_pull)
 ```
 
 
@@ -115,13 +122,13 @@ genes.embed <- c("MS4A1", "GNLY", "CD3E", "CD14",
 
 Since we only ran NMF on the overdispersed genes, we need to project the rest of the genes onto the NMF projection to get gene loadings for all genes.
 ```{r}
-nmf.res$W <- ProjectFeatures(norm.counts, nmf.scores, n.cores = 8)
+nmf.res$W <- ProjectFeatures(norm.counts, nmf.res$H, n.cores = 8)
 ```
 
 
 Now we can embed the key PBMC genes onto the visualization and remake the plot
 ```{r}
-swne.embedding <- EmbedFeatures(swne.embedding, nmf.res$W, genes.embed, n_pull = 4)
+swne.embedding <- EmbedFeatures(swne.embedding, nmf.res$W, genes.embed, n_pull = n_pull)
 ```
 
 
@@ -129,7 +136,7 @@ Let's make the SWNE plot with the key genes embedded. The closer a cell or a clu
 ```{r fig.width=5,fig.height=5}
 color.seed <- 42
 PlotSWNE(swne.embedding, alpha.plot = 0.4, sample.groups = cell.clusters, do.label = T,
-         label.size = 3.5, pt.size = 1.25, show.legend = F, seed = color.seed)
+         label.size = 3.5, pt.size = 1, show.legend = F, seed = color.seed)
 ```
 
 
@@ -143,7 +150,8 @@ FeaturePlotSWNE(swne.embedding, gene.expr, gene.use, alpha.plot = 0.4, label.siz
 
 We can also make a t-SNE plot for comparison.
 ```{r fig.width=5,fig.height=5}
-tsne.scores <- GetCellEmbeddings(se.obj, reduction.type = "tsne")
+obj <- RunTSNE(obj)
+tsne.scores <- Embeddings(obj, "tsne")
 PlotDims(tsne.scores, sample.groups = cell.clusters, pt.size = 1, label.size = 3.5, alpha = 0.4,
          show.legend = F, seed = color.seed, show.axes = F)
 ```
@@ -164,7 +172,7 @@ ggHeat(gene.loadings.heat, clustering = "col")
 ```
 
 
-Extract cluster colors for compatibility with other plotting methods (i.e. Monocle)
+Finally, we can extract cluster colors for compatibility with other plotting methods (i.e. Monocle)
 ```{r}
 color.mapping <- ExtractSWNEColors(swne.embedding, sample.groups = cell.clusters, seed = color.seed)
 color.mapping
