@@ -4,9 +4,9 @@
 \alias{EmbedTFBS}
 \title{Embeds genes based on TF binding site accessibility relative to topic coordinates}
 \usage{
-EmbedTFBS(swne.embedding, cisTopicObject, motif_ix_mat, genes.embed,
-  peaks.use = NULL, alpha.exp = 1, n_pull = 3, scale.cols = T,
-  overwrite = T)
+EmbedTFBS(swne.embedding, cisTopicObject, motif_ix_mat = NULL,
+  dev.mat = NULL, genes.embed, peaks.use = NULL, alpha.exp = 1,
+  n_pull = 3, scale.cols = T, overwrite = T, n.cores = 1)
 }
 \arguments{
 \item{swne.embedding}{SWNE embedding computed using RunSWNE}
@@ -14,6 +14,8 @@ EmbedTFBS(swne.embedding, cisTopicObject, motif_ix_mat, genes.embed,
 \item{cisTopicObject}{cisTopic object}
 
 \item{motif_ix_mat}{A binary matrix of peaks x TF motifs (can be generated with ChromVar)}
+
+\item{dev.mat}{A matrix of TF binding site accessibility generated from ChromVar}
 
 \item{genes.embed}{Genes to embed}
 

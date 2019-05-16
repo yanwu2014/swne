@@ -54,6 +54,7 @@ EmbedPromoters <- function(swne.embedding, cisTopicObject, genes.embed, peaks.us
 #'
 #' @param swne.embedding SWNE embedding computed using RunSWNE
 #' @param cisTopicObject cisTopic object
+#' @param dev.mat A matrix of TF binding site accessibility generated from ChromVar
 #' @param motif_ix_mat A binary matrix of peaks x TF motifs (can be generated with ChromVar)
 #' @param genes.embed Genes to embed
 #' @param peaks.use Subset of peaks to use
@@ -66,27 +67,41 @@ EmbedPromoters <- function(swne.embedding, cisTopicObject, genes.embed, peaks.us
 #'
 #' @export
 #'
-EmbedTFBS <- function(swne.embedding, cisTopicObject, motif_ix_mat, genes.embed, peaks.use = NULL,
-                      alpha.exp = 1, n_pull = 3, scale.cols = T, overwrite = T) {
+EmbedTFBS <- function(swne.embedding, cisTopicObject, motif_ix_mat = NULL, dev.mat = NULL,
+                      genes.embed, peaks.use = NULL, alpha.exp = 1, n_pull = 3,
+                      scale.cols = T, overwrite = T, n.cores = 1) {
   if (!requireNamespace("cisTopic", quietly = T)) {
     stop("cisTopic needed for this function to work. Please install it.",
          call. = F)
   }
 
-  topic.regions <- as.matrix(cisTopicObject@region.data)
-  if (is.null(peaks.use)) peaks.use <- rownames(topic.regions)
+  if(!is.null(dev.mat)) {
+    topic.emb <- modelMatSelection(cisTopicObject, target = "cell", method = "Probability")
+    tf.topic.cor <- FactorAssociation(dev.mat, topic.emb, n.cores = n.cores,
+                                      metric = "pearson")
+    swne.embedding <- EmbedFeatures(swne.embedding, tf.topic.cor, alpha.exp = alpha.exp, n_pull = n_pull,
+                                    scale.cols = scale.cols, overwrite = overwrite)
 
-  topic.regions <- topic.regions[peaks.use, grepl("Scores", colnames(topic.regions))]
-  topic.regions <- apply(topic.regions, 2, as.numeric)
-  rownames(topic.regions) <- rownames(cisTopicObject@region.data)
+  } else if(!is.null(motif_ix_mat)) {
+    topic.regions <- as.matrix(cisTopicObject@region.data)
+    if (is.null(peaks.use)) peaks.use <- rownames(topic.regions)
 
-  if (!all(genes.embed %in% colnames(motif_ix_mat))) {
-    print("TFs missing from motif matrix")
-    print(paste(genes.embed[!genes.embed %in% colnames(motif_ix_mat)], collapse = ", ", sep = ", "))
+    topic.regions <- topic.regions[peaks.use, grepl("Scores", colnames(topic.regions))]
+    topic.regions <- apply(topic.regions, 2, as.numeric)
+    rownames(topic.regions) <- rownames(cisTopicObject@region.data)
+
+    if (!all(genes.embed %in% colnames(motif_ix_mat))) {
+      print("TFs missing from motif matrix")
+      print(paste(genes.embed[!genes.embed %in% colnames(motif_ix_mat)], collapse = ", ", sep = ", "))
+    }
+    genes.embed <- genes.embed[genes.embed %in% colnames(motif_ix_mat)]
+    motif_topics <- t(as.matrix(motif_ix_mat[,genes.embed])) %*% topic.regions[rownames(motif_ix_mat),]
+    rownames(motif_topics) <- paste0(rownames(motif_topics), "-tfbs")
+    swne.embedding <- EmbedFeatures(swne.embedding, motif_topics, alpha.exp = alpha.exp, n_pull = n_pull,
+                                    scale.cols = scale.cols, overwrite = overwrite)
+  } else {
+    stop("At least one of motif_ix_mat or dev.mat must be specified")
   }
-  genes.embed <- genes.embed[genes.embed %in% colnames(motif_ix_mat)]
-  motif_topics <- t(as.matrix(motif_ix_mat[,genes.embed])) %*% topic.regions[rownames(motif_ix_mat),]
-  rownames(motif_topics) <- paste0(rownames(motif_topics), "-tfbs")
-  EmbedFeatures(swne.embedding, motif_topics, alpha.exp = alpha.exp, n_pull = n_pull,
-                scale.cols = scale.cols, overwrite = overwrite)
+
+  return(swne.embedding)
 }
