@@ -6,7 +6,7 @@
 \usage{
 EmbedTFBS(swne.embedding, cisTopicObject, motif_ix_mat = NULL,
   dev.mat = NULL, genes.embed, peaks.use = NULL, alpha.exp = 1,
-  n_pull = 3, scale.cols = T, overwrite = T, n.cores = 1)
+  n_pull = 3, scale.cols = T, overwrite = T)
 }
 \arguments{
 \item{swne.embedding}{SWNE embedding computed using RunSWNE}
