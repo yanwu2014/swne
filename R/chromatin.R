@@ -86,6 +86,7 @@ EmbedTFBS <- function(swne.embedding, cisTopicObject, motif_ix_mat = NULL, dev.m
     topic.regions <- as.matrix(cisTopicObject@region.data)
     if (is.null(peaks.use)) peaks.use <- rownames(topic.regions)
 
+    motif_ix_mat <- motif_ix_mat[peaks.use,]
     topic.regions <- topic.regions[peaks.use, grepl("Scores", colnames(topic.regions))]
     topic.regions <- apply(topic.regions, 2, as.numeric)
     rownames(topic.regions) <- rownames(cisTopicObject@region.data[peaks.use,])
