@@ -78,6 +78,7 @@ EmbedTFBS <- function(swne.embedding, cisTopicObject, motif_ix_mat = NULL, dev.m
   if(!is.null(dev.mat)) {
     topic.emb <- modelMatSelection(cisTopicObject, target = "cell", method = "Probability")
     tf.topic.cor <- FactorAssociation(dev.mat[genes.embed,], topic.emb, metric = "pearson")
+    rownames(tf.topic.cor ) <- paste0(rownames(tf.topic.cor), "-tfbs")
     swne.embedding <- EmbedFeatures(swne.embedding, tf.topic.cor, alpha.exp = alpha.exp, n_pull = n_pull,
                                     scale.cols = scale.cols, overwrite = overwrite)
 
