@@ -88,7 +88,7 @@ EmbedTFBS <- function(swne.embedding, cisTopicObject, motif_ix_mat = NULL, dev.m
 
     topic.regions <- topic.regions[peaks.use, grepl("Scores", colnames(topic.regions))]
     topic.regions <- apply(topic.regions, 2, as.numeric)
-    rownames(topic.regions) <- rownames(cisTopicObject@region.data)
+    rownames(topic.regions) <- rownames(cisTopicObject@region.data[peaks.use,])
 
     if (!all(genes.embed %in% colnames(motif_ix_mat))) {
       print("TFs missing from motif matrix")
