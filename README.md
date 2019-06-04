@@ -13,6 +13,7 @@ Run the following code to install the package using devtools:
 
 ```
 if(!require(devtools)){ install.packages("devtools") # If not already installed; }
+devtools::install_github("linxihui/NNLM")
 devtools::install_github("yanwu2014/swne")
 ```
 
