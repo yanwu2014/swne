@@ -117,15 +117,15 @@ RunSWNE.Seurat <- function(object, proj.method = "sammon", reduction.use = "pca"
   }
 
   if (missing(genes.embed)) genes.embed <- NULL
-  if (is.null(x = distance.matrix)) {
-    if(sum(dim(object@graphs$RNA_snn)) < 2){
+  if (is.null(distance.matrix)) {
+    if(sum(dim(object@graphs$RNA_snn)) != 2*ncol(object)) {
       object <- RunPCA(object, pc.genes = var.genes, do.print = F, pcs.compute = min(k,20))
-      pc.scores <- t(Embeddings(object, reduction = reduction.use, dims.use = dims.use))
-      snn <- CalcSNN(pc.scores, k = snn.k, prune.SNN = 1/15)
-    } else {
-      snn <- as(object@graphs$RNA_snn, "dgCMatrix")
+      # pc.scores <- t(Embeddings(object, reduction = reduction.use, dims.use = dims.use))
+      # snn <- CalcSNN(pc.scores, k = snn.k, prune.SNN = 1/15)
+      object <- FindNeighbors(object, k = snn.k, prune.SNN = 1/15)
     }
 
+    snn <- as(object@graphs$RNA_snn, "dgCMatrix")
     swne_embedding <- run_swne(object_norm, var.genes, snn, k, alpha.exp, snn.exp, n_pull, proj.method, dist.metric, genes.embed,
                                loss, n.cores, hide.factors)
   }
