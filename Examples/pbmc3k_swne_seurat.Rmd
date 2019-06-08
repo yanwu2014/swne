@@ -54,8 +54,7 @@ PlotSWNE(swne.embedding, alpha.plot = 0.4, sample.groups = cell.clusters,
 `RunSWNE` can also return a Seurat object with SWNE set as a dimensional reduction
 ```{r}
 ## Run SWNE
-obj <- RunSWNE(obj, k = 16, alpha.exp = 1.5, snn.exp = 0.25, 
-               var.genes = var.genes, genes.embed = genes.embed,
+obj <- RunSWNE(obj, k = 16, genes.embed = genes.embed,
                return.format = "seurat")
 
 DimPlot(obj, reduction = "swne")
@@ -101,7 +100,7 @@ Run the SWNE embedding. The three key parameters are `alpha.exp`, `snn.exp`, and
 alpha.exp <- 1.5 # Increase this > 1.0 to move the cells closer to the factors. Values > 2 start to distort the data.
 snn.exp <- 0.25 # Lower this < 1.0 to move similar cells closer to each other
 n_pull <- 3 # The number of factors pulling on each cell. Must be at least 3.
-swne.embedding <- EmbedSWNE(nmf.res$H, snn, alpha.exp = alpha.exp, snn.exp = snn.exp,
+swne.embedding <- EmbedSWNE(nmf.res$H, SNN = snn, alpha.exp = alpha.exp, snn.exp = snn.exp,
                             n_pull = n_pull)
 ```
 

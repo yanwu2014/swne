@@ -94,7 +94,7 @@ kl_div <- function(x, y, pseudocount = 1e-12) {
 #' @export
 #'
 RunNMF <- function(A, k, alpha = 0, init = "ica", n.cores = 1, loss = "mse",
-                   max.iter = 1000, ica.fast = F) {
+                   max.iter = 500, ica.fast = F) {
   if (any(A < 0)) stop('The input matrix contains negative elements !')
   if (k < 3) stop("k must be greater than or equal to 3 to create a viable SWNE plot")
 
