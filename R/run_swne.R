@@ -21,6 +21,7 @@
 #' @param snn.k Changes the number of nearest neighbors used to build SNN (passed to CalcSNN)
 #' @param n.var.genes Number of variable genes to use
 #' @param n_pull Maximum number of factors "pulling" on each sample
+#' @param ica.fast Whether to run SVD before ICA initialization
 #' @param genes.embed Genes to add to the SWNE embedding
 #' @param hide.factors Hide factors when plotting SWNE embedding
 #' @param reduction.name dimensional reduction name, specifies the position in the object$dr list. swne by default
@@ -75,7 +76,7 @@ RunSWNE.cisTopic <- function(cisTopicObject, proj.method = "sammon", cells.use =
 #' @export
 RunSWNE.Seurat <- function(object, proj.method = "sammon", reduction.use = "pca", cells.use = NULL, dims.use = NULL, genes.use = NULL,
                            dist.metric = "cosine", distance.matrix = NULL,  n.cores = 8, k, k.range, var.genes,
-                           loss = "mse", genes.embed, hide.factors = T, n_pull = 3,
+                           loss = "mse", genes.embed, hide.factors = T, n_pull = 3, ica.fast = T,
                            alpha.exp = 1.25, # Increase this > 1.0 to move the cells closer to the factors. Values > 2 start to distort the data.
                            snn.exp = 1.0, # Lower this < 1.0 to move similar cells closer to each other
                            snn.k = 10,
@@ -127,7 +128,7 @@ RunSWNE.Seurat <- function(object, proj.method = "sammon", reduction.use = "pca"
 
     snn <- as(object@graphs$RNA_snn, "dgCMatrix")
     swne_embedding <- run_swne(object_norm, var.genes, snn, k, alpha.exp, snn.exp, n_pull, proj.method, dist.metric, genes.embed,
-                               loss, n.cores, hide.factors)
+                               loss, n.cores, hide.factors, ica.fast)
   }
   else {
     swne_embedding <- RunSWNE(as.matrix(distance.matrix), proj.method = proj.method, dist.metric = dist.metric, n.cores = n.cores, k = k,
@@ -156,7 +157,7 @@ RunSWNE.Seurat <- function(object, proj.method = "sammon", reduction.use = "pca"
 #' @export
 #'
 RunSWNE.Pagoda2 <- function(object, proj.method = "sammon", dist.metric = "cosine", n.cores = 8, k, k.range, var.genes,
-                            loss = "mse", genes.embed, hide.factors = T, n_pull = 3, n.var.genes = 3000,
+                            loss = "mse", genes.embed, hide.factors = T, n_pull = 3, ica.fast = T, n.var.genes = 3000,
                             alpha.exp = 1.25, # Increase this > 1.0 to move the cells closer to the factors. Values > 2 start to distort the data.
                             snn.exp = 1.0 # Lower this < 1.0 to move similar cells closer to each other
 ){
@@ -188,7 +189,7 @@ RunSWNE.Pagoda2 <- function(object, proj.method = "sammon", dist.metric = "cosin
 
   if (missing(genes.embed)) genes.embed <- NULL
   run_swne(object_norm, var.genes, snn, k, alpha.exp, snn.exp, n_pull, proj.method, dist.metric, genes.embed,
-           loss, n.cores, hide.factors)
+           loss, n.cores, hide.factors, ica.fast)
 }
 
 
@@ -197,7 +198,8 @@ RunSWNE.Pagoda2 <- function(object, proj.method = "sammon", dist.metric = "cosin
 #' @method RunSWNE dgCMatrix
 #' @export
 RunSWNE.dgCMatrix <- function(data.matrix, proj.method = "sammon", dist.metric = "cosine", n.cores = 3, k, k.range,
-                              var.genes = rownames(data.matrix), loss = "mse", genes.embed, hide.factors = T, n_pull = 3,
+                              var.genes = rownames(data.matrix), loss = "mse", genes.embed, hide.factors = T,
+                              n_pull = 3, ica.fast = T,
                               alpha.exp = 1.25, # Increase this > 1.0 to move the cells closer to the factors. Values > 2 start to distort the data.
                               snn.exp = 1.0 # Lower this < 1.0 to move similar cells closer to each other
 ){
@@ -219,7 +221,7 @@ RunSWNE.dgCMatrix <- function(data.matrix, proj.method = "sammon", dist.metric =
 
   if (missing(genes.embed)) genes.embed <- NULL
   run_swne(data.matrix, var.genes, snn, k, alpha.exp, snn.exp, n_pull, proj.method, dist.metric, genes.embed,
-           loss, n.cores, hide.factors)
+           loss, n.cores, hide.factors, ica.fast)
 }
 
 
@@ -258,9 +260,9 @@ RunSWNE.dgTMatrix <- function(data.matrix, proj.method = "sammon", dist.metric =
 
 ## Helper function for running SWNE
 run_swne <- function(norm_counts, var.genes, snn, k, alpha.exp, snn.exp, n_pull, proj.method, dist.metric,
-                     genes.embed, loss, n.cores, hide.factors) {
+                     genes.embed, loss, n.cores, hide.factors, ica.fast) {
   nmf.res <- RunNMF(norm_counts[var.genes,], k = k, init = "ica", n.cores = n.cores, loss = loss,
-                    ica.fast = T)
+                    ica.fast = ica.fast)
   nmf.scores <- nmf.res$H
   swne_embedding <- EmbedSWNE(nmf.scores, snn, alpha.exp = alpha.exp, snn.exp = snn.exp,
                               n_pull = n_pull, proj.method = proj.method,

@@ -19,19 +19,21 @@
   reduction.use = "pca", cells.use = NULL, dims.use = NULL,
   genes.use = NULL, dist.metric = "cosine", distance.matrix = NULL,
   n.cores = 8, k, k.range, var.genes, loss = "mse", genes.embed,
-  hide.factors = T, n_pull = 3, alpha.exp = 1.25, snn.exp = 1,
-  snn.k = 10, reduction.name = "swne", reduction.key = "SWNE_",
-  return.format = c("embedding", "seurat"), ...)
+  hide.factors = T, n_pull = 3, ica.fast = T, alpha.exp = 1.25,
+  snn.exp = 1, snn.k = 10, reduction.name = "swne",
+  reduction.key = "SWNE_", return.format = c("embedding", "seurat"),
+  ...)
 
 \method{RunSWNE}{Pagoda2}(object, proj.method = "sammon",
   dist.metric = "cosine", n.cores = 8, k, k.range, var.genes,
   loss = "mse", genes.embed, hide.factors = T, n_pull = 3,
-  n.var.genes = 3000, alpha.exp = 1.25, snn.exp = 1)
+  ica.fast = T, n.var.genes = 3000, alpha.exp = 1.25, snn.exp = 1)
 
 \method{RunSWNE}{dgCMatrix}(data.matrix, proj.method = "sammon",
   dist.metric = "cosine", n.cores = 3, k, k.range,
   var.genes = rownames(data.matrix), loss = "mse", genes.embed,
-  hide.factors = T, n_pull = 3, alpha.exp = 1.25, snn.exp = 1)
+  hide.factors = T, n_pull = 3, ica.fast = T, alpha.exp = 1.25,
+  snn.exp = 1)
 
 \method{RunSWNE}{matrix}(data.matrix, proj.method = "sammon",
   dist.metric = "cosine", n.cores = 3, k, k.range,
@@ -79,6 +81,8 @@
 \item{loss}{loss function to use (passed to RunNMF)}
 
 \item{genes.embed}{Genes to add to the SWNE embedding}
+
+\item{ica.fast}{Whether to run SVD before ICA initialization}
 
 \item{reduction.name}{dimensional reduction name, specifies the position in the object$dr list. swne by default}
 
