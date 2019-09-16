@@ -120,8 +120,11 @@ EmbedSWNE <- function(H, SNN = NULL, alpha.exp = 1, snn.exp = 1.0, n_pull = NULL
                       proj.method = "sammon", pca.red = F, dist.use = "cosine",
                       snn.factor.proj = T, n.neighbors = max(round(nrow(H)/3),4),
                       min.dist = 0.5) {
-  if (!is.null(SNN) && (colnames(H) != rownames(SNN) || colnames(H) != colnames(SNN))) {
-    stop("Column names of H must match row and column names of the SNN matrix")
+
+  if (!is.null(SNN)) {
+    if (!(nrow(SNN) == ncol(H) && ncol(SNN) == ncol(H))) {
+      stop("Check the dimensions of your SNN. nrow(H) must equal nrow(SNN) and ncol(SNN)")
+    }
   }
 
   if (nrow(H) < 4 && proj.method == "umap") {
@@ -129,10 +132,11 @@ EmbedSWNE <- function(H, SNN = NULL, alpha.exp = 1, snn.exp = 1.0, n_pull = NULL
     proj.method = "sammon"
   }
 
-  H <- H[ ,colSums(H) > 0]
+  ix <- colSums(H) > 0
+  H <- H[,ix]
 
   if (!is.null(SNN)) {
-    SNN <- SNN[colnames(H), colnames(H)]
+    SNN <- SNN[ix, ix]
     SNN@x <- SNN@x^snn.exp
     SNN <- SNN/Matrix::rowSums(SNN)
   }
@@ -303,8 +307,9 @@ ProjectSWNE <- function(swne.embedding, H.test, SNN = NULL, alpha.exp = 1, snn.e
 RenameFactors <- function(swne.embedding, name.mapping, set.empty = T) {
   old.names <- swne.embedding$H.coords$name
   new.names <- revalue(old.names, name.mapping)
-  if (set.empty) { new.names[new.names == old.names] <- "" }
-
+  if (set.empty) {
+    new.names[new.names == old.names] <- ""
+  }
   swne.embedding$H.coords$name <- new.names
   return(swne.embedding)
 }
@@ -344,18 +349,28 @@ PlotSWNE <- function(swne.embedding, sample.groups, alpha.plot = 0.25, do.label 
   feature.coords <- swne.embedding$feature.coords
   sample.coords$pt.size <- pt.size
 
-  set.seed(seed)
-  sample.groups <- factor(sample.groups[rownames(sample.coords)])
+  sample.groups <- factor(sample.groups)
+  if (!is.null(names(sample.groups))) {
+    samples.plot <- intersect(names(sample.groups), rownames(sample.coords))
+    sample.groups <- sample.groups[samples.plot]
+    sample.coords <- sample.coords[samples.plot,]
+  } else {
+    if (length(sample.groups) != nrow(sample.coords)) {
+      stop("length(sample.groups) must be equal to nrow(swne.embedding$sample.coords)")
+    }
+  }
+
   n.missing <- sum(is.na(sample.groups))
   if (n.missing > 0) {
-    na.cells <- names(sample.groups[is.na(sample.groups)])
-    label.cells <- names(sample.groups[!is.na(sample.groups)])
-    na.sample.coords <- sample.coords[na.cells,]
-    sample.coords <- sample.coords[label.cells,]
-    sample.groups <- sample.groups[label.cells]
+    na.ix <- is.na(sample.groups)
+    label.ix <- !is.na(sample.groups)
+    na.sample.coords <- sample.coords[na.ix,]
+    sample.coords <- sample.coords[label.ix,]
+    sample.groups <- sample.groups[label.ix]
   }
+  set.seed(seed)
   sample.groups <- factor(sample.groups, levels = sample(levels(sample.groups)))
-  sample.coords$sample.groups <- sample.groups[rownames(sample.coords)]
+  sample.coords$sample.groups <- sample.groups
 
   if (!is.null(samples.plot)) {
     sample.coords <- sample.coords[samples.plot,]
@@ -557,16 +572,26 @@ PlotDims <- function(dim.scores, sample.groups, x.lab = "tsne1", y.lab = "tsne2"
                      label.size = 4, show.legend = T, show.axes = T, seed = NULL, colors.use = NULL,
                      use.brewer.pal = F) {
 
-  set.seed(seed)
-  sample.groups <- factor(sample.groups[rownames(dim.scores)])
+  sample.groups <- factor(sample.groups)
+  if (!is.null(names(sample.groups))) {
+    samples.plot <- intersect(names(sample.groups), rownames(dim.scores))
+    sample.groups <- sample.groups[samples.plot]
+    dim.scores <- dim.scores[samples.plot,]
+  } else {
+    if (length(sample.groups) != nrow(dim.scores)) {
+      stop("length(sample.groups) must be equal to nrow(dim.scores)")
+    }
+  }
+
   n.missing <- sum(is.na(sample.groups))
   if (n.missing > 0) {
-    na.cells <- names(sample.groups[is.na(sample.groups)])
-    label.cells <- names(sample.groups[!is.na(sample.groups)])
-    na.dim.scores <- dim.scores[na.cells,]
-    dim.scores <- dim.scores[label.cells,]
-    sample.groups <- sample.groups[label.cells]
+    na.ix <- is.na(sample.groups)
+    label.ix <- !is.na(sample.groups)
+    na.dim.scores <- dim.scores[na.ix,]
+    dim.scores <- dim.scores[label.ix,]
+    sample.groups <- sample.groups[label.ix]
   }
+  set.seed(seed)
   sample.groups <- factor(sample.groups, levels = sample(levels(sample.groups)))
 
   gg.df <- data.frame(x = dim.scores[,1], y = dim.scores[,2], sample.groups = sample.groups)

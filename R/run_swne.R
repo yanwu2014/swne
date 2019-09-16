@@ -83,7 +83,7 @@ RunSWNE.Seurat <- function(object, proj.method = "sammon", reduction.use = "pca"
                            reduction.name = "swne", reduction.key = "SWNE_", return.format = c("embedding", "seurat"), ...
 ){
   if (!requireNamespace("Seurat", quietly = T)) {
-    stop("Seurat needed for this function to work. Please install it.",
+    stop("Seurat is needed for this function to work. Please install it",
          call. = F)
   }
 
@@ -94,8 +94,8 @@ RunSWNE.Seurat <- function(object, proj.method = "sammon", reduction.use = "pca"
       dims.use <- 1:k
     }
   }
-  if (length(x = dims.use) < 2) {
-    stop("Cannot perform SWNE on only one dimension, please provide two or more dimensions")
+  if (length(x = dims.use) < 3) {
+    stop("SWNE needs at least 3 dimensions to generate a plot")
   }
   if (!is.null(x = distance.matrix)) {
     genes.use <- rownames(x = object)
