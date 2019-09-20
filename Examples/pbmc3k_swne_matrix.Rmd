@@ -1,5 +1,5 @@
 ---
-title: "SWNE Walkthrough using Seurat"
+title: "SWNE Walkthrough starting from a counts matrix"
 author: "Yan Wu"
 output: html_document
 date: 11/12/2018
@@ -10,32 +10,40 @@ knitr::opts_chunk$set(echo = TRUE)
 options(bitmapType="cairo")
 ```
 
-This is a quick walkthrough demonstrating how to generate SWNE plots alongside the [Seurat](http://satijalab.org/seurat/) pipeline using a [3k PBMC](https://support.10xgenomics.com/single-cell-gene-expression/datasets/1.1.0/pbmc3k) dataset as an example.
-
-To save time we will be using the pre-computed Seurat object `pbmc3k_seurat.Robj`, which can be downloaded [here](ftp://genome-miner.ucsd.edu/swne_files/pbmc3k_final.RObj).
+This is a quick walkthrough demonstrating how to generate SWNE plots starting from a counts matrix using a [3k PBMC](https://support.10xgenomics.com/single-cell-gene-expression/datasets/1.1.0/pbmc3k) dataset as an example. You can download the matrix [here](ftp://genome-miner.ucsd.edu/swne_files/pbmc3k_matrix.tsv.gz)
 
 
 First let's load the required libraries
 ```{r message=FALSE,warning=FALSE}
-library(Seurat)
+library(irlba)
+library(Matrix)
 library(swne)
 ```
 
 
-Next let's load the Seurat object
+Next let's load the matrix, convert it to a sparse matrix to save memory, and filter and trim the genes
 ```{r}
-obj <- readRDS("~/swne/Data/pbmc3k_final.RObj")
+counts <- read.table("~/swne/Data/pbmc3k_matrix.tsv.gz", header = T, sep = "\t")
+counts <- as(as.matrix(counts), "dgCMatrix")
+counts <- FilterData(counts, min.samples.frac = 0.001, trim = 3, min.nonzero.features = 0,
+                     max.sample.sum = Inf)
 ```
 
-Most scRNA-seq pipelines only use a subset of highly overdispersed genes for analysis. We'll pull out those variable genes here, as well as the cluster labels.
+Most scRNA-seq pipelines only use a subset of highly overdispersed genes for analysis. We'll pull out those variable genes here, as well as the cluster labels
 ```{r}
 ## Pull out overdispersed genes as defined by Seurat
-var.genes <- VariableFeatures(obj)
+var.genes <- SelectFeatures(counts, n.features = 2000)
 length(var.genes)
 
 ## Pull out cell clusters as defined by Seurat
-cell.clusters <- Idents(obj)
-levels(cell.clusters)
+cell.clusters <- factor(sapply(colnames(counts), ExtractField, field = 2, delim = "_"))
+names(cell.clusters) <- colnames(counts)
+table(cell.clusters)
+```
+
+Next we will normalize and run variance stabilization on the counts matrix
+```{r}
+norm.counts <- ScaleCounts(counts)
 ```
 
 
@@ -44,7 +52,7 @@ The easiest way to generate an SWNE embedding is to use the wrapper function `Ru
 ## Run SWNE
 genes.embed <- c("MS4A1", "GNLY", "CD3E", "CD14",
                  "FCER1A", "FCGR3A", "LYZ", "PPBP", "CD8A")
-swne.embedding <- RunSWNE(obj, k = 16, genes.embed = genes.embed)
+swne.embedding <- RunSWNE(norm.counts, k = 16, var.genes = var.genes, genes.embed = genes.embed)
 
 ## Plot SWNE
 PlotSWNE(swne.embedding, alpha.plot = 0.4, sample.groups = cell.clusters,
@@ -52,25 +60,8 @@ PlotSWNE(swne.embedding, alpha.plot = 0.4, sample.groups = cell.clusters,
          seed = 42)
 ```
 
-`RunSWNE` can also return a Seurat object with SWNE set as a dimensional reduction
-```{r}
-## Run SWNE
-obj <- RunSWNE(obj, k = 16, genes.embed = genes.embed,
-               return.format = "seurat")
-
-DimPlot(obj, reduction = "swne")
-```
-
 
 Now we'll go through the SWNE embedding process step by step
-
-
-First, let's pull out the counts, scale and adjust gene variance, while keeping the scaled matrix nonnegative.
-```{r}
-norm.counts <- ExtractNormCounts(obj, obj.type = "seurat", rescale = T, rescale.method = "log")
-dim(norm.counts)
-```
-
 
 
 We use the `FindNumFactors` function to identify the optimal number of factors to use. This function can be slow for large datasets, since it iterates over different values of `k`, so a simple "hack" is to just set `k` equal to the number of significant principal components.
@@ -87,19 +78,22 @@ nmf.res <- RunNMF(norm.counts[var.genes,], k = k)
 ```
 
 
-We can either use the pre-computed Shared Nearest Neighbors (SNN) matrix from Seurat or re-compute it ourselves.
+Next we'll compute the Shared Nearest Neigbhors (SNN) graph. We've noticed PCA tends to be a better reduction
+to use for computing the SNN
 ```{r}
-# pc.scores <- t(GetCellEmbeddings(se.obj, reduction.type = "pca", dims.use = 1:k))
-# snn <- CalcSNN(pc.scores)
-obj <- FindNeighbors(obj, k = 10, prune.SNN = 1/15)
-snn <- as(obj@graphs$RNA_snn, "dgCMatrix")
+## Run PCA
+pca.res <- irlba::irlba(t(norm.counts[var.genes,]), nv = max(k,20), center = Matrix::rowMeans(norm.counts[var.genes,]))
+pc.scores <- t(pca.res$u); colnames(pc.scores) <- colnames(norm.counts);
+
+## Compute SNN
+snn <- CalcSNN(pc.scores)
 ```
 
 
 Run the SWNE embedding. The three key parameters are `alpha.exp`, `snn.exp`, and `n_pull`, which control how the factors and neighboring cells affect the cell coordinates.
 ```{r message=FALSE,warning=FALSE}
-alpha.exp <- 1.5 # Increase this > 1.0 to move the cells closer to the factors. Values > 2 start to distort the data.
-snn.exp <- 0.25 # Lower this < 1.0 to move similar cells closer to each other
+alpha.exp <- 1.25 # Increase this > 1.0 to move the cells closer to the factors. Values > 2 start to distort the data.
+snn.exp <- 1 # Lower this < 1.0 to move similar cells closer to each other
 n_pull <- 3 # The number of factors pulling on each cell. Must be at least 3.
 swne.embedding <- EmbedSWNE(nmf.res$H, SNN = snn, alpha.exp = alpha.exp, snn.exp = snn.exp,
                             n_pull = n_pull)
@@ -146,14 +140,6 @@ gene.expr <- norm.counts[gene.use,]
 FeaturePlotSWNE(swne.embedding, gene.expr, gene.use, alpha.plot = 0.4, label.size = 3.5, pt.size = 1.25)
 ```
 
-
-We can also make a t-SNE plot for comparison.
-```{r fig.width=5,fig.height=5}
-obj <- RunTSNE(obj)
-tsne.scores <- Embeddings(obj, "tsne")
-PlotDims(tsne.scores, sample.groups = cell.clusters, pt.size = 1, label.size = 3.5, alpha = 0.4,
-         show.legend = F, seed = color.seed, show.axes = F)
-```
 
 
 We can also interpret the factors by using the gene loadings matrix. Here, we extract the top 3 genes for each factor by gene loading. Since NMF tends to create a parts-based representation of the data, the factors often correspond to key biological processes or gene modules that explain the data.

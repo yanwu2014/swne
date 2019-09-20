@@ -97,11 +97,12 @@ PlotSWNE(swne.emb, sample.groups = clusters, pt.size = 0.5, alpha.plot = 0.5, do
 ## scRNA-seq Walkthroughs and examples
 Since SWNE is primarily meant for visualization and interpretation of the data, we typically use either [Seurat](http://satijalab.org/seurat/) or [Pagoda2](https://github.com/hms-dbmi/pagoda2) as a primary scRNA-seq pipeline. All the R markdown files used to generate the walkthroughs can be found under the Examples/ directory.
 
-1. A basic [walkthrough](https://yanwu2014.github.io/swne/Examples/pbmc3k_swne_seurat.html) of 3k PBMC cells starting from a pre-computed Seurat object.
-2. A basic [walkthrough](https://yanwu2014.github.io/swne/Examples/pbmc3k_swne_pagoda2.html) of 3k PBMC cells starting from a pre-computed Pagoda2 object.
-3. A [walkthrough](https://yanwu2014.github.io/swne/Examples/Han_hemato_swne.html) benchmarking SWNE against UMAP and SWNE using a large mouse hematopoiesis data from the [Mouse Cell Atlas](http://bis.zju.edu.cn/MCA/). The walkthrough was based of an analysis done by the UMAP authors in Figure 2 of their UMAP paper [Becht, McInnes et al, NBT, 2019](https://www.nature.com/articles/nbt.4314).
-4. A [walkthrough](https://yanwu2014.github.io/swne/Examples/hemato_swne.html) demonstrating SWNE on a hematopoiesis dataset and comparing SWNE against other embeddings including t-SNE and UMAP (recreating Figure 2 from our Cell Systems paper).
-5. A [walkthrough](https://yanwu2014.github.io/swne/Examples/multiple_pancreas_alignment_swne.html) using SWNE to visualize four pancreas datasets that have undergone alignment with Seurat V3's [data integration](https://www.biorxiv.org/content/10.1101/460147v1.abstract).
+1. A basic [walkthrough](https://yanwu2014.github.io/swne/Examples/pbmc3k_swne_seurat.html) using SWNE to visualize 3k PBMC cells starting from a pre-computed Seurat object
+2. A basic [walkthrough](https://yanwu2014.github.io/swne/Examples/pbmc3k_swne_pagoda2.html) using SWNE to visualize 3k PBMC cells starting from a pre-computed Pagoda2 object
+3. A basic [walkthrough](https://yanwu2014.github.io/swne/Examples/pbmc3k_swne_matrix.html) using SWNE to visualize 3k PBMC cells starting from a counts matrix
+4. A [walkthrough](https://yanwu2014.github.io/swne/Examples/Han_hemato_swne.html) benchmarking SWNE against UMAP and SWNE using a large mouse hematopoiesis data from the [Mouse Cell Atlas](http://bis.zju.edu.cn/MCA/). The walkthrough was based of an analysis done by the UMAP authors in Figure 2 of their UMAP paper [Becht, McInnes et al, NBT, 2019](https://www.nature.com/articles/nbt.4314).
+5. A [walkthrough](https://yanwu2014.github.io/swne/Examples/hemato_swne.html) demonstrating SWNE on a hematopoiesis dataset and comparing SWNE against other embeddings including t-SNE and UMAP (recreating Figure 2 from our Cell Systems paper).
+6. A [walkthrough](https://yanwu2014.github.io/swne/Examples/multiple_pancreas_alignment_swne.html) using SWNE to visualize four pancreas datasets that have undergone alignment with Seurat V3's [data integration](https://www.biorxiv.org/content/10.1101/460147v1.abstract).
 
 
 ## scATAC/THS-seq Walkthroughs and examples
