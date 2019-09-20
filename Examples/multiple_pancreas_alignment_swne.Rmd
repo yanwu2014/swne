@@ -7,6 +7,7 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+options(bitmapType="cairo")
 ```
 
 This is a walkthrough demonstrating how to generate SWNE plots alongside the [Seurat](http://satijalab.org/seurat/) [manifold alignment pipeline](https://satijalab.org/seurat/v3.0/pancreas_integration_label_transfer.html) from three pancreas [datasets](https://www.dropbox.com/s/1zxbn92y5du9pu0/pancreas_v3_files.tar.gz?dl=1) generated using different single cell RNA-seq technologies.
@@ -27,59 +28,17 @@ se.obj <- readRDS("~/swne/Data/multiple_pancreas_seurat_v3.RObj")
 ```
 
 
-We can extract the integrated expression matrix
+Using the wrapper function `RunSWNE` is the simplest way to generate an SWNE embedding for an integrated Seurat object.
+Just make sure that `DefaultAssay(object) == "integrated"`.
 ```{r}
-aligned.counts <- as.matrix(GetAssayData(se.obj, assay = "integrated"))
-```
-
-Note that this matrix has negative values, which we will have to rescale in order to run NMF
-```{r}
-dim(aligned.counts)
-hist(as.matrix(aligned.counts))
-aligned.counts <- t(apply(aligned.counts, 1, function(x) (x - min(x))/(max(x) - min(x))))
-```
-
-Once we have the "reconstructed matrix", we can run NMF and embed the components
-```{r message=FALSE,warning=FALSE}
-k <- 20
-n.cores <- 8
-
-nmf.res <- RunNMF(aligned.counts, k = k, alpha = 0, init = "ica", n.cores = n.cores)
-
-pc.emb <- Embeddings(se.obj, "pca")
-snn <- CalcSNN(t(pc.emb), k = 20, prune.SNN = 0)
-
-swne.embedding <- EmbedSWNE(nmf.res$H, snn, alpha.exp = 1.5, snn.exp = 1, 
-                            n_pull = 3)
+genes.embed <- c("REG1A", "PPY", "SST", "GHRL", "VWF", "SOX10")
+swne.embedding <- RunSWNE(se.obj, k = 20, genes.embed = genes.embed, snn.exp = 0.25)
 ```
 
 
-We project the full gene expression matrix to get gene loadings for the full set of genes
-```{r message=FALSE,warning=FALSE}
-norm.counts <- ExtractNormCounts(se.obj, rescale = T, rescale.method = "log", batch = NULL)
-nmf.res$W <- ProjectFeatures(norm.counts, nmf.res$H, n.cores = n.cores)
-```
-
-
-We use these gene loadings to identify key genes to embed, and we hide all the factors
-```{r}
-gene.factor.df <- SummarizeAssocFeatures(nmf.res$W, features.return = 1)
-genes.embed <- unique(gene.factor.df$feature)
-
-swne.embedding <- EmbedFeatures(swne.embedding, nmf.res$W, genes.embed, n_pull = 3)
-swne.embedding$H.coords$name <- ""
-```
-
-
-We pull out the clusters and batches
+We can make the SWNE plot
 ```{r}
 clusters <- se.obj$celltype
-batch <- se.obj$tech
-```
-
-
-We can then create the SWNE plot
-```{r}
 PlotSWNE(swne.embedding, alpha.plot = 0.4, sample.groups = clusters, do.label = T, 
          label.size = 3.5, pt.size = 1.25, show.legend = F, seed = 42)
 ```
@@ -87,14 +46,15 @@ PlotSWNE(swne.embedding, alpha.plot = 0.4, sample.groups = clusters, do.label = 
 
 We also can show that there are no batch effects
 ```{r}
+batch <- se.obj$tech
 PlotSWNE(swne.embedding, alpha.plot = 0.4, sample.groups = batch, do.label = F, 
-         label.size = 3.5, pt.size = 0.25, show.legend = T, seed = 42)
+         label.size = 3.5, pt.size = 0.15, show.legend = T, seed = 42)
 ```
 
 
 UMAP plot for comparison
 ```{r}
-tsne.emb <- Embeddings(se.obj, "umap")
-PlotDims(tsne.emb, sample.groups = clusters, show.legend = F, seed = 42,
+umap.emb <- Embeddings(se.obj, "umap")
+PlotDims(umap.emb, sample.groups = clusters, show.legend = F, seed = 42,
          show.axes = F)
 ```

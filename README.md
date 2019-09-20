@@ -27,9 +27,8 @@ devtools::install_github("aertslab/cisTopic")
 
 
 ## Key Updates
-*(05/15/2019): Updated all code and vignettes for Seurat V3 objects. Removed C1/snDropSeq projection vignette since it's easier to use Seurat data integration (or CONOS).
-
-*(04/26/2019): Added function for embedding transcription factor binding sites with `EmbedTFBS`. Add walkthrough for chromatin data.
+*(09/19/2019): The wrapper function `RunSWNE` now works on integrated Seurat datasets
+*(05/15/2019): Updated all code and vignettes for Seurat V3 objects. Removed C1/snDropSeq projection vignette since it's easier to use Seurat data integration (or CONOS)
 
 
 ## Gene Expression Quickstart with Seurat

@@ -75,7 +75,7 @@ RunSWNE.cisTopic <- function(cisTopicObject, proj.method = "sammon", cells.use =
 #' @method RunSWNE Seurat
 #' @export
 RunSWNE.Seurat <- function(object, proj.method = "sammon", reduction.use = "pca", cells.use = NULL, dims.use = NULL, genes.use = NULL,
-                           dist.metric = "cosine", distance.matrix = NULL,  n.cores = 8, k, k.range, var.genes,
+                           dist.metric = "cosine", distance.matrix = NULL, n.cores = 8, k, k.range, var.genes,
                            loss = "mse", genes.embed, hide.factors = T, n_pull = 3, ica.fast = T,
                            alpha.exp = 1.25, # Increase this > 1.0 to move the cells closer to the factors. Values > 2 start to distort the data.
                            snn.exp = 1.0, # Lower this < 1.0 to move similar cells closer to each other
@@ -100,7 +100,14 @@ RunSWNE.Seurat <- function(object, proj.method = "sammon", reduction.use = "pca"
   if (!is.null(x = distance.matrix)) {
     genes.use <- rownames(x = object)
   }
-  object_norm <- ExtractNormCounts(object, obj.type = "seurat", rescale = F, rescale.method = "log", batch = NULL)
+
+  if (DefaultAssay(object) == "integrated") {
+    object_norm <- as.matrix(GetAssayData(se.obj, assay = "integrated"))
+    object_norm <- t(apply(object_norm, 1, function(x) (x - min(x))/(max(x) - min(x))))
+    var.genes <- rownames(object_norm)
+  } else {
+    object_norm <- ExtractNormCounts(object, obj.type = "seurat", rescale = F, rescale.method = "log", batch = NULL)
+  }
 
   if (missing(var.genes)) var.genes <- VariableFeatures(object)
   var.genes <- intersect(var.genes, rownames(object_norm))
@@ -119,14 +126,22 @@ RunSWNE.Seurat <- function(object, proj.method = "sammon", reduction.use = "pca"
 
   if (missing(genes.embed)) genes.embed <- NULL
   if (is.null(distance.matrix)) {
-    if(sum(dim(object@graphs$RNA_snn)) != 2*ncol(object)) {
-      object <- RunPCA(object, pc.genes = var.genes, do.print = F, pcs.compute = min(k,20))
-      # pc.scores <- t(Embeddings(object, reduction = reduction.use, dims.use = dims.use))
-      # snn <- CalcSNN(pc.scores, k = snn.k, prune.SNN = 1/15)
-      object <- FindNeighbors(object, k = snn.k, prune.SNN = 1/15)
+    if (DefaultAssay(object) == "integrated") {
+      if(sum(dim(object@graphs$integrated_snn)) != 2*ncol(object)) {
+        object <- RunPCA(object, pc.genes = var.genes, do.print = F, pcs.compute = min(k,20),
+                         verbose = F)
+        object <- FindNeighbors(object, k = snn.k, prune.SNN = 1/15)
+      }
+      snn <- as(object@graphs$integrated_snn, "dgCMatrix")
+    } else {
+      if(sum(dim(object@graphs$RNA_snn)) != 2*ncol(object)) {
+        object <- RunPCA(object, pc.genes = var.genes, do.print = F, pcs.compute = min(k,20),
+                         verbose = F)
+        object <- FindNeighbors(object, k = snn.k, prune.SNN = 1/15)
+      }
+      snn <- as(object@graphs$RNA_snn, "dgCMatrix")
     }
 
-    snn <- as(object@graphs$RNA_snn, "dgCMatrix")
     swne_embedding <- run_swne(object_norm, var.genes, snn, k, alpha.exp, snn.exp, n_pull, proj.method, dist.metric, genes.embed,
                                loss, n.cores, hide.factors, ica.fast)
   }
