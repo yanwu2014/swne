@@ -30,7 +30,7 @@ normalize_vector <- function(x, method = "scale", n_ranks = 10000) {
 #' @importFrom proxy dist
 #' @import umap
 #'
-get_factor_coords <- function(H, method, pca.red, distance, n.neighbors, min.dist) {
+get_factor_coords <- function(H, method, distance, n.neighbors, min.dist) {
   H <- t(H)
   distance <- tolower(distance)
   if(distance == "cor" || distance == "correlation") distance <- "pearson"
@@ -39,34 +39,20 @@ get_factor_coords <- function(H, method, pca.red, distance, n.neighbors, min.dis
     stop(paste(c("Distance must be one of:", paste(c("pearson", "IC", "cosine", "euclidean"), collapse = ", ")), collapse = " "))
   }
 
-  if (pca.red) {
-    H.pca <- prcomp(t(H), center = T, scale = F, rank = ncol(H))
-    H <- t(H.pca$x)
-  }
-
   if (method == "sammon") {
     if (distance == "pearson") {
       H.dist <- sqrt(2*(1 - cor(H)))
     } else if (distance == "IC") {
       H.dist <- sqrt(2*(1 - as.matrix(usedist::dist_make(t(H), distance_fcn = MutualInf, method = "IC"))))
     } else if (distance == "cosine") {
-      H.dist <- sqrt(2*(1 - proxy::simil(H, method = "cosine", by_rows = F)))
+      # H.dist <- sqrt(2*(1 - proxy::simil(H, method = "cosine", by_rows = F)))
+      H.dist <- 1 - proxy::simil(H, method = "cosine", by_rows = F)
     } else if (distance == "euclidean") {
       H.dist <- proxy::dist(H, method = "Euclidean", by_rows = F)
     }
     H.coords <- MASS::sammon(H.dist, k = 2, niter = 250)$points
+    rownames(H.coords) <- colnames(H)
 
-  } else if (method == "umap") {
-    umap.cfg <- umap::umap.defaults; umap.cfg$n_neighbors <- n.neighbors;
-    umap.cfg$min_dist <- min.dist; umap.cfg$random_state <- 42;
-    if (distance == "IC") {
-      stop("IC not supported for umap projection")
-    } else {
-      umap.cfg$metric <- distance
-    }
-
-    H.umap <- umap::umap(t(H), config = umap.cfg, method = "naive")
-    H.coords <- H.umap$layout
   } else {
     stop("Invalid factor projection method")
   }
@@ -107,19 +93,15 @@ get_sample_coords <- function(H, H.coords, alpha, n_pull) {
 #' @param snn.exp Decreasing snn.exp increases the effect of the similarity matrix on the embedding
 #' @param n_pull Number of factors pulling on each sample. Must be >= 3
 #' @param proj.method Method to use for projecting factors. Currently only supports "sammon"
-#' @param pca.red Whether or not to run PCA on transposed H matrix before calculating factor distances
 #' @param dist.use Similarity function to use for calculating factor positions. Options include pearson (correlation), IC (mutual information), cosine, euclidean.
-#' @param n.neighbors Number of neighbors for UMAP factor projection
-#' @param min.dist Minimum distance for UMAP factor projection
 #'
 #' @return A list of factor (H.coords) and sample coordinates (sample.coords) in 2D
 #'
 #' @export
 #'
 EmbedSWNE <- function(H, SNN = NULL, alpha.exp = 1, snn.exp = 1.0, n_pull = NULL,
-                      proj.method = "sammon", pca.red = F, dist.use = "cosine",
-                      snn.factor.proj = T, n.neighbors = max(round(nrow(H)/3),4),
-                      min.dist = 0.5) {
+                      proj.method = "sammon", dist.use = "cosine",
+                      snn.factor.proj = T) {
 
   if (!is.null(SNN)) {
     if (!(nrow(SNN) == ncol(H) && ncol(SNN) == ncol(H))) {
@@ -143,13 +125,11 @@ EmbedSWNE <- function(H, SNN = NULL, alpha.exp = 1, snn.exp = 1.0, n_pull = NULL
 
   if (!is.null(SNN) && snn.factor.proj) {
     H.smooth <- t(as.matrix(SNN %*% t(H)))
-    H.coords <- get_factor_coords(H.smooth, method = proj.method, pca.red = pca.red,
-                                  distance = dist.use, n.neighbors = n.neighbors,
-                                  min.dist = min.dist)
+    H.coords <- get_factor_coords(H.smooth, method = proj.method,
+                                  distance = dist.use)
   } else {
-    H.coords <- get_factor_coords(H, method = proj.method, pca.red = pca.red,
-                                  distance = dist.use, n.neighbors = n.neighbors,
-                                  min.dist = min.dist)
+    H.coords <- get_factor_coords(H, method = proj.method,
+                                  distance = dist.use)
   }
 
   H.coords <- data.frame(H.coords)
@@ -202,53 +182,6 @@ EmbedFeatures <- function(swne.embedding, feature.assoc, features.embed, alpha.e
 }
 
 
-
-
-#' Embeds data for generating elliptical contours to mark areas where features are present
-#'
-#' @param swne.embedding Existing swne embedding from EmbedSWNE
-#' @param contour.feature Feature to draw confidence ellipse for, either a factor or numeric vector
-#' @param sample.coords Sample coordinates to use (default is the sample coordinates from the swne embedding)
-#' @param levels.plot If contour.feature is a factor, specify a subset of levels to generate contours for
-#' @param cutoff.use If contour.feature is numeric, the cutoff to use to binarize the vector for defining the contour
-#'
-#' @return swne.embedding with contour coordinates added
-#'
-#' @export
-#'
-EmbedContours <- function(swne.embedding, contour.feature, sample.coords = NULL, levels.use = NULL,
-                          cutoff.use = NULL) {
-  if (is.null(sample.coords)) {
-    sample.coords <- swne.embedding$sample.coords
-  }
-
-  if (!all(names(contour.feature) %in% rownames(sample.coords))) {
-    stop("contour.feature must have same rownames as sample.coords")
-  }
-  contour.feature <- contour.feature[rownames(sample.coords)]
-
-  contour.data <- sample.coords
-  if (is.factor(contour.feature)) {
-    if (!all(levels.use %in% levels(contour.feature))) {
-      stop("Selected levels.plot do not exist in contour.feature")
-    }
-    contour.data <- contour.data[contour.feature %in% levels.use,]
-  } else if (is.numeric(contour.feature)) {
-    if (is.null(cutoff.use)) {
-      idx.use <- order(contour.feature, decreasing = T)[round(length(contour.feature)/3)]
-      cutoff.use <- contour.feature[[idx.use]]
-    }
-    contour.data <- contour.data[contour.feature > cutoff.use,]
-  } else {
-    stop("'contour.feature' must be either a factor or numeric")
-  }
-
-  swne.embedding$contour.data <- contour.data
-  return(swne.embedding)
-}
-
-
-
 #' Projects new data onto an existing swne embedding
 #'
 #' @param swne.embedding Existing swne embedding from EmbedSWNE
@@ -263,7 +196,8 @@ EmbedContours <- function(swne.embedding, contour.feature, sample.coords = NULL,
 #' @export
 #'
 ProjectSWNE <- function(swne.embedding, H.test, SNN = NULL, alpha.exp = 1, snn.exp = 1, n_pull = NULL) {
-  sample.coords.test <- get_sample_coords(H.test, swne.embedding$H.coords, alpha = alpha.exp, n_pull = n_pull)
+  sample.coords.test <- get_sample_coords(H.test, swne.embedding$H.coords, alpha = alpha.exp,
+                                          n_pull = n_pull)
 
   if (!is.null(SNN)) {
     SNN <- SNN[rownames(sample.coords.test), rownames(swne.embedding$sample.coords)]

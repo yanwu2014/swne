@@ -7,7 +7,6 @@
 #' @param k.scale Granularity option for k.param
 #' @param prune.SNN Sets the cutoff for acceptable Jaccard distances when
 #'                  computing the neighborhood overlap for the SNN construction.
-#' @param print.output Whether or not to print output to the console
 #'
 #' @return Returns similarity matrix in sparse matrix format
 #'
@@ -15,7 +14,7 @@
 #' @importFrom Matrix sparseMatrix
 #' @export
 #'
-CalcSNN <- function(data.use, k = 10, k.scale = 10, prune.SNN = 1/15, print.output = T) {
+CalcSNN <- function(data.use, k = 10, k.scale = 10, prune.SNN = 1/15) {
   n.cells <- ncol(data.use)
   if (n.cells < k) {
     stop("k cannot be greater than the number of samples")
@@ -31,6 +30,39 @@ CalcSNN <- function(data.use, k = 10, k.scale = 10, prune.SNN = 1/15, print.outp
 
   Matrix::diag(w) <- 1
   return(w)
+}
+
+
+#' kNN Graph Construction. Adapted from Seurat.
+#'
+#' @param data.use Features x samples matrix to use to build the SNN
+#' @param k Defines k for the k-nearest neighbor algorithm
+#' @param k.scale Granularity option for k.param
+#'
+#' @return Returns kNN matrix in sparse matrix format
+#'
+#' @importFrom FNN get.knn
+#' @importFrom Matrix sparseMatrix
+#' @export
+#'
+CalcKNN <- function(data.use, k = 10, k.scale = 10) {
+  n.cells <- ncol(data.use)
+  if (n.cells < k) {
+    stop("k cannot be greater than the number of samples")
+  }
+
+  ## find the k-nearest neighbors for each single cell
+  my.knn <- FNN::get.knn(t(as.matrix(data.use)), k = min(k.scale * k, n.cells - 1))
+  nn.ranked <- cbind(1:n.cells, my.knn$nn.index[, 1:(k - 1)])
+  nn.large <- my.knn$nn.index
+
+  j <- as.numeric(x = t(x = nn.ranked))
+  i <- ((1:length(x = j)) - 1) %/% k + 1
+  nn.matrix <- as(sparseMatrix(i = i, j = j, x = 1, dims = c(ncol(data.use), ncol(data.use))), "dgCMatrix")
+  rownames(nn.matrix) <- colnames(data.use)
+  colnames(nn.matrix) <- colnames(data.use)
+
+  return(nn.matrix)
 }
 
 
