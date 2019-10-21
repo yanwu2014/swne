@@ -5,9 +5,7 @@
 \title{Embeds NMF factors and samples in 2 dimensions}
 \usage{
 EmbedSWNE(H, SNN = NULL, alpha.exp = 1, snn.exp = 1, n_pull = NULL,
-  proj.method = "sammon", pca.red = F, dist.use = "cosine",
-  snn.factor.proj = T, n.neighbors = max(round(nrow(H)/3), 4),
-  min.dist = 0.5)
+  proj.method = "sammon", dist.use = "cosine", snn.factor.proj = T)
 }
 \arguments{
 \item{H}{NMF factors (factors x samples)}
@@ -22,13 +20,7 @@ EmbedSWNE(H, SNN = NULL, alpha.exp = 1, snn.exp = 1, n_pull = NULL,
 
 \item{proj.method}{Method to use for projecting factors. Currently only supports "sammon"}
 
-\item{pca.red}{Whether or not to run PCA on transposed H matrix before calculating factor distances}
-
 \item{dist.use}{Similarity function to use for calculating factor positions. Options include pearson (correlation), IC (mutual information), cosine, euclidean.}
-
-\item{n.neighbors}{Number of neighbors for UMAP factor projection}
-
-\item{min.dist}{Minimum distance for UMAP factor projection}
 }
 \value{
 A list of factor (H.coords) and sample coordinates (sample.coords) in 2D

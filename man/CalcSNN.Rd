@@ -4,8 +4,7 @@
 \alias{CalcSNN}
 \title{SNN Graph Construction. Adapted from Seurat.}
 \usage{
-CalcSNN(data.use, k = 10, k.scale = 10, prune.SNN = 1/15,
-  print.output = T)
+CalcSNN(data.use, k = 10, k.scale = 10, prune.SNN = 1/15)
 }
 \arguments{
 \item{data.use}{Features x samples matrix to use to build the SNN}
@@ -16,8 +15,6 @@ CalcSNN(data.use, k = 10, k.scale = 10, prune.SNN = 1/15,
 
 \item{prune.SNN}{Sets the cutoff for acceptable Jaccard distances when
 computing the neighborhood overlap for the SNN construction.}
-
-\item{print.output}{Whether or not to print output to the console}
 }
 \value{
 Returns similarity matrix in sparse matrix format
