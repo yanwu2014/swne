@@ -7,6 +7,7 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+options(bitmapType="cairo")
 ```
 
 This is a walkthrough on how to use SWNE to visualize a hematopoiesis chromatin accessibility trajectory from [Buenrostro et al, 2018](https://doi.org/10.1016/j.cell.2018.03.074), starting from a [cisTopic](https://github.com/aertslab/cisTopic) object that has already been processed using the cisTopic pipeline. That data can be downloaded [here](ftp://genome-miner.ucsd.edu/swne_files/scATAC_hemato_cisTopic.RData).
@@ -52,7 +53,7 @@ We can run SWNE directly on the cisTopicObject. Increasing `snn.k` and decreasin
 ```{r message=FALSE,warning=FALSE}
 ## Run SWNE
 swne.emb <- RunSWNE(cisTopicObject, alpha.ex = 1.25, snn.exp = 1, 
-                    n_pull = 3, snn.k = 50, prune.SNN = 1/20)
+                    n_pull = 3, snn.k = 30, prune.SNN = 1/20)
 swne.emb$H.coords$name <- ""
 ```
 
@@ -92,7 +93,7 @@ colnames(motif_ix_mat) <- sapply(colnames(motif_ix_mat), ExtractField, field = 3
 
 Now we can embed the binding site accessibility of CEBPB and GATA1 and generate our final SWNE plot.
 ```{r message=FALSE,warning=FALSE}
-swne.emb <- EmbedTFBS(swne.emb, cisTopicObject, motif_ix_mat, tfs.embed, n_pull = 3,
+swne.emb <- EmbedTFBS(swne.emb, cisTopicObject, motif_ix_mat = motif_ix_mat, genes.embed = tfs.embed, n_pull = 3,
                       overwrite = F)
 
 plot.seed <- 512223535

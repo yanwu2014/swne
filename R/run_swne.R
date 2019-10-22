@@ -19,6 +19,10 @@
 #' @param alpha.exp Increasing alpha.exp increases how much the NMF factors "pull" the samples (passed to EmbedSWNE)
 #' @param snn.exp Decreasing snn.exp increases the effect of the similarity matrix on the embedding (passed to EmbedSWNE)
 #' @param snn.k Changes the number of nearest neighbors used to build SNN (passed to CalcSNN)
+#' @param prune.SNN The minimum fraction of shared nearest neighbors (smaller values are set to zero)
+#' @param use.paga.pruning Use PAGA graphs to prune
+#' @param sample.groups Clusters to use for PAGA (default is to do a de-novo clustering)
+#' @param paga.qval.cutoff q-value cutoff for significant shared edges between clusters
 #' @param n.var.genes Number of variable genes to use
 #' @param n_pull Maximum number of factors "pulling" on each sample
 #' @param ica.fast Whether to run SVD before ICA initialization
@@ -47,7 +51,10 @@ RunSWNE.cisTopic <- function(cisTopicObject, proj.method = "sammon", cells.use =
                              alpha.exp = 1.25, # Increase this > 1.0 to move the cells closer to the factors. Values > 2 start to distort the data.
                              snn.exp = 1.0, # Lower this < 1.0 to move similar cells closer to each other
                              snn.k = 20,
-                             prune.SNN = 1/15) {
+                             prune.SNN = 1/15,
+                             use.paga.pruning = T,
+                             sample.groups = NULL,
+                             paga.qval.cutoff = 1e-3) {
   if (!requireNamespace("cisTopic", quietly = T)) {
     stop("cisTopic needed for this function to work. Please install it.",
          call. = F)
@@ -60,6 +67,10 @@ RunSWNE.cisTopic <- function(cisTopicObject, proj.method = "sammon", cells.use =
   topic.emb <- modelMatSelection(cisTopicObject, target = "cell", method = "Probability")
 
   snn <- CalcSNN(pc.emb, k = snn.k, prune.SNN = prune.SNN)
+  if (use.paga.pruning) {
+    knn <- CalcKNN(pc.emb, k = snn.k)
+    snn <- PruneSNN(snn, knn, clusters = sample.groups, qval.cutoff = paga.qval.cutoff)
+  }
   swne.emb <- EmbedSWNE(topic.emb, snn, alpha.exp = alpha.exp, snn.exp = snn.exp, n_pull = n_pull)
 
   if (hide.factors) {
@@ -80,7 +91,10 @@ RunSWNE.Seurat <- function(object, proj.method = "sammon", reduction.use = "pca"
                            alpha.exp = 1.25, # Increase this > 1.0 to move the cells closer to the factors. Values > 2 start to distort the data.
                            snn.exp = 1.0, # Lower this < 1.0 to move similar cells closer to each other
                            snn.k = 10,
-                           reduction.name = "swne", reduction.key = "SWNE_", return.format = c("embedding", "seurat"), ...
+                           use.paga.pruning = T,
+                           sample.groups = NULL,
+                           paga.qval.cutoff = 1e-3,
+                           reduction.name = "swne", reduction.key = "SWNE_", return.format = "embedding", ...
 ){
   if (!requireNamespace("Seurat", quietly = T)) {
     stop("Seurat is needed for this function to work. Please install it",
@@ -133,6 +147,7 @@ RunSWNE.Seurat <- function(object, proj.method = "sammon", reduction.use = "pca"
         object <- FindNeighbors(object, k = snn.k, prune.SNN = 1/15)
       }
       snn <- as(object@graphs$integrated_snn, "dgCMatrix")
+      if (use.paga.pruning) knn <- as(object@graphs$integrated_nn, "dgCMatrix")
     } else {
       if(sum(dim(object@graphs$RNA_snn)) != 2*ncol(object)) {
         object <- RunPCA(object, pc.genes = var.genes, do.print = F, pcs.compute = min(k,20),
@@ -140,8 +155,10 @@ RunSWNE.Seurat <- function(object, proj.method = "sammon", reduction.use = "pca"
         object <- FindNeighbors(object, k = snn.k, prune.SNN = 1/15)
       }
       snn <- as(object@graphs$RNA_snn, "dgCMatrix")
+      if (use.paga.pruning) knn <- as(object@graphs$RNA_nn, "dgCMatrix")
     }
 
+    if (use.paga.pruning) snn <- PruneSNN(snn, knn, clusters = sample.groups, qval.cutoff = paga.qval.cutoff)
     swne_embedding <- run_swne(object_norm, var.genes, snn, k, alpha.exp, snn.exp, n_pull, proj.method, dist.metric, genes.embed,
                                loss, n.cores, hide.factors, ica.fast)
   }
@@ -174,7 +191,11 @@ RunSWNE.Seurat <- function(object, proj.method = "sammon", reduction.use = "pca"
 RunSWNE.Pagoda2 <- function(object, proj.method = "sammon", dist.metric = "cosine", n.cores = 8, k, k.range, var.genes,
                             loss = "mse", genes.embed, hide.factors = T, n_pull = 3, ica.fast = T, n.var.genes = 3000,
                             alpha.exp = 1.25, # Increase this > 1.0 to move the cells closer to the factors. Values > 2 start to distort the data.
-                            snn.exp = 1.0 # Lower this < 1.0 to move similar cells closer to each other
+                            snn.exp = 1.0, # Lower this < 1.0 to move similar cells closer to each other
+                            snn.k = 20,
+                            use.paga.pruning = T,
+                            sample.groups = NULL,
+                            paga.qval.cutoff = 1e-3
 ){
   if (!requireNamespace("pagoda2", quietly = T)) {
     stop("pagoda2 needed for this function to work. Please install it.",
@@ -200,7 +221,12 @@ RunSWNE.Pagoda2 <- function(object, proj.method = "sammon", dist.metric = "cosin
 
   object$calculatePcaReduction(nPcs = max(k,20), odgenes = var.genes)
   pc.scores <- t(object$reductions$PCA[,1:k])
-  snn <- CalcSNN(pc.scores, k = 20, prune.SNN = 1/20)
+  snn <- CalcSNN(pc.scores, k = snn.k, prune.SNN = 1/20)
+
+  if (use.paga.pruning) {
+    knn <- CalcKNN(pc.scores, k = snn.k)
+    snn <- PruneSNN(snn, knn, clusters = sample.groups, qval.cutoff = paga.qval.cutoff)
+  }
 
   if (missing(genes.embed)) genes.embed <- NULL
   run_swne(object_norm, var.genes, snn, k, alpha.exp, snn.exp, n_pull, proj.method, dist.metric, genes.embed,
@@ -216,7 +242,11 @@ RunSWNE.dgCMatrix <- function(data.matrix, proj.method = "sammon", dist.metric =
                               var.genes = rownames(data.matrix), loss = "mse", genes.embed, hide.factors = T,
                               n_pull = 3, ica.fast = T,
                               alpha.exp = 1.25, # Increase this > 1.0 to move the cells closer to the factors. Values > 2 start to distort the data.
-                              snn.exp = 1.0 # Lower this < 1.0 to move similar cells closer to each other
+                              snn.exp = 1.0, # Lower this < 1.0 to move similar cells closer to each other
+                              snn.k = 20,
+                              use.paga.pruning = T,
+                              sample.groups = NULL,
+                              paga.qval.cutoff = 1e-3
 ){
   print(paste(length(var.genes), "variable genes"))
   if (missing(k)) {
@@ -232,7 +262,12 @@ RunSWNE.dgCMatrix <- function(data.matrix, proj.method = "sammon", dist.metric =
 
   pca.res <- irlba::irlba(t(data.matrix[var.genes,]), nv = max(k,20), center = Matrix::rowMeans(data.matrix[var.genes,]))
   pc.scores <- t(pca.res$u); colnames(pc.scores) <- colnames(data.matrix);
-  snn <- CalcSNN(pc.scores, k = 20, prune.SNN = 1/20)
+  snn <- CalcSNN(pc.scores, k = snn.k, prune.SNN = 1/20)
+
+  if (use.paga.pruning) {
+    knn <- CalcKNN(pc.scores, k = snn.k)
+    snn <- PruneSNN(snn, knn, clusters = sample.groups, qval.cutoff = paga.qval.cutoff)
+  }
 
   if (missing(genes.embed)) genes.embed <- NULL
   run_swne(data.matrix, var.genes, snn, k, alpha.exp, snn.exp, n_pull, proj.method, dist.metric, genes.embed,

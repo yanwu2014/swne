@@ -180,3 +180,30 @@ Eigen::SparseMatrix<double> ComputeSNN(Eigen::MatrixXd nn_ranked, double prune) 
   SNN.prune(0.0); // actually remove pruned values
   return SNN;
 }
+
+
+// Compute statistical significance of number of shared edges between two clusters
+// Adapted from monocle3 (https://github.com/cole-trapnell-lab/monocle3/blob/master/src/clustering.cpp)
+NumericMatrix pnorm_over_mat_cpp(NumericMatrix num_links_ij, NumericMatrix var_null_num_links) {
+  int n = num_links_ij.nrow();
+  NumericMatrix tmp(n, n);
+
+  for (int i = 0; i < n; i ++) {
+    for (int j = 0; j < n; j ++) {
+      // tmp(i, j) = Rcpp::pnorm( num_links_ij(i, j), 0.0, sqrt(var_null_num_links(i, j)), bool lower = false, bool log = false );
+      tmp(i, j) = R::pnorm(num_links_ij(i, j), 0.0, sqrt(var_null_num_links(i, j)), 0, 0);
+    }
+  }
+  return tmp;
+}
+
+
+// Compute statistical significance of number of shared edges between two clusters
+// Adapted from monocle3 (https://github.com/cole-trapnell-lab/monocle3/blob/master/src/clustering.cpp)
+// [[Rcpp::export]]
+NumericMatrix pnorm_over_mat(SEXP R_num_links_ij, SEXP R_var_null_num_links) {
+  NumericMatrix num_links_ij(R_num_links_ij);
+  NumericMatrix var_null_num_links(R_var_null_num_links);
+
+  return pnorm_over_mat_cpp(num_links_ij, var_null_num_links);
+}

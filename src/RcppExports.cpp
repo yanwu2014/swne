@@ -55,12 +55,25 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// pnorm_over_mat
+NumericMatrix pnorm_over_mat(SEXP R_num_links_ij, SEXP R_var_null_num_links);
+RcppExport SEXP _swne_pnorm_over_mat(SEXP R_num_links_ijSEXP, SEXP R_var_null_num_linksSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type R_num_links_ij(R_num_links_ijSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type R_var_null_num_links(R_var_null_num_linksSEXP);
+    rcpp_result_gen = Rcpp::wrap(pnorm_over_mat(R_num_links_ij, R_var_null_num_links));
+    return rcpp_result_gen;
+END_RCPP
+}
 
 static const R_CallMethodDef CallEntries[] = {
     {"_swne_colSumByFac", (DL_FUNC) &_swne_colSumByFac, 2},
     {"_swne_colMeanVarS", (DL_FUNC) &_swne_colMeanVarS, 2},
     {"_swne_inplaceWinsorizeSparseCols", (DL_FUNC) &_swne_inplaceWinsorizeSparseCols, 2},
     {"_swne_ComputeSNN", (DL_FUNC) &_swne_ComputeSNN, 2},
+    {"_swne_pnorm_over_mat", (DL_FUNC) &_swne_pnorm_over_mat, 2},
     {NULL, NULL, 0}
 };
 

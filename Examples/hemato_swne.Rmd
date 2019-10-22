@@ -7,6 +7,7 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+options(bitmapType="cairo")
 ```
 
 
@@ -103,8 +104,12 @@ nmf.scores <- nmf.res$H
 
 nmf.res$W <- ProjectFeatures(norm.counts, nmf.res$H, n.cores = n.cores) ## Project all genes onto NMF
 
-## Run SWNE embedding
+## Compute and prune SNN
 snn <- CalcSNN(t(pc.emb), k = 40, prune.SNN = 0)
+knn <- CalcKNN(t(pc.emb), k = 40) ## Extract kNN matrix
+snn <- PruneSNN(snn, knn, clusters = NULL, qval.cutoff = 1e-3)
+
+## Run SWNE embedding
 swne.embedding <- EmbedSWNE(nmf.scores, SNN = snn, alpha.exp = 1.5, snn.exp = 0.1, n_pull = 3,
                             dist.use = "cosine")
 ```
@@ -124,6 +129,8 @@ PlotSWNE(swne.embedding, alpha.plot = 0.4, sample.groups = clusters, do.label = 
          label.size = 3.5, pt.size = 2, show.legend = F) +
   scale_color_manual(values = cluster_colors)
 ```
+
+
 
 Make t-SNE plot
 ```{r}
@@ -200,14 +207,18 @@ library(proxy)
 
 ## Calculate approximate kNN for an embedding
 ComputeKNN <- function(emb, k) {
-  knn.idx <- knn.index(t(emb), k = k)
-  knn.matrix <- matrix(0, ncol(emb), ncol(emb))
-  for (i in 1:nrow(knn.idx)) {
-    knn.matrix[knn.idx[i,],i] <- 1
-    knn.matrix[i, knn.idx[i,]] <- 1
-  }
-  rownames(knn.matrix) <- colnames(knn.matrix) <- colnames(emb)
-  as(knn.matrix, "dgCMatrix")
+  my.knn <- FNN::get.knn(t(emb), k)
+
+  n.cells <- ncol(emb)
+  nn.ranked <- cbind(1:n.cells, my.knn$nn.index[, 1:(k - 1)])
+
+  j <- as.numeric(x = t(x = nn.ranked))
+  i <- ((1:length(x = j)) - 1) %/% k + 1
+  nn.matrix <- as(sparseMatrix(i = i, j = j, x = 1, dims = c(ncol(emb), ncol(emb))), "dgCMatrix")
+  rownames(nn.matrix) <- colnames(emb)
+  colnames(nn.matrix) <- colnames(emb)
+
+  nn.matrix
 }
 
 
