@@ -9,19 +9,10 @@
 #'
 #' @return List representing a PAGA graph
 #'
+#' @import igraph
 #' @export
 #'
 BuildPAGA <- function(knn, clusters = NULL, qval.cutoff = 0.05) {
-  if (!requireNamespace("monocle3", quietly = T)) {
-    stop("Monocle3 is needed for this function to work. Please install it",
-         call. = F)
-  }
-
-  if (!requireNamespace("igraph", quietly = T)) {
-    stop("igraph is needed for this function to work. Please install it",
-         call. = F)
-  }
-
   knn <- as(knn, "dgCMatrix")
   knn_graph <- igraph::graph_from_adjacency_matrix(knn, mode = "undirected")
 
@@ -84,4 +75,45 @@ PruneSNN <- function(snn, knn, clusters = NULL, qval.cutoff = 0.05) {
   snn <- as(snn, "dgCMatrix"); invisible(gc());
 
   return(snn)
+}
+
+
+
+#' Compute significant links between specified clusters
+#' Adapted from monocle3 (https://github.com/cole-trapnell-lab/monocle3)
+#'
+compute_partitions <- function(g,
+                               optim_res,
+                               qval_thresh=0.05,
+                               verbose = FALSE){
+  cell_membership <- as.factor(igraph::membership(optim_res))
+  membership_matrix <- Matrix::sparse.model.matrix( ~ cell_membership + 0)
+  num_links <- Matrix::t(membership_matrix) %*%
+    igraph::as_adjacency_matrix(g) %*% membership_matrix
+  diag(num_links) <- 0
+  louvain_modules <- levels(cell_membership)
+
+  edges_per_module <- Matrix::rowSums(num_links)
+  total_edges <- sum(num_links)
+
+  theta <- (as.matrix(edges_per_module) / total_edges) %*%
+    Matrix::t(edges_per_module / total_edges)
+  var_null_num_links <- theta * (1 - theta) / total_edges
+  num_links_ij <- num_links / total_edges - theta
+  cluster_mat <- pnorm_over_mat(as.matrix(num_links_ij), var_null_num_links)
+
+  num_links <- num_links_ij / total_edges
+
+  cluster_mat <- matrix(stats::p.adjust(cluster_mat),
+                        nrow=length(louvain_modules),
+                        ncol=length(louvain_modules))
+
+  sig_links <- as.matrix(num_links)
+  sig_links[cluster_mat > qval_thresh] = 0
+  diag(sig_links) <- 0
+
+  cluster_g <- igraph::graph_from_adjacency_matrix(sig_links, weighted = T,
+                                                   mode = 'undirected')
+
+  list(cluster_g = cluster_g, num_links = num_links, cluster_mat = cluster_mat)
 }

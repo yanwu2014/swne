@@ -17,3 +17,7 @@ ComputeSNN <- function(nn_ranked, prune) {
     .Call('_swne_ComputeSNN', PACKAGE = 'swne', nn_ranked, prune)
 }
 
+pnorm_over_mat <- function(R_num_links_ij, R_var_null_num_links) {
+    .Call('_swne_pnorm_over_mat', PACKAGE = 'swne', R_num_links_ij, R_var_null_num_links)
+}
+

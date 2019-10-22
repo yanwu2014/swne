@@ -44,7 +44,7 @@ The easiest way to generate an SWNE embedding is to use the wrapper function `Ru
 ## Run SWNE
 genes.embed <- c("MS4A1", "GNLY", "CD3E", "CD14",
                  "FCER1A", "FCGR3A", "LYZ", "PPBP", "CD8A")
-swne.embedding <- RunSWNE(obj, k = 16, genes.embed = genes.embed)
+swne.embedding <- RunSWNE(obj, k = 16, genes.embed = genes.embed, sample.groups = cell.clusters)
 
 ## Plot SWNE
 PlotSWNE(swne.embedding, alpha.plot = 0.4, sample.groups = cell.clusters,
@@ -62,7 +62,7 @@ DimPlot(obj, reduction = "swne")
 ```
 
 
-Now we'll go through the SWNE embedding process step by step
+Now we'll go through the SWNE embedding process step by step to get a sense of how everything works
 
 
 First, let's pull out the counts, scale and adjust gene variance, while keeping the scaled matrix nonnegative.
@@ -95,10 +95,15 @@ obj <- FindNeighbors(obj, k = 10, prune.SNN = 1/15)
 snn <- as(obj@graphs$RNA_snn, "dgCMatrix")
 ```
 
+We can prune the SNN matrix by removing edges between cells in clusters that don't share a statistically significant amount of edges using a PAGA graph (https://github.com/theislab/paga)
+```{r}
+knn <- as(obj@graphs$RNA_nn, "dgCMatrix") ## Extract kNN matrix
+snn <- PruneSNN(snn, knn, clusters = cell.clusters, qval.cutoff = 1e-3)
+```
 
 Run the SWNE embedding. The three key parameters are `alpha.exp`, `snn.exp`, and `n_pull`, which control how the factors and neighboring cells affect the cell coordinates.
 ```{r message=FALSE,warning=FALSE}
-alpha.exp <- 1.5 # Increase this > 1.0 to move the cells closer to the factors. Values > 2 start to distort the data.
+alpha.exp <- 1.25 # Increase this > 1.0 to move the cells closer to the factors. Values > 2 start to distort the data.
 snn.exp <- 0.25 # Lower this < 1.0 to move similar cells closer to each other
 n_pull <- 3 # The number of factors pulling on each cell. Must be at least 3.
 swne.embedding <- EmbedSWNE(nmf.res$H, SNN = snn, alpha.exp = alpha.exp, snn.exp = snn.exp,

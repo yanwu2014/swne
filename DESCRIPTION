@@ -37,8 +37,8 @@ Imports:
   hash,
   irlba,
   methods,
-  umap,
-  reshape
+  reshape,
+  igraph
 Remotes:
   linxihui/NNLM,
   JEFworks/liger

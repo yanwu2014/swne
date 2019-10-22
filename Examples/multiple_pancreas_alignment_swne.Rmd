@@ -32,7 +32,7 @@ Using the wrapper function `RunSWNE` is the simplest way to generate an SWNE emb
 Just make sure that `DefaultAssay(object) == "integrated"`.
 ```{r}
 genes.embed <- c("REG1A", "PPY", "SST", "GHRL", "VWF", "SOX10")
-swne.embedding <- RunSWNE(se.obj, k = 20, genes.embed = genes.embed, snn.exp = 0.25)
+swne.embedding <- RunSWNE(se.obj, k = 20, genes.embed = genes.embed, snn.exp = 0.25, snn.k = 20)
 ```
 
 
