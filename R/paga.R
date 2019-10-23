@@ -1,6 +1,40 @@
 ## Functions for plotting and using PAGA graphs to prune SNNs
 
 
+#' Create a graph of cosine similarities between clusters pruned using PAGA
+#'
+#' @param partitions List representing a PAGA graph (output of BuildPAGA)
+#' @param embeddings Dimensional reduction used to compute cosine similarities (cells x dimensions)
+#' @param qval.cutoff Q-value cutoff for cluster to cluster interactions
+#' @param min.cluster.sim Minimum similarity needed to draw an edge between two clusters
+#' @param seed Random seed for force-directed layout reproducibility
+#'
+#' @return igraph object where each vertex is a cluster and edges represent PAGA-pruned similarities between clusters
+#'
+#' @import igraph
+#' @export
+#'
+PartitionSimilarityGraph <- function(partitions, embedding, qval.cutoff = 1e-3,
+                                     min.cluster.sim = 0.05, seed = 42) {
+  stopifnot(all(rownames(embedding) %in% names(partitions$clusters)))
+  embedding <- embedding[names(partitions$clusters),]
+  mean.embedding <- apply(embedding, 2, function(x) tapply(x, partitions$clusters, mean))
+
+  cluster.sim <- as.matrix(proxy::simil(mean.embedding, method = "cosine", by_rows = T))
+  cluster.sim <- cluster.sim[rownames(partitions$cluster_mat), colnames(partitions$cluster_mat)]
+  cluster.sim[partitions$cluster_mat > qval.cutoff] <- 0
+  cluster.sim[cluster.sim < min.cluster.sim] <- 0
+
+  cluster.graph <- graph_from_adjacency_matrix(cluster.sim, mode = "undirected", weighted = T)
+
+  set.seed(seed)
+  cluster.graph.layout <- layout_with_fr(cluster.graph, weights = E(cluster.graph)$weight)
+  cluster.graph <- set_graph_attr(cluster.graph, "layout", cluster.graph.layout)
+
+  return(cluster.graph)
+}
+
+
 #' Make PAGA graph. Adapted from Monocle3
 #'
 #' @param knn kNN in the form of a sparse matrix
