@@ -7,6 +7,7 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+options(bitmapType="cairo")
 ```
 
 This is a walkthrough comparing SWNE, UMAP, and t-SNE on a hematopoiesis dataset from the [Mouse Cell Atlas](http://bis.zju.edu.cn/MCA/). Based off of the analysis done by in Figure 2d of [Becht, McInnes et al](https://www.nature.com/articles/nbt.4314).
@@ -38,7 +39,7 @@ lineages <- c("Multi Potential Progenitor", "Macrophage Lineage", "Neutrophil Li
               "Erythrocyte Lineage", "B Cell Lineage", "T Cell Lineage", "NK Cell Lineage")
 cutoffs <- setNames(c(0.04,0.09,0.05,0.045,0.09,0.075,0.04), lineages)
 
-labels <- sapply(lineages, function(i) cells_AUC@assays[[1]][i,][w2] >= cutoffs[i])
+labels <- sapply(lineages, function(i) cells_AUC@assays$data[[1]][i,][w2] >= cutoffs[i])
 labels <- apply(labels, 1, which)
 labels <- sapply(labels, function(x) { if(length(x) == 1) {x} else {0} })
 labels[labels != 0] <- lineages[labels[labels != 0]]
@@ -81,7 +82,6 @@ PlotDims(umap, sample.groups = labels, show.legend = F, show.axes = F,
 
 Filter lowly expressed genes and get gene variance info
 ```{r}
-## 
 norm.xp <- xp*1000
 norm.xp <- FilterData(norm.xp, min.samples.frac = 2.5e-4, trim = 1e-4, min.nonzero.features = 0,
                       max.sample.sum = Inf)
@@ -97,19 +97,22 @@ norm.xp@x <- log(norm.xp@x + 1)
 
 Select variable genes to use
 ```{r}
-n.genes <- 2e3
+n.genes <- 4e3
 var.df <- var.df[order(var.df$lp),]
 var.genes <- rownames(var.df[1:n.genes,])
 ```
 
 Run SWNE
 ```{r}
-n.cores <- 24
-nmf.res <- RunNMF(norm.xp[var.genes,], k = 30, n.cores = n.cores, ica.fast = T)
+n.cores <- 16
+nmf.res <- RunNMF(norm.xp[var.genes,], k = 40, n.cores = n.cores, ica.fast = T)
 nmf.res$W <- ProjectFeatures(norm.xp, nmf.res$H, n.cores = n.cores)
 
-snn <- CalcSNN(t(pca), k = 60, prune.SNN = 0.0)
-swne.embedding <- EmbedSWNE(nmf.res$H, SNN = snn, alpha.exp = 1.25, snn.exp = 0.25, n_pull = 3)
+snn <- CalcSNN(t(pca), k = 30, prune.SNN = 0.0)
+knn <- CalcKNN(t(pca), k = 30)
+snn <- PruneSNN(snn, knn, qval.cutoff = 1e-3)
+swne.embedding <- EmbedSWNE(nmf.res$H, SNN = snn, alpha.exp = 1.25, snn.exp = 0.25, n_pull = 3, 
+                            proj.method = "sammon")
 swne.embedding$H.coords$name <- ""
 ```
 
@@ -135,14 +138,18 @@ library(proxy)
 
 ## Calculate approximate kNN for an embedding
 ComputeKNN <- function(emb, k) {
-  knn.idx <- knn.index(t(emb), k = k)
-  knn.matrix <- matrix(0, ncol(emb), ncol(emb))
-  for (i in 1:nrow(knn.idx)) {
-    knn.matrix[knn.idx[i,],i] <- 1
-    knn.matrix[i, knn.idx[i,]] <- 1
-  }
-  rownames(knn.matrix) <- colnames(knn.matrix) <- colnames(emb)
-  as(knn.matrix, "dgCMatrix")
+  my.knn <- FNN::get.knn(t(emb), k)
+
+  n.cells <- ncol(emb)
+  nn.ranked <- cbind(1:n.cells, my.knn$nn.index[, 1:(k - 1)])
+
+  j <- as.numeric(x = t(x = nn.ranked))
+  i <- ((1:length(x = j)) - 1) %/% k + 1
+  nn.matrix <- as(sparseMatrix(i = i, j = j, x = 1, dims = c(ncol(emb), ncol(emb))), "dgCMatrix")
+  rownames(nn.matrix) <- colnames(emb)
+  colnames(nn.matrix) <- colnames(emb)
+
+  nn.matrix
 }
 
 
@@ -197,12 +204,12 @@ n.neighbors <- 30
 load("~/swne/Data/Han/BM_BMcKit_PB_RData/Han_hemato_ref_knn.RData") ## Load pre-computed kNN networks to save time. Computing the kNN networks in the original expression space can take quite a bit of time.
 
 ## Compute kNN for embeddings
-embeddings.knn <- lapply(embeddings, function(x) ComputeKNN(x[,label.cells], k = n.neighbors))
+embeddings.knn <- lapply(embeddings, function(x) ComputeKNN(x, k = n.neighbors))
 knn.simil <- sapply(embeddings.knn, function(knn.emb) {
   mean(sapply(1:ncol(knn.emb), function(i) CalcJaccard(knn.emb[,i], ref.knn[,i])))
 })
 
-swne.knn <- ComputeKNN(swne.emb[,label.cells], k = n.neighbors)
+swne.knn <- ComputeKNN(swne.emb, k = n.neighbors)
 knn.simil <- c(knn.simil, mean(sapply(1:ncol(swne.knn), function(i) CalcJaccard(swne.knn[,i], ref.knn[,i])))) 
 names(knn.simil) <- c("tsne", "umap", "swne")
 ```
