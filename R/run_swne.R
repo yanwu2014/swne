@@ -116,7 +116,7 @@ RunSWNE.Seurat <- function(object, proj.method = "sammon", reduction.use = "pca"
   }
 
   if (DefaultAssay(object) == "integrated") {
-    object_norm <- as.matrix(GetAssayData(se.obj, assay = "integrated"))
+    object_norm <- as.matrix(GetAssayData(object, assay = "integrated"))
     object_norm <- t(apply(object_norm, 1, function(x) (x - min(x))/(max(x) - min(x))))
     var.genes <- rownames(object_norm)
   } else {

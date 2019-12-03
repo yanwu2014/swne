@@ -1,13 +1,15 @@
 Package: swne
 Type: Package
 Title: Similarity Weighted Nonnegative Embedding: A method for visualizing high dimensional datasets
-Version: 0.6.2
+Version: 0.6.3
 Author: Yan Wu
 Maintainer: Yan Wu <yauwning@gmail.com>
-Description: Uses matrix factorization to reduce high dimenensional dataset into factors, embeds factors
-  in a 2D space for visualization, and then embeds samples and features relative to the factors,
-  using a similarity matrix to ensure that samples which are close in the high dimensional space are also close 
-  in the 2D visualization. The embedding of key features enhances interpretation of SWNE visualizations.
+Description: Similarity Weighted Nonnegative Embedding (SWNE), is a method for visualizing high dimensional datasets.
+SWNE uses Nonnegative Matrix Factorization to decompose datasets into latent factors, projects
+those factors onto 2 dimensions, and embeds samples and key features in 2 dimensions relative to the
+factors. SWNE can capture both the local and global dataset structure, and allows
+relevant features to be embedded directly onto the visualization, facilitating interpretation
+of the data.
 Authors@R: person("Yan", "Wu", email = "yauwning@gmail.com", role = c("aut", "cre"))
 License: GPL-2
 Encoding: UTF-8

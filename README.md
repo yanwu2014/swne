@@ -3,7 +3,7 @@ Similarity Weighted Nonnegative Embedding (SWNE), is a method for visualizing hi
 SWNE uses Nonnegative Matrix Factorization to decompose datasets into latent factors, projects
 those factors onto 2 dimensions, and embeds samples and key features in 2 dimensions relative to the
 factors. SWNE can capture both the local and global dataset structure, and allows
-factors and relevant features to be embedded directly onto the visualization, facilitating interpretation
+relevant features to be embedded directly onto the visualization, facilitating interpretation
 of the data.
 
 If you use SWNE in your research, please consider citing [Wu et al, Cell Systems, 2018](https://www.cell.com/cell-systems/fulltext/S2405-4712(18)30440-X). You can also find our our bioRxiv preprint [here](https://www.biorxiv.org/content/early/2018/06/22/276261).
