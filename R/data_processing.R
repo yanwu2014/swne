@@ -32,13 +32,25 @@ ReadData <- function(matrix.dir, make.sparse = T) {
   if (dir.exists(matrix.dir)) {
     if (!grepl("\\/$", matrix.dir)) { matrix.dir <- paste(matrix.dir, "/", sep = "") }
 
-    barcode.loc <- paste0(matrix.dir, "barcodes.tsv")
-    gene.loc <- paste0(matrix.dir, "genes.tsv")
-    matrix.loc <- paste0(matrix.dir, "matrix.mtx")
+    barcode.loc <- paste0(matrix.dir, "barcodes.tsv.gz")
+    gene.loc <- paste0(matrix.dir, "features.tsv.gz")
+    matrix.loc <- paste0(matrix.dir, "matrix.mtx.gz")
 
-    if (!file.exists(barcode.loc)) { stop("Barcode file missing") }
-    if (!file.exists(gene.loc)) { stop("Gene name file missing") }
-    if (!file.exists(matrix.loc)) { stop("Expression matrix file missing") }
+    if (!file.exists(barcode.loc)) {
+      barcode.loc <- paste0(matrix.dir, "barcodes.tsv")
+      if (!file.exists(barcode.loc)) stop("Barcode file missing")
+    }
+    if (!file.exists(gene.loc)) {
+      genes.loc <- paste0(matrix.dir, "features.tsv")
+      if (!file.exists(genes.loc)) {
+        genes.loc <- paste0(matrix.dir, "genes.tsv")
+        if (!file.exists(genes.loc)) stop("Gene name file missing")
+      }
+    }
+    if (!file.exists(matrix.loc)) {
+      matrix.loc <- paste0(matrix.dir, "matrix.mtx")
+      if (!file.exists(matrix.loc)) stop("Expression matrix file missing")
+    }
 
     counts <- Matrix::readMM(file = matrix.loc)
     cell.names <- readLines(barcode.loc)
