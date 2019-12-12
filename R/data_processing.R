@@ -73,6 +73,30 @@ ReadData <- function(matrix.dir, make.sparse = T) {
 }
 
 
+#' Reads a 10X matrix aligned to a mouse/human reference and pulls out only the human cells
+#' Adapted from Seurat
+#'
+#' @param matrix.dir The input matrix or sparse matrix directory
+#' @param species.class Species classification (from Seurat secondary)
+#'
+#' @return Returns the human cells and genes
+#'
+#' @import Matrix
+#' @export
+Read10XHuman <- function(matrix.dir, species.class.file) {
+  counts <- ReadData(matrix.dir)
+  cell.class.df <- read.table(species.class.file, sep = ",", header = T,
+                              stringsAsFactors = F)
+  cell.class.df <- subset(cell.class.df, call == "hg19")
+  cell.class.df$barcode <- sapply(cell.class.df$barcode, ExtractField, field = 1, delim = "-")
+  counts <- counts[,colnames(counts) %in% cell.class.df$barcode]
+  counts <- counts[grepl("hg19", rownames(counts)), ]
+  rownames(counts) <- sapply(rownames(counts), ExtractField, field = 2, delim = "_")
+
+  return(counts)
+}
+
+
 #' Internal function for winsorizing a matrix
 #' Adapted from pagoda2: https://github.com/hms-dbmi/pagoda2
 winsorize_matrix <- function(mat, trim) {
