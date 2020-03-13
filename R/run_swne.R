@@ -239,7 +239,7 @@ RunSWNE.Pagoda2 <- function(object, proj.method = "sammon", dist.metric = "cosin
 #' @method RunSWNE dgCMatrix
 #' @export
 RunSWNE.dgCMatrix <- function(data.matrix, proj.method = "sammon", dist.metric = "cosine", n.cores = 3, k, k.range,
-                              var.genes = rownames(data.matrix), loss = "mse", genes.embed, hide.factors = T,
+                              var.genes, loss = "mse", genes.embed, hide.factors = T,
                               n_pull = 3, ica.fast = T,
                               alpha.exp = 1.25, # Increase this > 1.0 to move the cells closer to the factors. Values > 2 start to distort the data.
                               snn.exp = 1.0, # Lower this < 1.0 to move similar cells closer to each other
@@ -248,6 +248,9 @@ RunSWNE.dgCMatrix <- function(data.matrix, proj.method = "sammon", dist.metric =
                               sample.groups = NULL,
                               paga.qval.cutoff = 1e-3
 ){
+  if (missing(var.genes)) {
+    var.genes = rownames(data.matrix)
+  }
   print(paste(length(var.genes), "variable genes"))
   if (missing(k)) {
     if (missing(k.range)) k.range <- seq(2,20,2) ## Range of factors to iterate over
@@ -279,7 +282,7 @@ RunSWNE.dgCMatrix <- function(data.matrix, proj.method = "sammon", dist.metric =
 #' @rdname RunSWNE
 #' @method RunSWNE matrix
 #' @export
-RunSWNE.matrix <- function(data.matrix, proj.method = "sammon", dist.metric = "cosine", n.cores = 3, k, k.range,
+RunSWNE.matrix <- function(data.matrix, proj.method = "sammon", dist.metric = "cosine", n.cores = 8, k, k.range,
                            var.genes = rownames(data.matrix), loss = "mse", genes.embed, hide.factors = T, n_pull = 3,
                            alpha.exp = 1.25, # Increase this > 1.0 to move the cells closer to the factors. Values > 2 start to distort the data.
                            snn.exp = 1.0 # Lower this < 1.0 to move similar cells closer to each other

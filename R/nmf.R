@@ -55,12 +55,12 @@ nnsvd_init <- function(A, k, LINPACK) {
 #'
 ica_init <- function(A, k, ica.fast = F) {
   if (ica.fast) {
-    pc.res.h <- irlba::irlba(t(A), nv = 50, maxit = 100, center = rowMeans(A))
-    ica.res.h <- ica::icafast(pc.res.h$u, nc = k, maxit = 25, tol = 1e-4)
+    pc.res.h <- irlba::irlba(t(A), nv = 50, maxit = 500, center = rowMeans(A))
+    ica.res.h <- ica::icafast(pc.res.h$u, nc = k, maxit = 50, tol = 1e-4)
     return(list(W = (A - Matrix::rowMeans(A)) %*% ica.res.h$S,
                 H = t(ica.res.h$S)))
   } else {
-    ica.res <- ica::icafast(t(A), nc = k, maxit = 25, tol = 1e-4)
+    ica.res <- ica::icafast(t(A), nc = k, maxit = 50, tol = 1e-4)
     return(list(W = ica.res$M, H = t(ica.res$S)))
   }
 }

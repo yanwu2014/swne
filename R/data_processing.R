@@ -83,6 +83,7 @@ ReadData <- function(matrix.dir, make.sparse = T) {
 #'
 #' @import Matrix
 #' @export
+#'
 Read10XHuman <- function(matrix.dir, species.class.file) {
   counts <- ReadData(matrix.dir)
   cell.class.df <- read.table(species.class.file, sep = ",", header = T,
