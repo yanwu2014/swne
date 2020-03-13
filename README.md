@@ -6,7 +6,7 @@ factors. SWNE can capture both the local and global dataset structure, and allow
 relevant features to be embedded directly onto the visualization, facilitating interpretation
 of the data.
 
-If you use SWNE in your research, please consider citing [Wu et al, Cell Systems, 2018](https://www.cell.com/cell-systems/fulltext/S2405-4712(18)30440-X). You can also find our our bioRxiv preprint [here](https://www.biorxiv.org/content/early/2018/06/22/276261).
+If you use SWNE in your research, please consider citing [Wu et al, Cell Systems, 2018](https://www.cell.com/cell-systems/fulltext/S2405-4712(18)30440-X). You can also find our bioRxiv preprint [here](https://www.biorxiv.org/content/early/2018/06/22/276261).
 
 ## Installation
 Run the following code to install the package using devtools:
@@ -114,7 +114,7 @@ Since SWNE is primarily meant for visualization and interpretation of the data, 
 
 
 ## Recreating Figures
-To recreate the figures from our preprint, see the Scripts/ directory. 
+To recreate the figures from our preprint, see the `Scripts/` directory. 
 
 To generate the simulated discrete and trajectory datasets, use `splatter_generate.R`. The simulated datasets we generated can be found [here](https://bit.ly/2JQDDNc)
 
