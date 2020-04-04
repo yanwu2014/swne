@@ -3,10 +3,9 @@ Similarity Weighted Nonnegative Embedding (SWNE), is a method for visualizing hi
 SWNE uses Nonnegative Matrix Factorization to decompose datasets into latent factors, projects
 those factors onto 2 dimensions, and embeds samples and key features in 2 dimensions relative to the
 factors. SWNE can capture both the local and global dataset structure, and allows
-relevant features to be embedded directly onto the visualization, facilitating interpretation
-of the data.
+relevant features to be embedded directly onto the visualization, helping with biological interpretation.
 
-If you use SWNE in your research, please consider citing [Wu et al, Cell Systems, 2018](https://www.cell.com/cell-systems/fulltext/S2405-4712(18)30440-X). You can also find our bioRxiv preprint [here](https://www.biorxiv.org/content/early/2018/06/22/276261).
+If you use SWNE in your research, please cite [Wu et al, Cell Systems, 2018](https://doi.org/10.1016/j.cels.2018.10.015)
 
 ## Installation
 Run the following code to install the package using devtools:
@@ -104,7 +103,8 @@ Since SWNE is primarily meant for visualization and interpretation of the data, 
 3. A basic [walkthrough](https://yanwu2014.github.io/swne/Examples/pbmc3k_swne_matrix.html) using SWNE to visualize 3k PBMC cells starting from a counts matrix
 4. A [walkthrough](https://yanwu2014.github.io/swne/Examples/Han_hemato_swne.html) benchmarking SWNE against UMAP and SWNE using a large mouse hematopoiesis data from the [Mouse Cell Atlas](http://bis.zju.edu.cn/MCA/). The walkthrough was based of an analysis done by the UMAP authors in Figure 2 of their UMAP paper [Becht, McInnes et al, NBT, 2019](https://www.nature.com/articles/nbt.4314).
 5. A [walkthrough](https://yanwu2014.github.io/swne/Examples/hemato_swne.html) demonstrating SWNE on a hematopoiesis dataset and comparing SWNE against other embeddings including t-SNE and UMAP (recreating Figure 2 from our Cell Systems paper).
-6. A [walkthrough](https://yanwu2014.github.io/swne/Examples/multiple_pancreas_alignment_swne.html) using SWNE to visualize four pancreas datasets that have undergone alignment with Seurat V3's [data integration](https://www.biorxiv.org/content/10.1101/460147v1.abstract).
+6. A [walkthrough](https://yanwu2014.github.io/swne/Examples/zika_swne.html) demonstrating SWNE on a single-cell [study](https://elifesciences.org/articles/32942) looking at Zika replication across time in a hepatoma cell line.
+7. A [walkthrough](https://yanwu2014.github.io/swne/Examples/multiple_pancreas_alignment_swne.html) using SWNE to visualize four pancreas datasets that have undergone alignment with Seurat V3's [data integration](https://doi.org/10.1016/j.cell.2019.05.031).
 
 
 ## scATAC/THS-seq Walkthroughs and examples

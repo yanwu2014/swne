@@ -1,0 +1,123 @@
+---
+title: "Re-analyzing the Zika replication cycle with SWNE"
+author: "Yan Wu"
+output: html_document
+date: 04/04/2020
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+options(bitmapType="cairo")
+```
+
+This is a quick walkthrough demonstrating how to use SWNE to re-analyze an existing single-cell study that looks at both the host transcriptome and Zika viral RNA levels using a Huh7 hepatoma cell line. The study can be found [here](https://elifesciences.org/articles/32942).
+
+To save time we will be using the pre-computed Seurat object `zika_seurat.Robj`, which can be downloaded [here](ftp://genome-miner.ucsd.edu/swne_files/zika_seurat.Robj).
+
+
+First let's load the required libraries
+```{r message=FALSE,warning=FALSE}
+library(Seurat)
+library(swne)
+library(perturbLM)
+library(ggplot2)
+```
+
+
+Next let's load the Seurat object
+```{r}
+obj <- readRDS("~/swne/Data/zika_seurat.Robj")
+```
+
+
+Most scRNA-seq pipelines only use a subset of highly overdispersed genes for analysis. However here, we want to use the genes that are most highly correlated with viral load. First let's pull out the zika reads and log-scale and normalize them
+```{r}
+zika.reads <- as.integer(obj$numberZikaReads)
+names(zika.reads) <- colnames(obj)
+zika.norm.reads <- log((zika.reads/obj$nCount_RNA) * median(obj$nCount_RNA) + 1)
+zika.scale.reads <- scale(zika.norm.reads, center = T, scale = T)
+```
+
+
+Next we can compute a pearson correlation between each scaled gene and the scaled zika reads
+```{r}
+scale.expr <- GetAssayData(obj, slot = "scale.data")
+gene.virus.pearson <- sapply(rownames(obj), function(g) cor(scale.expr[g,], zika.scale.reads, method = "pearson"))
+gene.virus.pearson <- sort(gene.virus.pearson, decreasing = T)
+```
+
+
+Next we'll look at the top correlated and anti-correlated genes for candidate genes to embed onto our SWNE plot
+```{r}
+top.gene.virus <- c(head(gene.virus.pearson, n = 10), tail(gene.virus.pearson, n = 10),
+                    gene.virus.pearson[c("FURIN", "HSPA2")])
+ggBarplot(top.gene.virus, fill.color = "tomato") + coord_flip()
+```
+
+
+We selected some of the top genes, as well as some genes previously known to be key to flavivirus replication for
+SWNE embedding
+```{r}
+genes.embed <- c("ATF3", ## UPR 
+                 "DDIT3", ## UPR
+                 "RND1", ## Permeabilizes cell membrane
+                 "NEURL3", ## Possible anti-viral IFN response
+                 "FGFR4", ## Alters distribution of viral particles
+                 "NR0B2", ## Regulates cholesterol homeostasis
+                 "CCNB1", ## Cell Cycle
+                 "HSPA2", ## Chaperone required for entry
+                 "HMGB1", ## Cell Cycle
+                 "LSM3") ## mRNA degradation
+```
+
+
+We build the Shared Nearest Neighbors (SNN) graph using Seurat. We're only going to use genes that are 
+correlated with the viral load from now on.
+```{r}
+## Only use genes that are correlated with viral load
+genes.use <- names(gene.virus.pearson[abs(gene.virus.pearson) > 0.1])
+length(genes.use)
+
+obj <- RunPCA(obj, features = genes.use, verbose = F)
+ElbowPlot(obj)
+
+obj <- FindNeighbors(obj, k.param = 20, dims = 1:10, prune.SNN = 0.05)
+snn <- obj@graphs$RNA_snn
+```
+
+
+
+Normalize the data and find the optimal number of factors to use for NMF
+```{r}
+norm.counts <- ExtractNormCounts(obj)
+k.res <- FindNumFactors(norm.counts[genes.use,], k.range = seq(2,20,2))
+```
+
+
+Next we run NMF and the SWNE embedding as well as the feature embedding
+```{r}
+nmf.res <- RunNMF(norm.counts[genes.use,], k = 10, n.cores = 12, ica.fast = T)
+nmf.res$W <- ProjectFeatures(norm.counts, nmf.res$H, n.cores = 12)
+
+swne.emb <- EmbedSWNE(nmf.res$H, SNN = snn, alpha.exp = 1.25, snn.exp = 1, n_pull = 3)
+swne.emb <- EmbedFeatures(swne.emb, nmf.res$W, alpha.exp = 1, features.embed = genes.embed, n_pull = 3)
+swne.emb$H.coords$name <- ""
+```
+
+
+Now we can generate an SWNE plot, with the viral load of each cell overlaid onto the plot
+```{r}
+FeaturePlotSWNE(swne.emb, feature.scores = zika.norm.reads, feature.name = "Viral Load")
+```
+
+
+We extract out the time point (in hrs) and make an SWNE plot by time point. We can see that generally the later time
+points have a higher viral load but there is also quite a bit of heterogeneity within each time point.
+```{r}
+time.point <- droplevels(obj$time..h.)
+levels(time.point) <- paste0(levels(time.point), "hr")
+PlotSWNE(swne.emb, sample.groups = time.point)
+```
+
+
+
