@@ -712,18 +712,18 @@ ggHeat <- function(m, rescaling = 'none', clustering = 'none',
 
   ## add axis labels either supplied or from the colnames rownames of the matrix
   if(labCol == T)
-    g2 = g2 + scale_x_continuous(breaks = (1:cols) - 0.5, labels = colnames(m), expand = c(0.005,0))
+    g2 = g2 + scale_x_continuous(breaks = (1:cols), labels = colnames(m), expand = c(0.005,0))
   if(labCol == F)
-    g2 = g2 + scale_x_continuous(breaks = (1:cols) - 0.5, labels = rep('', cols))
+    g2 = g2 + scale_x_continuous(breaks = (1:cols), labels = rep('', cols))
   if(labRow == T)
-    g2 = g2 + scale_y_continuous(breaks = (1:rows) - 0.5, labels = rownames(m), expand = c(0.005,0))
+    g2 = g2 + scale_y_continuous(breaks = (1:rows), labels = rownames(m), expand = c(0.005,0))
   if(labRow == F)
     g2 = g2 + scale_y_continuous(breaks = (1:rows), labels = rep('', rows))
 
   ## get rid of grey panel background and gridlines
   g2 = g2 + theme(panel.grid.minor = element_line(colour = NA), panel.grid.major = element_line(colour=NA),
-                  panel.background = element_rect(fill = NA, colour = NA), axis.text.x = element_text(angle = 90, hjust = 0.5, size = x.lab.size),
-                  axis.ticks = element_blank(), axis.text.y = element_text(size = y.lab.size),
+                  panel.background = element_rect(fill = NA, colour = NA), axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5, size = x.lab.size),
+                  axis.ticks = element_blank(), axis.text.y = element_text(size = y.lab.size, hjust = 0.5),
                   axis.title = element_blank())
 
   ## finally add the fill colour ramp of your choice (default is blue to red)-- and return
