@@ -662,8 +662,10 @@ FeaturePlotDims <- function(dim.scores, feature.scores, feature.name = NULL, x.l
 #'
 #' @export
 #'
-ggHeat <- function(m, rescaling = 'none', clustering = 'none', labCol = T, labRow = T, border = F,
-                   heatscale = c(low = 'skyblue', mid = 'white', high = 'tomato'), legend.title = NULL, x.lab.size = 10,
+ggHeat <- function(m, rescaling = 'none', clustering = 'none',
+                   labCol = T, labRow = T, border = F,
+                   heatscale = c(low = 'skyblue', mid = 'white', high = 'tomato'),
+                   legend.title = NULL, x.lab.size = 10,
                    y.lab.size = 10) {
   ## you can either scale by row or column not both!
   ## if you wish to scale by both or use a differen scale method then simply supply a scale
@@ -697,14 +699,14 @@ ggHeat <- function(m, rescaling = 'none', clustering = 'none', labCol = T, labRo
 
   rows = dim(m)[1]
   cols = dim(m)[2]
-  melt.m = cbind(rowInd = rep(1:rows, times = cols), colInd = rep(1:cols, each = rows), melt(m))
+  melt.m = cbind(rowInd = rep(1:rows, times = cols), colInd = rep(1:cols, each = rows), reshape2::melt(m))
   g = ggplot(data = melt.m)
 
   ## add the heat tiles with or without a white border for clarity
   if(border == TRUE)
-    g2 = g + geom_rect(aes(xmin = colInd - 1, xmax = colInd, ymin = rowInd - 1, ymax = rowInd, fill = value), colour = 'white')
+    g2 = g + geom_tile(aes(x = colInd, y = rowInd, fill = value), colour = 'white')
   if(border == FALSE)
-    g2 = g + geom_rect(aes(xmin = colInd - 1, xmax = colInd, ymin = rowInd - 1, ymax = rowInd, fill = value))
+    g2 = g + geom_tile(aes(x = colInd, y = rowInd, fill = value))
 
   ## add axis labels either supplied or from the colnames rownames of the matrix
   if(labCol == T)
@@ -712,9 +714,9 @@ ggHeat <- function(m, rescaling = 'none', clustering = 'none', labCol = T, labRo
   if(labCol == F)
     g2 = g2 + scale_x_continuous(breaks = (1:cols) - 0.5, labels = rep('', cols))
   if(labRow == T)
-    g2 = g2 + scale_y_continuous(breaks = (1:rows) - 0.5, labels = rownames(m), expand = c(0.005,0))
+    g2 = g2 + scale_y_continuous(breaks = (1:rows), labels = rownames(m), expand = c(0.005,0))
   if(labRow == F)
-    g2 = g2 + scale_y_continuous(breaks = (1:rows) - 0.5, labels = rep('', rows))
+    g2 = g2 + scale_y_continuous(breaks = (1:rows), labels = rep('', rows))
 
   ## get rid of grey panel background and gridlines
   g2 = g2 + theme(panel.grid.minor = element_line(colour = NA), panel.grid.major = element_line(colour=NA),
@@ -722,7 +724,9 @@ ggHeat <- function(m, rescaling = 'none', clustering = 'none', labCol = T, labRo
                   axis.ticks = element_blank(), axis.text.y = element_text(size = y.lab.size))
 
   ## finally add the fill colour ramp of your choice (default is blue to red)-- and return
-  return(g2 + scale_fill_gradient2(low = heatscale[1], mid = heatscale[2], high = heatscale[3], guide = guide_colorbar(title = legend.title)))
+  g2 <- g2 + scale_fill_gradient2(low = heatscale[1], mid = heatscale[2], high = heatscale[3], guide = guide_colorbar(title = legend.title))
+
+  return(g2)
 }
 
 
