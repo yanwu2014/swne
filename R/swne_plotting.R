@@ -723,7 +723,7 @@ ggHeat <- function(m, rescaling = 'none', clustering = 'none',
   ## get rid of grey panel background and gridlines
   g2 = g2 + theme(panel.grid.minor = element_line(colour = NA), panel.grid.major = element_line(colour=NA),
                   panel.background = element_rect(fill = NA, colour = NA), axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5, size = x.lab.size),
-                  axis.ticks = element_blank(), axis.text.y = element_text(size = y.lab.size, hjust = 0.5),
+                  axis.ticks = element_blank(), axis.text.y = element_text(size = y.lab.size, hjust = 0.5, vjust = 1),
                   axis.title = element_blank())
 
   ## finally add the fill colour ramp of your choice (default is blue to red)-- and return
