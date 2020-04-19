@@ -10,45 +10,127 @@
 \alias{RunSWNE.dgTMatrix}
 \title{Wrapper for running SWNE analysis}
 \usage{
-\method{RunSWNE}{cisTopic}(cisTopicObject, proj.method = "sammon",
-  cells.use = NULL, dist.metric = "cosine", n.cores = 8,
-  hide.factors = T, n_pull = 3, alpha.exp = 1.25, snn.exp = 1,
-  snn.k = 20, prune.SNN = 1/15, use.paga.pruning = T,
-  sample.groups = NULL, paga.qval.cutoff = 0.001)
+\method{RunSWNE}{cisTopic}(
+  cisTopicObject,
+  proj.method = "sammon",
+  cells.use = NULL,
+  dist.metric = "cosine",
+  n.cores = 8,
+  hide.factors = T,
+  n_pull = 3,
+  alpha.exp = 1.25,
+  snn.exp = 1,
+  snn.k = 20,
+  prune.SNN = 1/15,
+  use.paga.pruning = T,
+  sample.groups = NULL,
+  paga.qval.cutoff = 0.001
+)
 
-\method{RunSWNE}{Seurat}(object, proj.method = "sammon",
-  reduction.use = "pca", cells.use = NULL, dims.use = NULL,
-  genes.use = NULL, dist.metric = "cosine", distance.matrix = NULL,
-  n.cores = 8, k, k.range, var.genes, loss = "mse", genes.embed,
-  hide.factors = T, n_pull = 3, ica.fast = T, alpha.exp = 1.25,
-  snn.exp = 1, snn.k = 10, use.paga.pruning = T,
-  sample.groups = NULL, paga.qval.cutoff = 0.001,
-  reduction.name = "swne", reduction.key = "SWNE_",
-  return.format = "embedding", ...)
+\method{RunSWNE}{Seurat}(
+  object,
+  proj.method = "sammon",
+  reduction.use = "pca",
+  cells.use = NULL,
+  dims.use = NULL,
+  genes.use = NULL,
+  dist.metric = "cosine",
+  distance.matrix = NULL,
+  n.cores = 8,
+  k,
+  k.range,
+  var.genes,
+  loss = "mse",
+  genes.embed,
+  hide.factors = T,
+  n_pull = 3,
+  ica.fast = T,
+  alpha.exp = 1.25,
+  snn.exp = 1,
+  snn.k = 10,
+  use.paga.pruning = T,
+  sample.groups = NULL,
+  paga.qval.cutoff = 0.001,
+  reduction.name = "swne",
+  reduction.key = "SWNE_",
+  return.format = "embedding",
+  ...
+)
 
-\method{RunSWNE}{Pagoda2}(object, proj.method = "sammon",
-  dist.metric = "cosine", n.cores = 8, k, k.range, var.genes,
-  loss = "mse", genes.embed, hide.factors = T, n_pull = 3,
-  ica.fast = T, n.var.genes = 3000, alpha.exp = 1.25, snn.exp = 1,
-  snn.k = 20, use.paga.pruning = T, sample.groups = NULL,
-  paga.qval.cutoff = 0.001)
+\method{RunSWNE}{Pagoda2}(
+  object,
+  proj.method = "sammon",
+  dist.metric = "cosine",
+  n.cores = 8,
+  k,
+  k.range,
+  var.genes,
+  loss = "mse",
+  genes.embed,
+  hide.factors = T,
+  n_pull = 3,
+  ica.fast = T,
+  n.var.genes = 3000,
+  alpha.exp = 1.25,
+  snn.exp = 1,
+  snn.k = 20,
+  use.paga.pruning = T,
+  sample.groups = NULL,
+  paga.qval.cutoff = 0.001
+)
 
-\method{RunSWNE}{dgCMatrix}(data.matrix, proj.method = "sammon",
-  dist.metric = "cosine", n.cores = 3, k, k.range,
-  var.genes = rownames(data.matrix), loss = "mse", genes.embed,
-  hide.factors = T, n_pull = 3, ica.fast = T, alpha.exp = 1.25,
-  snn.exp = 1, snn.k = 20, use.paga.pruning = T,
-  sample.groups = NULL, paga.qval.cutoff = 0.001)
+\method{RunSWNE}{dgCMatrix}(
+  data.matrix,
+  proj.method = "sammon",
+  dist.metric = "cosine",
+  n.cores = 3,
+  k,
+  k.range,
+  var.genes,
+  loss = "mse",
+  genes.embed,
+  hide.factors = T,
+  n_pull = 3,
+  ica.fast = T,
+  alpha.exp = 1.25,
+  snn.exp = 1,
+  snn.k = 20,
+  use.paga.pruning = T,
+  sample.groups = NULL,
+  paga.qval.cutoff = 0.001
+)
 
-\method{RunSWNE}{matrix}(data.matrix, proj.method = "sammon",
-  dist.metric = "cosine", n.cores = 3, k, k.range,
-  var.genes = rownames(data.matrix), loss = "mse", genes.embed,
-  hide.factors = T, n_pull = 3, alpha.exp = 1.25, snn.exp = 1)
+\method{RunSWNE}{matrix}(
+  data.matrix,
+  proj.method = "sammon",
+  dist.metric = "cosine",
+  n.cores = 8,
+  k,
+  k.range,
+  var.genes = rownames(data.matrix),
+  loss = "mse",
+  genes.embed,
+  hide.factors = T,
+  n_pull = 3,
+  alpha.exp = 1.25,
+  snn.exp = 1
+)
 
-\method{RunSWNE}{dgTMatrix}(data.matrix, proj.method = "sammon",
-  dist.metric = "cosine", n.cores = 3, k, k.range,
-  var.genes = rownames(data.matrix), loss = "mse", genes.embed,
-  hide.factors = T, n_pull = 3, alpha.exp = 1.25, snn.exp = 1)
+\method{RunSWNE}{dgTMatrix}(
+  data.matrix,
+  proj.method = "sammon",
+  dist.metric = "cosine",
+  n.cores = 3,
+  k,
+  k.range,
+  var.genes = rownames(data.matrix),
+  loss = "mse",
+  genes.embed,
+  hide.factors = T,
+  n_pull = 3,
+  alpha.exp = 1.25,
+  snn.exp = 1
+)
 }
 \arguments{
 \item{proj.method}{Method to use to project factors in 2D. Either "sammon" or "umap"}

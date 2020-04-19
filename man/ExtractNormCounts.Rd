@@ -4,8 +4,13 @@
 \alias{ExtractNormCounts}
 \title{Extracts scaled counts from Seurat or Pagoda2 objects}
 \usage{
-ExtractNormCounts(obj, obj.type = "seurat", rescale = T,
-  rescale.method = "log", batch = NULL)
+ExtractNormCounts(
+  obj,
+  obj.type = "seurat",
+  rescale = T,
+  rescale.method = "log",
+  batch = NULL
+)
 }
 \arguments{
 \item{obj}{Seurat or Pagoda2 object}

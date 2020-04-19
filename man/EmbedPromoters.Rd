@@ -4,9 +4,17 @@
 \alias{EmbedPromoters}
 \title{Embeds genes based on promoter accessibility relative to topic coordinates}
 \usage{
-EmbedPromoters(swne.embedding, cisTopicObject, genes.embed,
-  peaks.use = NULL, alpha.exp = 1, n_pull = 3, scale.cols = T,
-  overwrite = T, promoterOnly = T)
+EmbedPromoters(
+  swne.embedding,
+  cisTopicObject,
+  genes.embed,
+  peaks.use = NULL,
+  alpha.exp = 1,
+  n_pull = 3,
+  scale.cols = T,
+  overwrite = T,
+  promoterOnly = T
+)
 }
 \arguments{
 \item{swne.embedding}{SWNE embedding computed using RunSWNE}

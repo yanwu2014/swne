@@ -4,8 +4,13 @@
 \alias{PartitionSimilarityGraph}
 \title{Create a graph of cosine similarities between clusters pruned using PAGA}
 \usage{
-PartitionSimilarityGraph(partitions, embedding, qval.cutoff = 0.001,
-  min.cluster.sim = 0.05, seed = 42)
+PartitionSimilarityGraph(
+  partitions,
+  embedding,
+  qval.cutoff = 0.001,
+  min.cluster.sim = 0.05,
+  seed = 42
+)
 }
 \arguments{
 \item{partitions}{List representing a PAGA graph (output of BuildPAGA)}

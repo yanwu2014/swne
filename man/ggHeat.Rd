@@ -4,10 +4,19 @@
 \alias{ggHeat}
 \title{Plots a heatmap using ggplot2}
 \usage{
-ggHeat(m, rescaling = "none", clustering = "none", labCol = T,
-  labRow = T, border = F, heatscale = c(low = "skyblue", mid =
-  "white", high = "tomato"), legend.title = NULL, x.lab.size = 10,
-  y.lab.size = 10)
+ggHeat(
+  m,
+  rescaling = "none",
+  clustering = "none",
+  labCol = T,
+  labRow = T,
+  border = F,
+  heatscale = c(low = "skyblue", mid = "white", high = "tomato"),
+  legend.title = NULL,
+  x.lab.size = 10,
+  y.lab.size = 10,
+  dot.highlight.cutoff = Inf
+)
 }
 \arguments{
 \item{m}{Matrix to plot heatmap for}
@@ -29,6 +38,8 @@ ggHeat(m, rescaling = "none", clustering = "none", labCol = T,
 \item{x.lab.size}{x label size}
 
 \item{y.lab.size}{y label size}
+
+\item{dot.highlight.cutoff}{Heatmap cells above this value  will be highlighted with a dot}
 }
 \value{
 ggplot2 heatmap

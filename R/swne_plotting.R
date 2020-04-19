@@ -655,6 +655,7 @@ FeaturePlotDims <- function(dim.scores, feature.scores, feature.name = NULL, x.l
 #' @param legend.title Title of heatmap legend
 #' @param x.lab.size x label size
 #' @param y.lab.size y label size
+#' @param dot.highlight.cutoff Heatmap cells above this value  will be highlighted with a dot
 #'
 #' @return ggplot2 heatmap
 #'
@@ -666,7 +667,8 @@ ggHeat <- function(m, rescaling = 'none', clustering = 'none',
                    labCol = T, labRow = T, border = F,
                    heatscale = c(low = 'skyblue', mid = 'white', high = 'tomato'),
                    legend.title = NULL, x.lab.size = 10,
-                   y.lab.size = 10) {
+                   y.lab.size = 10,
+                   dot.highlight.cutoff = Inf) {
   ## you can either scale by row or column not both!
   ## if you wish to scale by both or use a differen scale method then simply supply a scale
   ## function instead NB scale is a base funct
@@ -725,6 +727,12 @@ ggHeat <- function(m, rescaling = 'none', clustering = 'none',
 
   ## finally add the fill colour ramp of your choice (default is blue to red)-- and return
   g2 <- g2 + scale_fill_gradient2(low = heatscale[1], mid = heatscale[2], high = heatscale[3], guide = guide_colorbar(title = legend.title))
+
+  ## Add dots to highlight certain cells
+  dot.melt.m <- subset(melt.m, abs(value) > dot.highlight.cutoff)
+  if (nrow(dot.melt.m) > 0) {
+    g2 <- g2 + geom_point(aes(x = colInd, y = rowInd), data = dot.melt.m)
+  }
 
   return(g2)
 }

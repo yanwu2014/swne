@@ -4,10 +4,19 @@
 \alias{FeaturePlotSWNE}
 \title{Plots swne embedding with feature overlayed}
 \usage{
-FeaturePlotSWNE(swne.embedding, feature.scores, feature.name = NULL,
-  alpha.plot = 0.5, quantiles = c(0.01, 0.99), samples.plot = NULL,
-  label.size = 4.5, pt.size = 1, color.palette = "YlOrRd",
-  contour.geom = "path", contour.alpha = 0.25)
+FeaturePlotSWNE(
+  swne.embedding,
+  feature.scores,
+  feature.name = NULL,
+  alpha.plot = 0.5,
+  quantiles = c(0.01, 0.99),
+  samples.plot = NULL,
+  label.size = 4.5,
+  pt.size = 1,
+  color.palette = "YlOrRd",
+  contour.geom = "path",
+  contour.alpha = 0.25
+)
 }
 \arguments{
 \item{swne.embedding}{SWNE embedding (list of NMF and sample coordinates) from EmbedSWNE}

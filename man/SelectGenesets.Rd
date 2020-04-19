@@ -4,9 +4,15 @@
 \alias{SelectGenesets}
 \title{Select genesets for embedding}
 \usage{
-SelectGenesets(norm.counts, nmf.scores, genesets,
-  assoc.metric = "pearson", method = "lm", n.cores = 8,
-  genesets.return = 5)
+SelectGenesets(
+  norm.counts,
+  nmf.scores,
+  genesets,
+  assoc.metric = "pearson",
+  method = "lm",
+  n.cores = 8,
+  genesets.return = 5
+)
 }
 \arguments{
 \item{norm.counts}{Normalized input data}

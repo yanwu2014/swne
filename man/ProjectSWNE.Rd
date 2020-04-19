@@ -4,8 +4,14 @@
 \alias{ProjectSWNE}
 \title{Projects new data onto an existing swne embedding}
 \usage{
-ProjectSWNE(swne.embedding, H.test, SNN = NULL, alpha.exp = 1,
-  snn.exp = 1, n_pull = NULL)
+ProjectSWNE(
+  swne.embedding,
+  H.test,
+  SNN = NULL,
+  alpha.exp = 1,
+  snn.exp = 1,
+  n_pull = NULL
+)
 }
 \arguments{
 \item{swne.embedding}{Existing swne embedding from EmbedSWNE}

@@ -5,9 +5,15 @@
 \title{Adjust feature variance to remove effect of varying feature means.
 Adapted from pagoda2: https://github.com/hms-dbmi/pagoda2}
 \usage{
-AdjustVariance(counts, gam.k = 10, plot = F,
-  max.adjusted.variance = 1000, min.adjusted.variance = 0.001,
-  verbose = T, q.val = 0.05)
+AdjustVariance(
+  counts,
+  gam.k = 10,
+  plot = F,
+  max.adjusted.variance = 1000,
+  min.adjusted.variance = 0.001,
+  verbose = T,
+  q.val = 0.05
+)
 }
 \arguments{
 \item{counts}{Input data matrix}

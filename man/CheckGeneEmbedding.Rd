@@ -5,9 +5,18 @@
 \title{Validates gene embeddings by plotting cluster logFC vs gene factor loading logFC
 Warns users if embedded genes fall below minimum logFC threshold}
 \usage{
-CheckGeneEmbedding(W, norm.counts, genes.embed, sample.groups,
-  n.bins = 50, min.cluster.logfc = 1.5, min.factor.logfc = 1.5,
-  font.size = 12, label.size = 5, eps = 1e-04)
+CheckGeneEmbedding(
+  W,
+  norm.counts,
+  genes.embed,
+  sample.groups,
+  n.bins = 50,
+  min.cluster.logfc = 1.5,
+  min.factor.logfc = 1.5,
+  font.size = 12,
+  label.size = 5,
+  eps = 1e-04
+)
 }
 \arguments{
 \item{W}{Gene loadings matrix}

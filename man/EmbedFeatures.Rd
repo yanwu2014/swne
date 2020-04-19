@@ -4,8 +4,15 @@
 \alias{EmbedFeatures}
 \title{Embeds features relative to factor coordinates}
 \usage{
-EmbedFeatures(swne.embedding, feature.assoc, features.embed,
-  alpha.exp = 1, n_pull = NULL, scale.cols = T, overwrite = T)
+EmbedFeatures(
+  swne.embedding,
+  feature.assoc,
+  features.embed,
+  alpha.exp = 1,
+  n_pull = NULL,
+  scale.cols = T,
+  overwrite = T
+)
 }
 \arguments{
 \item{swne.embedding}{Existing swne embedding from EmbedSWNE}

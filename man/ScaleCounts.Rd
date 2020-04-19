@@ -4,8 +4,14 @@
 \alias{ScaleCounts}
 \title{Normalize, adjust feature variance, and scale data matrix}
 \usage{
-ScaleCounts(counts, batch = NULL, method = "log", adj.var = T,
-  plot.var.adj = F, gam.k = 10)
+ScaleCounts(
+  counts,
+  batch = NULL,
+  method = "log",
+  adj.var = T,
+  plot.var.adj = F,
+  gam.k = 10
+)
 }
 \arguments{
 \item{counts}{Input data matrix}

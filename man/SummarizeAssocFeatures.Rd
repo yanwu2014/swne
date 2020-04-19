@@ -4,8 +4,11 @@
 \alias{SummarizeAssocFeatures}
 \title{Summarize the factors x features association matrix into a readable dataframe}
 \usage{
-SummarizeAssocFeatures(feature.factor.assoc, features.return = 10,
-  features.use = NULL)
+SummarizeAssocFeatures(
+  feature.factor.assoc,
+  features.return = 10,
+  features.use = NULL
+)
 }
 \arguments{
 \item{feature.factor.assoc}{(features x factors) association matrix from FactorAssociation}

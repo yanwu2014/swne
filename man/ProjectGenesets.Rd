@@ -4,8 +4,13 @@
 \alias{ProjectGenesets}
 \title{Projects dataset onto genesets using either NMF or a nonnegative linear model}
 \usage{
-ProjectGenesets(norm.counts, genesets, method = "lm", loss = "mse",
-  n.cores = 1)
+ProjectGenesets(
+  norm.counts,
+  genesets,
+  method = "lm",
+  loss = "mse",
+  n.cores = 1
+)
 }
 \arguments{
 \item{norm.counts}{Normalized input data}

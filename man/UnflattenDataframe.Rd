@@ -4,8 +4,7 @@
 \alias{UnflattenDataframe}
 \title{Convert dataframe to matrix, specifying all column names}
 \usage{
-UnflattenDataframe(df, output.name, row.col = "Gene",
-  col.col = "Group")
+UnflattenDataframe(df, output.name, row.col = "Gene", col.col = "Group")
 }
 \arguments{
 \item{df}{Dataframe}

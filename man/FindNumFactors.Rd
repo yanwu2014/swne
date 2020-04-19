@@ -7,8 +7,15 @@ reconstruction error vs the reduction in reconstruction error for a randomized
 matrix. The optimal number of factors is where the decrease in reconstruction
 errors intersect}
 \usage{
-FindNumFactors(A, k.range = seq(2, 12, 2), n.cores = 1, do.plot = T,
-  seed = NULL, loss = "mse", max.iter = 250)
+FindNumFactors(
+  A,
+  k.range = seq(2, 12, 2),
+  n.cores = 1,
+  do.plot = T,
+  seed = NULL,
+  loss = "mse",
+  max.iter = 250
+)
 }
 \arguments{
 \item{A}{Input data matrix}

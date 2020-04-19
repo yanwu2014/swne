@@ -4,8 +4,13 @@
 \alias{FilterData}
 \title{Filter data by minimum cells, minimum genes, and winsorizes data}
 \usage{
-FilterData(x, min.samples.frac, trim, min.nonzero.features = 500,
-  max.sample.sum = 50000)
+FilterData(
+  x,
+  min.samples.frac,
+  trim,
+  min.nonzero.features = 500,
+  max.sample.sum = 50000
+)
 }
 \arguments{
 \item{x}{Input matrix}

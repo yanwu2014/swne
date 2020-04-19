@@ -4,8 +4,7 @@
 \alias{RunGSEA}
 \title{Runs GSEA on the gene association coefficients for each NMF}
 \usage{
-RunGSEA(gene.factor.assoc, genesets, power = 1, n.rand = 1000,
-  n.cores = 1)
+RunGSEA(gene.factor.assoc, genesets, power = 1, n.rand = 1000, n.cores = 1)
 }
 \arguments{
 \item{gene.factor.assoc}{Matrix with the gene associations for each nmf}

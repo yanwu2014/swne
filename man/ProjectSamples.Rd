@@ -4,8 +4,14 @@
 \alias{ProjectSamples}
 \title{Projects new samples onto existing factor decomposition}
 \usage{
-ProjectSamples(newdata, W, features.use = NULL, alpha = rep(0, 3),
-  loss = "mse", n.cores = 1)
+ProjectSamples(
+  newdata,
+  W,
+  features.use = NULL,
+  alpha = rep(0, 3),
+  loss = "mse",
+  n.cores = 1
+)
 }
 \arguments{
 \item{newdata}{New data matrix}

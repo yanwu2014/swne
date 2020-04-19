@@ -4,10 +4,21 @@
 \alias{PlotSWNE}
 \title{Plots swne embedding}
 \usage{
-PlotSWNE(swne.embedding, sample.groups, alpha.plot = 0.25,
-  do.label = F, label.size = 4.5, pt.size = 1, samples.plot = NULL,
-  show.legend = T, seed = NULL, colors.use = NULL,
-  use.brewer.pal = F, contour.geom = "path", contour.alpha = 0.25)
+PlotSWNE(
+  swne.embedding,
+  sample.groups,
+  alpha.plot = 0.25,
+  do.label = F,
+  label.size = 4.5,
+  pt.size = 1,
+  samples.plot = NULL,
+  show.legend = T,
+  seed = NULL,
+  colors.use = NULL,
+  use.brewer.pal = F,
+  contour.geom = "path",
+  contour.alpha = 0.25
+)
 }
 \arguments{
 \item{swne.embedding}{SWNE embedding (list of factor and sample coordinates) from EmbedSWNE}
