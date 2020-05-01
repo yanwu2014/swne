@@ -739,6 +739,44 @@ ggHeat <- function(m, rescaling = 'none', clustering = 'none',
 }
 
 
+#' Make simple barplot from vector
+#'
+#' @param x Named numeric vector
+#' @param y.lim Max y-axis
+#' @param fill.color Bar color
+#'
+#' @return barplot
+#' @import ggplot2
+#' @export
+#'
+ggBarplot <- function(x, y.lim = NULL, fill.color = "lightgrey") {
+  unique.names <- paste0(names(x), 1:length(x))
+  barplot.df <- data.frame(Y = x, X = factor(unique.names, levels = unique.names),
+                           color = fill.color)
+
+  if(length(fill.color) == 1) {
+    ggobj <- ggplot(data = barplot.df, aes(x = X, y = Y)) +
+      geom_bar(position = "dodge", stat = "identity", width = 0.8, color = "black", fill = fill.color) +
+      scale_x_discrete(labels = names(x))
+  } else {
+    ggobj <- ggplot(data = barplot.df, aes(x = X, y = Y, fill = color)) +
+      geom_bar(position = "dodge", stat = "identity", width = 0.8, color = "black") +
+      scale_x_discrete(labels = names(x))
+  }
+
+
+  ggobj <- ggobj + theme_classic() +
+    theme(axis.title.x = element_blank(), axis.title.y = element_blank(),
+          axis.text.x = element_text(hjust = 1, vjust = 0.5, size = 14, angle = 90, color = "black"),
+          axis.text.y = element_text(size = 12, color = "black"))
+
+  if(!is.null(y.lim)) {
+    ggobj <- ggobj + coord_cartesian(ylim = y.lim)
+  }
+  ggobj
+}
+
+
 
 #' Validates gene embeddings by plotting cluster logFC vs gene factor loading logFC
 #' Warns users if embedded genes fall below minimum logFC threshold
