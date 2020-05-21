@@ -699,26 +699,9 @@ ggHeat <- function(m, rescaling = 'none', clustering = 'none',
   }
   ## this is just reshaping into a ggplot format matrix and making a ggplot layer
 
-  rows = dim(m)[1]
-  cols = dim(m)[2]
-  melt.m = cbind(rowInd = rep(1:rows, times = cols), colInd = rep(1:cols, each = rows), reshape2::melt(m))
-  g = ggplot(data = melt.m)
+  melt.m = reshape2::melt(m)
+  g2 <- ggplot(data = melt.m) + geom_tile(aes(x = Var2, y = Var1, fill = value))
 
-  ## add the heat tiles with or without a white border for clarity
-  if(border == TRUE)
-    g2 = g + geom_tile(aes(x = colInd, y = rowInd, fill = value), colour = 'white')
-  if(border == FALSE)
-    g2 = g + geom_tile(aes(x = colInd, y = rowInd, fill = value))
-
-  ## add axis labels either supplied or from the colnames rownames of the matrix
-  if(labCol == T)
-    g2 = g2 + scale_x_continuous(breaks = (1:cols), labels = colnames(m), expand = c(0.005,0))
-  if(labCol == F)
-    g2 = g2 + scale_x_continuous(breaks = (1:cols), labels = rep('', cols))
-  if(labRow == T)
-    g2 = g2 + scale_y_continuous(breaks = (1:rows), labels = rownames(m), expand = c(0.005,0))
-  if(labRow == F)
-    g2 = g2 + scale_y_continuous(breaks = (1:rows), labels = rep('', rows))
 
   ## get rid of grey panel background and gridlines
   g2 = g2 + theme(panel.grid.minor = element_line(colour = NA), panel.grid.major = element_line(colour=NA),
@@ -734,6 +717,10 @@ ggHeat <- function(m, rescaling = 'none', clustering = 'none',
   if (nrow(dot.melt.m) > 0) {
     g2 <- g2 + geom_point(aes(x = colInd, y = rowInd), data = dot.melt.m)
   }
+
+  ## Remove axis labels
+  if(labCol == F) g2 = g2 + theme(axis.text.y = element_blank())
+  if(labRow == F) g2 = g2 + theme(axis.text.x = element_blank())
 
   return(g2)
 }
