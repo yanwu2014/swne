@@ -659,7 +659,7 @@ FeaturePlotDims <- function(dim.scores, feature.scores, feature.name = NULL, x.l
 #'
 #' @return ggplot2 heatmap
 #'
-#' @importFrom reshape melt
+#' @import reshape2
 #'
 #' @export
 #'
@@ -715,7 +715,7 @@ ggHeat <- function(m, rescaling = 'none', clustering = 'none',
   ## Add dots to highlight certain cells
   dot.melt.m <- subset(melt.m, abs(value) > dot.highlight.cutoff)
   if (nrow(dot.melt.m) > 0) {
-    g2 <- g2 + geom_point(aes(x = colInd, y = rowInd), data = dot.melt.m)
+    g2 <- g2 + geom_point(aes(x = Var2, y = Var1), data = dot.melt.m)
   }
 
   ## Remove axis labels
