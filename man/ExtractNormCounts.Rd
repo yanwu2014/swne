@@ -7,7 +7,6 @@
 ExtractNormCounts(
   obj,
   obj.type = "seurat",
-  rescale = T,
   rescale.method = "log",
   batch = NULL
 )
@@ -16,8 +15,6 @@ ExtractNormCounts(
 \item{obj}{Seurat or Pagoda2 object}
 
 \item{obj.type}{Must be either "seurat" or "pagoda2"}
-
-\item{rescale}{Rescale data with plain pagoda2 model}
 
 \item{rescale.method}{Rescale method, either "log", or "ft"}
 

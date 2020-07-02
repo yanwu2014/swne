@@ -419,7 +419,15 @@ FeaturePlotSWNE <- function(swne.embedding, feature.scores, feature.name = NULL,
   sample.coords <- swne.embedding$sample.coords
   feature.coords <- swne.embedding$feature.coords
 
-  feature.scores <- feature.scores[!is.na(feature.scores)]
+  n.missing <- sum(is.na(feature.scores))
+  if (n.missing > 0) {
+    na.ix <- is.na(feature.scores)
+    label.ix <- !is.na(feature.scores)
+    na.sample.coords <- sample.coords[na.ix,]
+    sample.coords <- sample.coords[label.ix,]
+    feature.scores <- feature.scores[label.ix]
+  }
+
   sample.coords <- sample.coords[names(feature.scores),]
   feature.scores <- as.numeric(feature.scores[rownames(sample.coords)])
   feature.quantiles <- quantile(feature.scores, probs = quantiles)
@@ -438,8 +446,15 @@ FeaturePlotSWNE <- function(swne.embedding, feature.scores, feature.name = NULL,
     sample.coords <- droplevels(sample.coords)
   }
 
+  ## Plot samples with missing labels
+  ggobj <- ggplot()
+  if (n.missing > 0) {
+    ggobj <- ggobj +
+      geom_point(data = na.sample.coords, aes(x, y), alpha = alpha.plot, size = pt.size, color = "lightgrey")
+  }
+
   ## Plot sample coordinates
-  ggobj <- ggplot() +
+  ggobj <- ggobj +
     geom_point(data = sample.coords, aes(x, y, colour = feature),
                alpha = alpha.plot, size = pt.size) +
     theme_classic() + theme(axis.title = element_blank(), axis.ticks = element_blank(),
@@ -608,6 +623,15 @@ FeaturePlotDims <- function(dim.scores, feature.scores, feature.name = NULL, x.l
                             alpha.plot = 0.5, quantiles = c(0.01, 0.99), show.axes = T, pt.size = 1,
                             font.size = 12, color.palette = "YlOrRd") {
 
+  n.missing <- sum(is.na(feature.scores))
+  if (n.missing > 0) {
+    na.ix <- is.na(feature.scores)
+    label.ix <- !is.na(feature.scores)
+    na.dim.scores <- dim.scores[na.ix,]
+    dim.scores <- dim.scores[label.ix,]
+    feature.scores <- feature.scores[label.ix]
+  }
+
   sample.coords <- data.frame(x = dim.scores[,1], y = dim.scores[,2])
 
   feature.scores <- as.numeric(feature.scores[rownames(dim.scores)])
@@ -622,9 +646,16 @@ FeaturePlotDims <- function(dim.scores, feature.scores, feature.name = NULL, x.l
   sample.coords$feature <- feature.scores
   sample.coords <- sample.coords[order(sample.coords$feature),]
 
+  ## Plot samples with missing labels
+  ggobj <- ggplot()
+  if (n.missing > 0) {
+    na.gg.df <- data.frame(x = na.dim.scores[,1], y = na.dim.scores[,2])
+    ggobj <- ggobj + geom_point(data = na.gg.df, aes(x, y), alpha = alpha.plot,
+                                size = pt.size, color = "lightgrey")
+  }
 
   ## Plot sample coordinates
-  ggobj <- ggplot() +
+  ggobj <- ggobj +
     geom_point(data = sample.coords, aes(x, y, colour = feature),
                alpha = alpha.plot, size = pt.size) +
     xlab(x.lab) + ylab(y.lab) +
@@ -715,14 +746,14 @@ ggHeat <- function(m, rescaling = 'none', clustering = 'none',
   g2 <- g2 + scale_fill_gradient2(low = heatscale[1], mid = heatscale[2], high = heatscale[3], guide = guide_colorbar(title = legend.title))
 
   ## Add dots to highlight certain cells
-  dot.melt.m <- subset(melt.m, abs(value) > dot.highlight.cutoff)
+  dot.melt.m <- subset(melt.m, value > dot.highlight.cutoff)
   if (nrow(dot.melt.m) > 0) {
     g2 <- g2 + geom_point(aes(x = Var2, y = Var1), data = dot.melt.m)
   }
 
   ## Remove axis labels
-  if(labCol == F) g2 = g2 + theme(axis.text.y = element_blank())
-  if(labRow == F) g2 = g2 + theme(axis.text.x = element_blank())
+  if(labCol == F) g2 = g2 + theme(axis.text.x = element_blank())
+  if(labRow == F) g2 = g2 + theme(axis.text.y = element_blank())
 
   return(g2)
 }

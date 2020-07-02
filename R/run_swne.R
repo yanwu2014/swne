@@ -141,7 +141,7 @@ RunSWNE.Seurat <- function(object, proj.method = "sammon", reduction.use = "pca"
   if (missing(genes.embed)) genes.embed <- NULL
   if (is.null(distance.matrix)) {
     if (DefaultAssay(object) == "integrated") {
-      if(sum(dim(object@graphs$integrated_snn)) != 2*ncol(object)) {
+      if(is.null(object@graphs$integrated_snn)) {
         object <- RunPCA(object, pc.genes = var.genes, do.print = F, pcs.compute = min(k,20),
                          verbose = F)
         object <- FindNeighbors(object, k = snn.k, prune.SNN = 1/15)
@@ -149,7 +149,7 @@ RunSWNE.Seurat <- function(object, proj.method = "sammon", reduction.use = "pca"
       snn <- as(object@graphs$integrated_snn, "dgCMatrix")
       if (use.paga.pruning) knn <- as(object@graphs$integrated_nn, "dgCMatrix")
     } else {
-      if(sum(dim(object@graphs$RNA_snn)) != 2*ncol(object)) {
+      if(is.null(object@graphs$RNA_snn)) {
         object <- RunPCA(object, pc.genes = var.genes, do.print = F, pcs.compute = min(k,20),
                          verbose = F)
         object <- FindNeighbors(object, k = snn.k, prune.SNN = 1/15)

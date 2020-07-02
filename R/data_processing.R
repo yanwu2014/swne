@@ -327,14 +327,13 @@ SelectFeatures <- function(counts, batch = NULL, n.features = 3e3, gam.k = 10) {
 #'
 #' @param obj Seurat or Pagoda2 object
 #' @param obj.type Must be either "seurat" or "pagoda2"
-#' @param rescale Rescale data with plain pagoda2 model
 #' @param rescale.method Rescale method, either "log", or "ft"
 #' @param batch If rescaling and multiple batches, specify batch
 #' @return Normalized gene expression matrix
 #'
 #' @export
 #'
-ExtractNormCounts <- function(obj, obj.type = "seurat", rescale = T, rescale.method = "log",
+ExtractNormCounts <- function(obj, obj.type = "seurat", rescale.method = "log",
                               batch = NULL) {
   if (!obj.type %in% c("seurat", "pagoda2")) {
     stop("obj.type must be either 'seurat' or 'pagoda2'")
@@ -349,13 +348,13 @@ ExtractNormCounts <- function(obj, obj.type = "seurat", rescale = T, rescale.met
       stop("Seurat needed for this function to work. Please install it.",
            call. = F)
     }
-    if (rescale) {
+    if (DefaultAssay(obj) == "integrated") {
+      norm.counts <- GetAssayData(obj, slot = "scale.data")
+      norm.counts <- t(apply(norm.counts, 1, function(x) (x - min(x))/(max(x) - min(x))))
+    } else {
       counts <- GetAssayData(obj, slot = "counts", assay = "RNA")
       counts <- counts[,intersect(colnames(obj), colnames(counts))]
       norm.counts <- ScaleCounts(counts, batch = batch, method = rescale.method)
-    } else {
-      norm.counts <- GetAssayData(obj, slot = "scale.data")
-      norm.counts <- t(apply(norm.counts, 1, function(x) (x - min(x))/(max(x) - min(x))))
     }
   } else if (obj.type == "pagoda2") {
     if (!requireNamespace("pagoda2", quietly = T)) {
