@@ -728,13 +728,18 @@ ggHeat <- function(m, rescaling = 'none', clustering = 'none',
     if(clustering=='both')
       m = m[hclust(dist(m))$order, hclust(dist(t(m)))$order]
   }
-  ## this is just reshaping into a ggplot format matrix and making a ggplot layer
+  col.labels <- colnames(m)
+  row.labels <- rownames(m)
 
+  colnames(m) <- paste0(col.labels, 1:ncol(m))
+  rownames(m) <- paste0(row.labels, 1:nrow(m))
+
+  ## this is just reshaping into a ggplot format matrix and making a ggplot layer
   melt.m = reshape2::melt(m)
   g2 <- ggplot(data = melt.m) + geom_tile(aes(x = factor(Var2, levels = colnames(m)),
                                               y = factor(Var1, levels = rownames(m)),
                                               fill = value))
-
+  g2 <- g2 + scale_x_discrete(labels = col.labels) + scale_y_discrete(labels = row.labels)
 
   ## get rid of grey panel background and gridlines
   g2 = g2 + theme(panel.grid.minor = element_line(colour = NA), panel.grid.major = element_line(colour=NA),
