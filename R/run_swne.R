@@ -120,7 +120,7 @@ RunSWNE.Seurat <- function(object, proj.method = "sammon", reduction.use = "pca"
     object_norm <- t(apply(object_norm, 1, function(x) (x - min(x))/(max(x) - min(x))))
     var.genes <- rownames(object_norm)
   } else {
-    object_norm <- ExtractNormCounts(object, obj.type = "seurat", rescale = F, rescale.method = "log", batch = NULL)
+    object_norm <- ExtractNormCounts(object, obj.type = "seurat", rescale.method = "log", batch = NULL)
   }
 
   if (missing(var.genes)) var.genes <- VariableFeatures(object)
@@ -202,7 +202,7 @@ RunSWNE.Pagoda2 <- function(object, proj.method = "sammon", dist.metric = "cosin
          call. = F)
   }
 
-  object_norm <- ExtractNormCounts(object, obj.type = "pagoda2", rescale = F, rescale.method = "log", batch = NULL)
+  object_norm <- ExtractNormCounts(object, obj.type = "pagoda2", rescale.method = "log", batch = NULL)
 
   if (missing(var.genes)) var.genes <- rownames(p2$misc$varinfo[order(p2$misc$varinfo$lp),])[1:n.var.genes]
   var.genes <- intersect(var.genes, rownames(object_norm))
