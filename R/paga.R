@@ -35,6 +35,8 @@ PartitionSimilarityGraph <- function(partitions, embedding, qval.cutoff = 1e-3,
 }
 
 
+
+
 #' Make PAGA graph. Adapted from Monocle3
 #'
 #' @param knn kNN in the form of a sparse matrix
@@ -47,6 +49,8 @@ PartitionSimilarityGraph <- function(partitions, embedding, qval.cutoff = 1e-3,
 #' @export
 #'
 BuildPAGA <- function(knn, clusters = NULL, qval.cutoff = 0.05) {
+
+
   knn <- as(knn, "dgCMatrix")
   knn_graph <- igraph::graph_from_adjacency_matrix(knn, mode = "undirected")
 
@@ -59,9 +63,9 @@ BuildPAGA <- function(knn, clusters = NULL, qval.cutoff = 0.05) {
   }
 
   names(knn_clusters$membership) <- names(igraph::V(knn_graph))
-  partitions <- monocle3:::compute_partitions(knn_graph, knn_clusters,
-                                              qval_thresh = qval.cutoff,
-                                              verbose = F)
+  partitions <- compute_partitions(knn_graph, knn_clusters,
+                                   qval_thresh = qval.cutoff,
+                                   verbose = F)
 
   partitions$clusters <- knn_clusters$membership
   rownames(partitions$cluster_mat) <- colnames(partitions$cluster_mat) <- levels(knn_clusters$membership)
