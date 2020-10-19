@@ -736,6 +736,7 @@ ggHeat <- function(m, rescaling = 'none', clustering = 'none',
 
   ## this is just reshaping into a ggplot format matrix and making a ggplot layer
   melt.m = reshape2::melt(m)
+  colnames(melt.m) <- c("Var1", "Var2", "value")
   g2 <- ggplot(data = melt.m) + geom_tile(aes(x = factor(Var2, levels = colnames(m)),
                                               y = factor(Var1, levels = rownames(m)),
                                               fill = value))
