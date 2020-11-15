@@ -377,12 +377,10 @@ FlattenGroups <- function(groups.list) {
 #' @export
 #'
 UnflattenGroups <- function(groups) {
-  groups.list <- c()
-  unique.groups <- unique(groups)
-  for (g in unique.groups) {
-    g.cells <- names(groups[groups == g])
-    groups.list[[g]] <- g.cells
-  }
+  groups.list <- lapply(unique(groups), function(g){
+    names(groups[groups == g])
+  })
+  names(groups.list) <- unique(groups)
   return(groups.list)
 }
 
