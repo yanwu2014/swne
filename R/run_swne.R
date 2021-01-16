@@ -148,6 +148,14 @@ RunSWNE.Seurat <- function(object, proj.method = "sammon", reduction.use = "pca"
       }
       snn <- as(object@graphs$integrated_snn, "dgCMatrix")
       if (use.paga.pruning) knn <- as(object@graphs$integrated_nn, "dgCMatrix")
+    } else if (DefaultAssay(object) == "SCT") {
+      if(is.null(object@graphs$SCT_snn)) {
+        object <- RunPCA(object, pc.genes = var.genes, do.print = F, pcs.compute = min(k,20),
+                         verbose = F)
+        object <- FindNeighbors(object, k = snn.k, prune.SNN = 1/15)
+      }
+      snn <- as(object@graphs$SCT_snn, "dgCMatrix")
+      if (use.paga.pruning) knn <- as(object@graphs$SCT_nn, "dgCMatrix")
     } else {
       if(is.null(object@graphs$RNA_snn)) {
         object <- RunPCA(object, pc.genes = var.genes, do.print = F, pcs.compute = min(k,20),
