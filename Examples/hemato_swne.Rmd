@@ -1,7 +1,7 @@
 ---
 title: "Hematopoiesis Trajectory Visualization and Benchmarking with SWNE"
 author: "Yan Wu"
-date: "5/14/2019"
+date: "01/31/2021"
 output: html_document
 ---
 
@@ -78,8 +78,8 @@ se.obj <- RunPCA(se.obj, features = info.genes, verbose = F, pcs.compute = 40)
 ElbowPlot(se.obj)
 
 ## Run t-SNE, UMAP, and SNN
-se.obj <- RunTSNE(se.obj, dims = 1:15)
-se.obj <- RunUMAP(se.obj, reduction.use = "pca", dims = 1:15, verbose = F)
+se.obj <- RunTSNE(se.obj, dims = 1:10)
+se.obj <- RunUMAP(se.obj, reduction.use = "pca", dims = 1:10, n.neighbors = 40, min.dist = 0.5, verbose = F)
 pc.emb <- Embeddings(se.obj, reduction = "pca")[,1:15]
 ```
 
