@@ -268,15 +268,19 @@ ft_transform <- function(A) {
 #' @param adj.var Whether or not to apply mean variance adjustment for features
 #' @param plot.var.adj Whether or not to plot the mean variance relationship
 #' @param gam.k Number of additive models to use for variance modeling
+#' @param scale.factor Scale factor (defaults to median total counts)
 #'
 #' @return Normalized and scaled data matrix
 #'
 #' @export
 #'
-ScaleCounts <- function(counts, batch = NULL, method = "log", adj.var = T, plot.var.adj = F, gam.k = 10) {
+ScaleCounts <- function(counts, batch = NULL, method = "log", adj.var = T, plot.var.adj = F,
+                        gam.k = 10, scale.factor = NULL) {
   stopifnot(method %in% c("log", "logrank", "ft", "none"))
 
-  scale.factor <- median(Matrix::colSums(counts))
+  if (is.null(scale.factor)) {
+    scale.factor <- median(Matrix::colSums(counts))
+  }
   norm.counts <- NormalizeCounts(counts, batch = batch, depthScale = scale.factor)
 
   if (adj.var) {

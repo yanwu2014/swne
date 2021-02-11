@@ -10,7 +10,8 @@ ScaleCounts(
   method = "log",
   adj.var = T,
   plot.var.adj = F,
-  gam.k = 10
+  gam.k = 10,
+  scale.factor = NULL
 )
 }
 \arguments{
@@ -25,6 +26,8 @@ ScaleCounts(
 \item{plot.var.adj}{Whether or not to plot the mean variance relationship}
 
 \item{gam.k}{Number of additive models to use for variance modeling}
+
+\item{scale.factor}{Scale factor (defaults to median total counts)}
 }
 \value{
 Normalized and scaled data matrix
