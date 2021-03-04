@@ -11,7 +11,7 @@ If you use SWNE in your research, please cite [Wu et al, Cell Systems, 2018](htt
 Run the following code to install the package using devtools:
 
 ```
-if(!require(devtools)){ install.packages("devtools") # If not already installed; }
+if(!require(remotes)){ install.packages("remotes") # If not already installed; }
 remotes::install_github("linxihui/NNLM")
 remotes::install_github("yanwu2014/swne")
 ```
