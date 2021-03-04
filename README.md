@@ -12,8 +12,8 @@ Run the following code to install the package using devtools:
 
 ```
 if(!require(devtools)){ install.packages("devtools") # If not already installed; }
-remotes::install()("linxihui/NNLM")
-remotes::install()("yanwu2014/swne")
+remotes::install_github("linxihui/NNLM")
+remotes::install_github("yanwu2014/swne")
 ```
 
 If you want to run SWNE on chromatin accessibility data, install [cisTopic](github.com/aertslab/cisTopic) as well.
